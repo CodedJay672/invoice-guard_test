@@ -1,0 +1,12 @@
+{
+  "name": "@workspace/queues",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"queues build not configured yet\"",
+    "lint": "echo \"queues lint not configured yet\"",
+    "test": "echo \"queues tests not configured yet\"",
+    "typecheck": "echo \"queues typecheck not configured yet\""
+  }
+}

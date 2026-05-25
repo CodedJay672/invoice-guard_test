@@ -1,0 +1,13 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"api build not configured yet\"",
+    "dev": "echo \"api dev not configured yet\"",
+    "lint": "echo \"api lint not configured yet\"",
+    "test": "echo \"api tests not configured yet\"",
+    "typecheck": "echo \"api typecheck not configured yet\""
+  }
+}

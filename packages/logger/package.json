@@ -1,0 +1,12 @@
+{
+  "name": "@workspace/logger",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"logger build not configured yet\"",
+    "lint": "echo \"logger lint not configured yet\"",
+    "test": "echo \"logger tests not configured yet\"",
+    "typecheck": "echo \"logger typecheck not configured yet\""
+  }
+}

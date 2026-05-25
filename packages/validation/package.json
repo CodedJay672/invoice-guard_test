@@ -1,0 +1,12 @@
+{
+  "name": "@workspace/validation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"validation build not configured yet\"",
+    "lint": "echo \"validation lint not configured yet\"",
+    "test": "echo \"validation tests not configured yet\"",
+    "typecheck": "echo \"validation typecheck not configured yet\""
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@workspace/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"types build not configured yet\"",
+    "lint": "echo \"types lint not configured yet\"",
+    "test": "echo \"types tests not configured yet\"",
+    "typecheck": "echo \"types typecheck not configured yet\""
+  }
+}

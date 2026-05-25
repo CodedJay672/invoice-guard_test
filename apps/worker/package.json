@@ -1,0 +1,13 @@
+{
+  "name": "worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"worker build not configured yet\"",
+    "dev": "echo \"worker dev not configured yet\"",
+    "lint": "echo \"worker lint not configured yet\"",
+    "test": "echo \"worker tests not configured yet\"",
+    "typecheck": "echo \"worker typecheck not configured yet\""
+  }
+}

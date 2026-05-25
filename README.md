@@ -146,6 +146,7 @@ External Integrations
 Managed using:
 
 - Turborepo
+- npm workspaces
 
 ---
 
@@ -550,8 +551,8 @@ NODE_ENV=
 
 ## Requirements
 
-- Node.js 22+
-- pnpm
+- Node.js 20+
+- npm
 - PostgreSQL
 - Redis
 
@@ -560,7 +561,7 @@ NODE_ENV=
 ## Installation
 
 ```bash id="2jlwm1"
-pnpm install
+npm install
 ```
 
 ---
@@ -568,7 +569,7 @@ pnpm install
 ## Start Development
 
 ```bash id="5jlwm7"
-pnpm dev
+npm run dev
 ```
 
 ---
@@ -576,7 +577,7 @@ pnpm dev
 ## Start API Only
 
 ```bash id="jlwm4w"
-pnpm --filter api dev
+npm run dev --workspace api
 ```
 
 ---
@@ -584,7 +585,7 @@ pnpm --filter api dev
 ## Start Worker Only
 
 ```bash id="4jlwm8"
-pnpm --filter worker dev
+npm run dev --workspace worker
 ```
 
 ---
