@@ -10,6 +10,7 @@
     "./react-internal": "./react-internal.js"
   },
   "scripts": {
+    "format": "prettier --check .",
     "lint": "eslint ."
   },
   "devDependencies": {

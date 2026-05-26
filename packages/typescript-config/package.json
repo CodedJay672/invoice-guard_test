@@ -4,6 +4,7 @@
   "private": true,
   "license": "PROPRIETARY",
   "scripts": {
+    "format": "prettier --check .",
     "lint": "eslint ."
   },
   "exports": {

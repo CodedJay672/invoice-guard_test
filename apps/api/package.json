@@ -6,6 +6,7 @@
   "scripts": {
     "build": "echo \"api build not configured yet\"",
     "dev": "echo \"api dev not configured yet\"",
+    "format": "prettier --check .",
     "lint": "eslint .",
     "test": "echo \"api tests not configured yet\"",
     "typecheck": "tsc --noEmit"

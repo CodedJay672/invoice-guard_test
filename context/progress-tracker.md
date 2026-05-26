@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — setup — shared prettier configuration
+packages — types — base shared contracts setup
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — setup — shared prettier configuration
+## packages — types — base shared contracts setup
 
 ### Scope Status
 
@@ -65,25 +65,26 @@ Not started
 
 ### Included
 
-- Shared Prettier config review
-- Prettier workspace standardization
-- Package-level Prettier command verification
-- Format command alignment where required
+- Base shared contracts package review
+- Shared type export structure setup
+- Package-level typecheck verification
+- Contract naming and organization alignment
 
 ---
 
 ### Excluded
 
-- Database setup
+- Business logic
 - Queue setup
 - Clerk setup
 - Stripe setup
 - Express bootstrap
 - Frontend implementation
-- Shared business logic
 - Drizzle configuration
-- TypeScript standardization
-- ESLint standardization
+- Validation schemas
+- Database schemas
+- API routes
+- Service/repository/controller layers
 
 ---
 
@@ -93,10 +94,9 @@ A unit is only complete if all are true:
 
 - [ ] Requirements reviewed
 - [ ] Scope confirmed
-- [ ] Shared Prettier config reviewed
-- [ ] Prettier rules verified
-- [ ] Workspace Prettier command behavior verified
-- [ ] Format command passes or non-scope issues documented
+- [ ] Shared contracts package reviewed
+- [ ] Base exports verified
+- [ ] Typecheck passes
 - [ ] Progress tracker updated
 
 ---
@@ -111,6 +111,7 @@ List completed units in order.
 1. packages — setup — monorepo configuration hardening
 2. packages — setup — shared tsconfig standardization
 3. packages — setup — shared eslint standardization
+4. packages — setup — shared prettier configuration
 ```
 
 ---
@@ -131,9 +132,9 @@ None
 
 Next 3 implementation units only.
 
-1. `packages — setup — shared prettier configuration`
-2. `packages — types — base shared contracts setup`
-3. `packages — validation — zod validation infrastructure`
+1. `packages — types — base shared contracts setup`
+2. `packages — validation — zod validation infrastructure`
+3. `packages — logger — pino logger infrastructure`
 
 ---
 
@@ -142,7 +143,7 @@ Next 3 implementation units only.
 ## Current Blockers
 
 ```txt id="3t5t7f"
-npm run lint resolves through Turborepo but currently fails in non-scope file apps/web/app/layout.tsx because the existing Geist import is unused. The ESLint unit did not modify apps/web/app/** files because they are forbidden by specs/02-eslint-config.md.
+None
 ```
 
 ---
@@ -443,6 +444,32 @@ All future app and package workspaces must use the shared ESLint package unless 
 
 ---
 
+## Decision: Prettier Configuration Strategy
+
+### Decision
+
+InvoiceGuard uses a root `.prettierrc` as the shared Prettier configuration source for all workspaces.
+
+Workspace `format` scripts use:
+
+```txt id="prettier-check-script"
+prettier --check .
+```
+
+---
+
+### Reason
+
+A root Prettier config keeps formatting rules consistent across TypeScript, TSX, JSON, Markdown, CSS, and configuration files while check-only scripts avoid mutating forbidden-scope source files during infrastructure verification units.
+
+---
+
+### Impact
+
+Future workspace packages should inherit root Prettier behavior and expose a non-mutating `format` check unless a later roadmap unit explicitly approves a separate write-format workflow.
+
+---
+
 # 14. Repository Conventions
 
 - Repositories return raw persistence data only
@@ -600,7 +627,6 @@ In progress
 
 ### Remaining Core Units
 
-- shared prettier configuration
 - shared types setup
 - validation infrastructure
 - logger infrastructure
@@ -711,6 +737,23 @@ Not started
 - Verified `npm run lint -- --force` reaches all 13 lint workspaces; 12 pass and `web` fails only on existing forbidden-scope file `apps/web/app/layout.tsx` for unused `Geist` import.
 - Left `apps/web/app/layout.tsx` unchanged because `apps/**/app/**` is forbidden by `specs/02-eslint-config.md`; this lint issue is recorded in Current Blockers.
 - Verified `npm run typecheck` passes across the workspace after ESLint standardization.
+- Applied shared Prettier baseline in `.prettierrc` with semicolons enabled, double quotes, trailing commas, 100-character print width, 2-space tabs, LF endings, and the existing Tailwind plugin integration preserved.
+- Updated `.prettierignore` to exclude generated/dependency outputs required by `specs/03-prettier-setup.md`, including `node_modules`, `.next`, `.turbo`, `dist`, `build`, `coverage`, and `package-lock.json`.
+- Standardized root and workspace `format` scripts to `prettier --check .` so validation is non-mutating and cannot rewrite forbidden-scope source files during this unit.
+- Verified Prettier configuration discovery from the repository root with `npx.cmd prettier --find-config-path package.json`, which resolved to `.prettierrc`.
+- Verified `.prettierignore` excludes `package-lock.json` with `npx.cmd prettier --file-info package-lock.json`, which returned ignored.
+- Verified all workspace package manifests expose `format: prettier --check .` through `npm.cmd pkg get scripts --workspaces`.
+- Verified representative workspace format behavior with `npm.cmd run format -w @workspace/types`; the command resolves but reports existing formatting in `packages/types/eslint.config.js`, which is outside this unit's allowed edit scope.
+- Verified changed configuration and package manifest files pass Prettier with `npx.cmd prettier --check --ignore-unknown ...`.
+- `npm.cmd run format` initially resolved correctly but reported existing formatting differences in 48 non-scope files; no forbidden-scope files were formatted during the original scoped Prettier unit.
+- `npm.cmd run typecheck` initially failed because existing package `tsconfig.json` files used `"ignoreDeprecations": "6.0"`, which TypeScript rejected; those blockers were cleared after explicit user approval to resolve validation blockers.
+- `npm.cmd run lint` passes across all 13 workspaces; the previously documented `apps/web/app/layout.tsx` unused Geist lint blocker is no longer present in the current checkout.
+- Completed `packages — setup — shared prettier configuration`.
+- Cleared the Prettier blocker by running `npx.cmd prettier --write .` after explicit user approval to resolve full-repo formatting issues outside the original Prettier unit scope.
+- Removed invalid `"ignoreDeprecations": "6.0"` compiler options from `apps/web/tsconfig.json` and foundation package `tsconfig.json` files because TypeScript rejected the value during validation.
+- Verified `npm.cmd run format` passes across the repository.
+- Verified `npm.cmd run typecheck` passes across the workspace.
+- Verified `npm.cmd run lint` passes across all 13 lint workspaces after repo-wide formatting.
 
 ---
 

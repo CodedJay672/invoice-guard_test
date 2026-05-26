@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "echo \"types build not configured yet\"",
+    "format": "prettier --check .",
     "lint": "eslint .",
     "test": "echo \"types tests not configured yet\"",
     "typecheck": "tsc --noEmit"

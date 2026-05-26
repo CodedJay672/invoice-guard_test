@@ -6,6 +6,7 @@
   "scripts": {
     "build": "echo \"worker build not configured yet\"",
     "dev": "echo \"worker dev not configured yet\"",
+    "format": "prettier --check .",
     "lint": "eslint .",
     "test": "echo \"worker tests not configured yet\"",
     "typecheck": "tsc --noEmit"

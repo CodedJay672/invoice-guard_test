@@ -22,8 +22,8 @@ Read the following files in order before implementing or making any architectura
 
 Always follow:
 
-* `context/ai-workflow-rules.md`
-* `context/code-standards.md`
+- `context/ai-workflow-rules.md`
+- `context/code-standards.md`
 
 strictly.
 
@@ -35,11 +35,11 @@ Update `context/progress-tracker.md` after every meaningful implementation chang
 
 If implementation changes:
 
-* architecture
-* workflow structure
-* implementation standards
-* infrastructure assumptions
-* domain boundaries
+- architecture
+- workflow structure
+- implementation standards
+- infrastructure assumptions
+- domain boundaries
 
 then update the relevant context file BEFORE continuing implementation.
 
@@ -47,23 +47,23 @@ then update the relevant context file BEFORE continuing implementation.
 
 # Execution Rules
 
-* Only work on ONE roadmap unit at a time.
-* Never implement beyond the current roadmap unit.
-* Follow the exact ordering in `context/execution-roadmap.md`.
-* Never skip units.
-* Never merge unrelated implementation units.
-* Never implement speculative future functionality.
-* Never implement future phases early.
+- Only work on ONE roadmap unit at a time.
+- Never implement beyond the current roadmap unit.
+- Follow the exact ordering in `context/execution-roadmap.md`.
+- Never skip units.
+- Never merge unrelated implementation units.
+- Never implement speculative future functionality.
+- Never implement future phases early.
 
 Phase A and Phase B are intentionally separated.
 
 Do not implement:
 
-* invoice enforcement workflows
-* accounting integrations
-* OCR ingestion
-* demand letter systems
-* response portals
+- invoice enforcement workflows
+- accounting integrations
+- OCR ingestion
+- demand letter systems
+- response portals
 
 while scoped Phase A units are active unless explicitly required by roadmap sequencing.
 
@@ -93,17 +93,17 @@ Do not combine layers into single implementation units.
 
 # Scope Discipline
 
-* Do not modify files outside current unit scope.
-* Do not refactor unrelated systems.
-* Do not introduce new architectural patterns without approval.
-* Do not introduce new dependencies without approval.
-* Do not invent product behavior outside documented context files.
-* Do not create alternative implementations when a standard pattern already exists.
+- Do not modify files outside current unit scope.
+- Do not refactor unrelated systems.
+- Do not introduce new architectural patterns without approval.
+- Do not introduce new dependencies without approval.
+- Do not invent product behavior outside documented context files.
+- Do not create alternative implementations when a standard pattern already exists.
 
 If requirements are ambiguous:
 
-* stop implementation
-* ask questions first
+- stop implementation
+- ask questions first
 
 Never guess business logic.
 
@@ -117,14 +117,14 @@ Maintain strict architectural boundaries.
 
 ## Backend Rules
 
-* Controllers must NEVER access the database directly.
-* Controllers must NEVER contain business logic.
-* Business logic belongs ONLY in services.
-* Database access belongs ONLY in repositories.
-* Queue orchestration belongs ONLY in workers/services.
-* External integrations must be isolated behind adapter layers.
-* Shared contracts belong ONLY in `/packages/types`.
-* Validation schemas belong ONLY in `/packages/validation`.
+- Controllers must NEVER access the database directly.
+- Controllers must NEVER contain business logic.
+- Business logic belongs ONLY in services.
+- Database access belongs ONLY in repositories.
+- Queue orchestration belongs ONLY in workers/services.
+- External integrations must be isolated behind adapter layers.
+- Shared contracts belong ONLY in `/packages/types`.
+- Validation schemas belong ONLY in `/packages/validation`.
 
 ---
 
@@ -136,22 +136,22 @@ All long-running or retryable workflows MUST use queues.
 
 Examples:
 
-* report generation
-* email delivery
-* webhook processing
-* API synchronization
-* OCR processing
-* interest recalculation
-* notification dispatch
+- report generation
+- email delivery
+- webhook processing
+- API synchronization
+- OCR processing
+- interest recalculation
+- notification dispatch
 
 Never process heavy async workflows directly inside controllers.
 
 All workers must:
 
-* be idempotent
-* support retries
-* log failures
-* emit structured events
+- be idempotent
+- support retries
+- log failures
+- emit structured events
 
 ---
 
@@ -159,10 +159,10 @@ All workers must:
 
 Webhook endpoints must:
 
-* verify signatures
-* respond quickly
-* enqueue processing jobs
-* avoid inline heavy processing
+- verify signatures
+- respond quickly
+- enqueue processing jobs
+- avoid inline heavy processing
 
 Webhook events must be idempotent.
 
@@ -176,9 +176,9 @@ PostgreSQL is the ONLY approved primary database.
 
 Do not introduce:
 
-* MongoDB
-* Firebase
-* document database patterns
+- MongoDB
+- Firebase
+- document database patterns
 
 without explicit approval.
 
@@ -186,21 +186,21 @@ Financial and workflow events should be append-only where applicable.
 
 Avoid destructive updates for:
 
-* payment events
-* report generation events
-* delivery logs
-* workflow state transitions
+- payment events
+- report generation events
+- delivery logs
+- workflow state transitions
 
 ---
 
 # Frontend Rules
 
-* Default to React Server Components.
-* Use `"use client"` only when required.
-* Prefer server-side data fetching.
-* Avoid unnecessary client state.
-* Use server actions where appropriate.
-* Keep UI consistent with documented dashboard and report patterns.
+- Default to React Server Components.
+- Use `"use client"` only when required.
+- Prefer server-side data fetching.
+- Avoid unnecessary client state.
+- Use server actions where appropriate.
+- Keep UI consistent with documented dashboard and report patterns.
 
 ---
 
@@ -210,11 +210,11 @@ The company search and intelligence platform is Phase A priority.
 
 Treat:
 
-* search
-* intelligence aggregation
-* report generation
-* paywall gating
-* Stripe integration
+- search
+- intelligence aggregation
+- report generation
+- paywall gating
+- Stripe integration
 
 as first-class production systems.
 
@@ -232,8 +232,8 @@ Never trust frontend payment success states.
 
 All payment confirmation must be validated through:
 
-* Stripe webhooks
-* server-side verification
+- Stripe webhooks
+- server-side verification
 
 Premium report access must always be entitlement-driven.
 
@@ -245,20 +245,20 @@ Tests are required for every completed unit where applicable.
 
 Required testing layers:
 
-* unit tests
-* integration tests
-* queue processing tests
-* webhook tests
-* API tests
+- unit tests
+- integration tests
+- queue processing tests
+- webhook tests
+- API tests
 
 Critical workflows must have integration coverage.
 
 A unit is NOT complete if:
 
-* tests fail
-* required tests are missing
-* queue flows are unverified
-* webhook flows are unverified
+- tests fail
+- required tests are missing
+- queue flows are unverified
+- webhook flows are unverified
 
 ---
 
@@ -268,10 +268,10 @@ All critical systems must support observability.
 
 Required:
 
-* structured logging
-* error tracking
-* queue monitoring
-* retry visibility
+- structured logging
+- error tracking
+- queue monitoring
+- retry visibility
 
 Never swallow errors silently.
 
@@ -283,10 +283,10 @@ All async failures must be logged with context.
 
 After completing a unit:
 
-* update `context/progress-tracker.md`
-* mark completed work accurately
-* update active implementation unit
-* document blockers or architecture changes
+- update `context/progress-tracker.md`
+- mark completed work accurately
+- update active implementation unit
+- document blockers or architecture changes
 
 Progress tracking must always reflect REAL implementation state.
 
@@ -296,18 +296,18 @@ Never mark speculative work as completed.
 
 # AI Behavioral Constraints
 
-* Reuse existing patterns whenever possible.
-* Maintain consistency across apps and packages.
-* Do not introduce parallel architectural styles.
-* Prefer extension of existing systems over invention of new systems.
-* Preserve architectural cohesion across all modules.
+- Reuse existing patterns whenever possible.
+- Maintain consistency across apps and packages.
+- Do not introduce parallel architectural styles.
+- Prefer extension of existing systems over invention of new systems.
+- Preserve architectural cohesion across all modules.
 
 Prioritize:
 
-* maintainability
-* consistency
-* reliability
-* deterministic workflows
-* production-grade engineering discipline
+- maintainability
+- consistency
+- reliability
+- deterministic workflows
+- production-grade engineering discipline
 
 over rapid but unstable implementation.

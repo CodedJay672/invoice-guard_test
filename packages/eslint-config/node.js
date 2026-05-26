@@ -1,6 +1,6 @@
-import globals from "globals"
+import globals from "globals";
 
-import { typescriptSourceConfig } from "./base.js"
+import { typescriptSourceConfig } from "./base.js";
 
 /**
  * Shared ESLint configuration for Node.js workspaces.
@@ -16,4 +16,4 @@ export const nodeConfig = [
       },
     },
   },
-]
+];

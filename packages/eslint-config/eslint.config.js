@@ -1,4 +1,4 @@
-import { nodeConfig } from "./node.js"
+import { nodeConfig } from "./node.js";
 
 /** @type {import("eslint").Linter.Config} */
-export default nodeConfig
+export default nodeConfig;
