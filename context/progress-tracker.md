@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — utils — common utilities setup
+packages — db — drizzle setup + postgres connection
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — utils — common utilities setup
+## packages — db — drizzle setup + postgres connection
 
 ### Scope Status
 
@@ -65,10 +65,11 @@ Not started
 
 ### Included
 
-- Shared utils package review
-- Common utilities setup
+- Shared db package review
+- Drizzle setup
+- PostgreSQL connection foundation
 - Package-level typecheck verification
-- Utils export structure alignment
+- DB export structure alignment
 
 ---
 
@@ -80,9 +81,8 @@ Not started
 - Stripe setup
 - Express bootstrap
 - Frontend implementation
-- Drizzle configuration
 - Business-domain logging workflows
-- Database schemas
+- Business-domain database schemas
 - API routes
 - Service/repository/controller layers
 - Logger infrastructure changes
@@ -95,8 +95,9 @@ A unit is only complete if all are true:
 
 - [ ] Requirements reviewed
 - [ ] Scope confirmed
-- [ ] Utils package reviewed
-- [ ] Common utilities implemented
+- [ ] DB package reviewed
+- [ ] Drizzle setup implemented
+- [ ] PostgreSQL connection foundation implemented
 - [ ] Typecheck passes
 - [ ] Progress tracker updated
 
@@ -116,6 +117,7 @@ List completed units in order.
 5. packages — types — base shared contracts setup
 6. packages — validation — zod validation infrastructure
 7. packages — logger — pino logger infrastructure
+8. packages — utils — common utilities setup
 ```
 
 ---
@@ -127,7 +129,7 @@ Only ONE active unit may exist here.
 ## Current In Progress
 
 ```txt id="gvl2dx"
-packages — utils — common utilities setup
+packages — db — drizzle setup + postgres connection
 ```
 
 ---
@@ -136,9 +138,9 @@ packages — utils — common utilities setup
 
 Next 3 implementation units only.
 
-1. `packages — utils — common utilities setup`
-2. `packages — db — drizzle setup + postgres connection`
-3. `packages — queues — BullMQ queue infrastructure`
+1. `packages — db — drizzle setup + postgres connection`
+2. `packages — queues — BullMQ queue infrastructure`
+3. `packages — integrations — integration package foundation`
 
 ---
 
@@ -691,7 +693,6 @@ In progress
 
 ### Remaining Core Units
 
-- utils setup
 - drizzle setup
 - queue infrastructure
 - integrations foundation
@@ -852,6 +853,18 @@ Not started
 - Formatted `specs/06-pino-logger-setup.md` after explicit user approval because it blocked the root format check.
 - Completed `packages — logger — pino logger infrastructure`.
 - Advanced current scope to `packages — utils — common utilities setup`.
+- Implemented the `@workspace/utils` shared common utilities package under `packages/utils/src`.
+- Added generic string helpers only: `isNonEmptyString`, `normalizeWhitespace`, and `toKebabCase`.
+- Added generic object helpers only: `isRecord`, `omitUndefined`, and `pickDefined`, using shallow immutable object filtering and no `any`.
+- Added generic async helpers only: `sleep` and `withTimeout`, including timer cleanup for timeout races.
+- Added generic framework-independent URL query helper `appendQueryParams`, preserving existing query parameters and omitting `null` and `undefined` values.
+- Added `@workspace/utils` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/utils/src/index.ts`.
+- Kept `@workspace/utils` dependency-free with no imports from apps, database, validation, queues, integrations, logger, or UI packages.
+- Verified `npm.cmd run typecheck -w @workspace/utils`, `npm.cmd run lint -w @workspace/utils`, and `npm.cmd run format -w @workspace/utils` pass.
+- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
+- Formatted `specs/07-common-utils.md` after explicit user approval because it blocked the root format check.
+- Completed `packages — utils — common utilities setup`.
+- Advanced current scope to `packages — db — drizzle setup + postgres connection`.
 
 ---
 
