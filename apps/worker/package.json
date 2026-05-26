@@ -6,7 +6,7 @@
   "scripts": {
     "build": "echo \"worker build not configured yet\"",
     "dev": "echo \"worker dev not configured yet\"",
-    "lint": "echo \"worker lint not configured yet\"",
+    "lint": "eslint .",
     "test": "echo \"worker tests not configured yet\"",
     "typecheck": "tsc --noEmit"
   }

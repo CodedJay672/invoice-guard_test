@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "echo \"utils build not configured yet\"",
-    "lint": "echo \"utils lint not configured yet\"",
+    "lint": "eslint .",
     "test": "echo \"utils tests not configured yet\"",
     "typecheck": "tsc --noEmit"
   }

@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — setup — shared eslint standardization
+packages — setup — shared prettier configuration
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — setup — shared eslint standardization
+## packages — setup — shared prettier configuration
 
 ### Scope Status
 
@@ -65,10 +65,10 @@ Not started
 
 ### Included
 
-- Shared ESLint config review
-- ESLint workspace standardization
-- Package-level ESLint inheritance verification
-- Lint command alignment where required
+- Shared Prettier config review
+- Prettier workspace standardization
+- Package-level Prettier command verification
+- Format command alignment where required
 
 ---
 
@@ -83,7 +83,7 @@ Not started
 - Shared business logic
 - Drizzle configuration
 - TypeScript standardization
-- Prettier standardization
+- ESLint standardization
 
 ---
 
@@ -93,10 +93,10 @@ A unit is only complete if all are true:
 
 - [ ] Requirements reviewed
 - [ ] Scope confirmed
-- [ ] Shared ESLint config reviewed
-- [ ] ESLint rules verified
-- [ ] Workspace ESLint inheritance verified
-- [ ] Lint passes
+- [ ] Shared Prettier config reviewed
+- [ ] Prettier rules verified
+- [ ] Workspace Prettier command behavior verified
+- [ ] Format command passes or non-scope issues documented
 - [ ] Progress tracker updated
 
 ---
@@ -110,6 +110,7 @@ List completed units in order.
 ```txt id="lwmjlwm"
 1. packages — setup — monorepo configuration hardening
 2. packages — setup — shared tsconfig standardization
+3. packages — setup — shared eslint standardization
 ```
 
 ---
@@ -130,9 +131,9 @@ None
 
 Next 3 implementation units only.
 
-1. `packages — setup — shared eslint standardization`
-2. `packages — setup — shared prettier configuration`
-3. `packages — types — base shared contracts setup`
+1. `packages — setup — shared prettier configuration`
+2. `packages — types — base shared contracts setup`
+3. `packages — validation — zod validation infrastructure`
 
 ---
 
@@ -141,7 +142,7 @@ Next 3 implementation units only.
 ## Current Blockers
 
 ```txt id="3t5t7f"
-None
+npm run lint resolves through Turborepo but currently fails in non-scope file apps/web/app/layout.tsx because the existing Geist import is unused. The ESLint unit did not modify apps/web/app/** files because they are forbidden by specs/02-eslint-config.md.
 ```
 
 ---
@@ -409,6 +410,39 @@ All future app and package workspaces must extend the shared TypeScript presets 
 
 ---
 
+## Decision: ESLint Configuration Inheritance
+
+### Decision
+
+InvoiceGuard workspaces inherit shared ESLint baselines from:
+
+```txt id="eslint-inheritance"
+@workspace/eslint-config
+```
+
+The shared package exposes separate presets for:
+
+```txt id="eslint-presets"
+base
+node
+next-js
+react-internal
+```
+
+---
+
+### Reason
+
+Centralized ESLint presets keep TypeScript-aware linting, unused variable handling, no-explicit-any enforcement, Turbo environment checks, React rules, Next.js rules, and Node.js globals consistent across apps and packages.
+
+---
+
+### Impact
+
+All future app and package workspaces must use the shared ESLint package unless a roadmap unit explicitly approves a different linting strategy. Next.js linting must continue to run through the ESLint CLI because Next.js 16 removed `next lint`.
+
+---
+
 # 14. Repository Conventions
 
 - Repositories return raw persistence data only
@@ -566,7 +600,6 @@ In progress
 
 ### Remaining Core Units
 
-- shared eslint standardization
 - shared prettier configuration
 - shared types setup
 - validation infrastructure
@@ -670,6 +703,14 @@ Not started
 - Preserved the existing Next.js/shadcn web tsconfig and `@workspace/ui` import paths.
 - Verified `npm run typecheck` passes across the workspace.
 - Verified `npm run build` passes; existing placeholder build scripts still emit Turbo output warnings.
+- Completed `packages - setup - shared eslint standardization`.
+- Standardized shared ESLint presets under `packages/eslint-config` with TypeScript-aware linting, explicit `no-explicit-any`, ignored-name handling for intentionally unused identifiers, Turbo environment variable checks, and a direct app-import restriction.
+- Added a shared Node.js ESLint preset and workspace `eslint.config.*` inheritance for `apps/api`, `apps/worker`, `packages/db`, `packages/types`, `packages/validation`, `packages/queues`, `packages/integrations`, `packages/logger`, `packages/utils`, `packages/typescript-config`, and `packages/eslint-config`.
+- Preserved Next.js App Router lint compatibility for `apps/web` using the ESLint CLI, `@next/eslint-plugin-next`, Core Web Vitals rules, and an App Router-compatible `no-html-link-for-pages` override.
+- Replaced placeholder lint scripts with `eslint .` for API, worker, and foundation package workspaces; root `npm run lint` continues to execute through Turborepo.
+- Verified `npm run lint -- --force` reaches all 13 lint workspaces; 12 pass and `web` fails only on existing forbidden-scope file `apps/web/app/layout.tsx` for unused `Geist` import.
+- Left `apps/web/app/layout.tsx` unchanged because `apps/**/app/**` is forbidden by `specs/02-eslint-config.md`; this lint issue is recorded in Current Blockers.
+- Verified `npm run typecheck` passes across the workspace after ESLint standardization.
 
 ---
 

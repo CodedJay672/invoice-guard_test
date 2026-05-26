@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "echo \"db build not configured yet\"",
-    "lint": "echo \"db lint not configured yet\"",
+    "lint": "eslint .",
     "test": "echo \"db tests not configured yet\"",
     "typecheck": "tsc --noEmit"
   }
