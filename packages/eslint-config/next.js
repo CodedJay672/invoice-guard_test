@@ -10,7 +10,8 @@ import { config as baseConfig } from "./base.js";
  *
  * @type {import("eslint").Linter.Config}
  * */
-export const nextJsConfig = [
+
+export const createNextJsConfig = (rootDir = ["apps/web/"]) => [
   ...baseConfig,
   {
     ...pluginReact.configs.flat.recommended,
@@ -27,7 +28,7 @@ export const nextJsConfig = [
     },
     settings: {
       next: {
-        rootDir: ["apps/web/"],
+        rootDir,
       },
     },
     rules: {
@@ -49,3 +50,6 @@ export const nextJsConfig = [
     },
   },
 ];
+
+// Default export for backward compatibility
+export const nextJsConfig = createNextJsConfig();
