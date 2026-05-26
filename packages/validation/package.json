@@ -7,6 +7,6 @@
     "build": "echo \"validation build not configured yet\"",
     "lint": "echo \"validation lint not configured yet\"",
     "test": "echo \"validation tests not configured yet\"",
-    "typecheck": "echo \"validation typecheck not configured yet\""
+    "typecheck": "tsc --noEmit"
   }
 }

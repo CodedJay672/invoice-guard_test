@@ -8,6 +8,6 @@
     "dev": "echo \"api dev not configured yet\"",
     "lint": "echo \"api lint not configured yet\"",
     "test": "echo \"api tests not configured yet\"",
-    "typecheck": "echo \"api typecheck not configured yet\""
+    "typecheck": "tsc --noEmit"
   }
 }

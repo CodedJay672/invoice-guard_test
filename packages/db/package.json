@@ -7,6 +7,6 @@
     "build": "echo \"db build not configured yet\"",
     "lint": "echo \"db lint not configured yet\"",
     "test": "echo \"db tests not configured yet\"",
-    "typecheck": "echo \"db typecheck not configured yet\""
+    "typecheck": "tsc --noEmit"
   }
 }

@@ -8,6 +8,6 @@
     "dev": "echo \"worker dev not configured yet\"",
     "lint": "echo \"worker lint not configured yet\"",
     "test": "echo \"worker tests not configured yet\"",
-    "typecheck": "echo \"worker typecheck not configured yet\""
+    "typecheck": "tsc --noEmit"
   }
 }

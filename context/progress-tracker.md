@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — setup — shared tsconfig standardization
+packages — setup — shared eslint standardization
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — setup — shared tsconfig standardization
+## packages — setup — shared eslint standardization
 
 ### Scope Status
 
@@ -65,10 +65,10 @@ Not started
 
 ### Included
 
-- Shared TypeScript config review
-- Strict TypeScript baseline standardization
-- Package-level tsconfig inheritance verification
-- TypeScript workspace reference alignment where required
+- Shared ESLint config review
+- ESLint workspace standardization
+- Package-level ESLint inheritance verification
+- Lint command alignment where required
 
 ---
 
@@ -82,7 +82,7 @@ Not started
 - Frontend implementation
 - Shared business logic
 - Drizzle configuration
-- ESLint standardization
+- TypeScript standardization
 - Prettier standardization
 
 ---
@@ -93,10 +93,10 @@ A unit is only complete if all are true:
 
 - [ ] Requirements reviewed
 - [ ] Scope confirmed
-- [ ] Shared TypeScript config reviewed
-- [ ] Strict compiler options verified
-- [ ] Workspace tsconfig inheritance verified
-- [ ] Typecheck passes
+- [ ] Shared ESLint config reviewed
+- [ ] ESLint rules verified
+- [ ] Workspace ESLint inheritance verified
+- [ ] Lint passes
 - [ ] Progress tracker updated
 
 ---
@@ -109,6 +109,7 @@ List completed units in order.
 
 ```txt id="lwmjlwm"
 1. packages — setup — monorepo configuration hardening
+2. packages — setup — shared tsconfig standardization
 ```
 
 ---
@@ -129,9 +130,9 @@ None
 
 Next 3 implementation units only.
 
-1. `packages — setup — shared tsconfig standardization`
-2. `packages — setup — shared eslint standardization`
-3. `packages — setup — shared prettier configuration`
+1. `packages — setup — shared eslint standardization`
+2. `packages — setup — shared prettier configuration`
+3. `packages — types — base shared contracts setup`
 
 ---
 
@@ -384,6 +385,30 @@ Stripe webhook infrastructure becomes mandatory.
 
 ---
 
+## Decision: TypeScript Configuration Inheritance
+
+### Decision
+
+InvoiceGuard workspaces inherit shared TypeScript baselines from:
+
+```txt id="tsconfig-inheritance"
+@workspace/typescript-config
+```
+
+---
+
+### Reason
+
+Centralized TypeScript presets keep strict compiler behavior consistent across apps and packages while preserving Next.js-specific and Node.js-specific runtime settings.
+
+---
+
+### Impact
+
+All future app and package workspaces must extend the shared TypeScript presets unless a roadmap unit explicitly approves a different configuration.
+
+---
+
 # 14. Repository Conventions
 
 - Repositories return raw persistence data only
@@ -541,7 +566,6 @@ In progress
 
 ### Remaining Core Units
 
-- shared tsconfig standardization
 - shared eslint standardization
 - shared prettier configuration
 - shared types setup
@@ -638,6 +662,14 @@ Not started
 - Event-driven internal architecture approved
 - Worker runtime separated from API runtime
 - Phase B systems intentionally deferred to later roadmap units
+- Completed `packages - setup - shared tsconfig standardization`.
+- Shared TypeScript baseline now explicitly enforces `strict`, `noImplicitAny`, `strictNullChecks`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `forceConsistentCasingInFileNames`, and `skipLibCheck`.
+- Added shared Node.js and package-build TypeScript presets under `packages/typescript-config`.
+- Added tsconfig inheritance for `apps/api`, `apps/worker`, and foundation packages without adding application or business logic.
+- Converted placeholder typecheck scripts in API, worker, and foundation packages to `tsc --noEmit`.
+- Preserved the existing Next.js/shadcn web tsconfig and `@workspace/ui` import paths.
+- Verified `npm run typecheck` passes across the workspace.
+- Verified `npm run build` passes; existing placeholder build scripts still emit Turbo output warnings.
 
 ---
 
