@@ -8,11 +8,16 @@
     "lint": "turbo lint",
     "format": "prettier --check .",
     "test": "turbo test",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "pg:push": "npx drizzle-kit push",
+    "pg:migrate": "npx drizzle-kit migrate",
+    "pg:generate": "npx drizzle-kit generate",
+    "pg:studio": "npx drizzle=kit studio"
   },
   "devDependencies": {
     "@workspace/eslint-config": "*",
     "@workspace/typescript-config": "*",
+    "drizzle-kit": "^0.31.10",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "turbo": "^2.8.17",

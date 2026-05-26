@@ -3,11 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "types": "./src/index.ts",
   "scripts": {
     "build": "echo \"db build not configured yet\"",
     "format": "prettier --check .",
     "lint": "eslint .",
     "test": "echo \"db tests not configured yet\"",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.9"
   }
 }

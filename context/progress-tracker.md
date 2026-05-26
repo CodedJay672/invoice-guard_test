@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — db — drizzle setup + postgres connection
+packages — queues — BullMQ queue infrastructure
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — db — drizzle setup + postgres connection
+## packages — queues — BullMQ queue infrastructure
 
 ### Scope Status
 
@@ -65,24 +65,24 @@ Not started
 
 ### Included
 
-- Shared db package review
-- Drizzle setup
-- PostgreSQL connection foundation
+- Shared queues package review
+- BullMQ queue infrastructure setup
+- Redis connection foundation
+- Queue export structure alignment
 - Package-level typecheck verification
-- DB export structure alignment
 
 ---
 
 ### Excluded
 
 - Business logic
-- Queue setup
+- Database schema setup
 - Clerk setup
 - Stripe setup
 - Express bootstrap
 - Frontend implementation
 - Business-domain logging workflows
-- Business-domain database schemas
+- Business-domain queue definitions
 - API routes
 - Service/repository/controller layers
 - Logger infrastructure changes
@@ -95,9 +95,9 @@ A unit is only complete if all are true:
 
 - [ ] Requirements reviewed
 - [ ] Scope confirmed
-- [ ] DB package reviewed
-- [ ] Drizzle setup implemented
-- [ ] PostgreSQL connection foundation implemented
+- [ ] Queues package reviewed
+- [ ] BullMQ setup implemented
+- [ ] Redis connection foundation implemented
 - [ ] Typecheck passes
 - [ ] Progress tracker updated
 
@@ -118,6 +118,7 @@ List completed units in order.
 6. packages — validation — zod validation infrastructure
 7. packages — logger — pino logger infrastructure
 8. packages — utils — common utilities setup
+9. packages — db — drizzle setup + postgres connection
 ```
 
 ---
@@ -129,7 +130,7 @@ Only ONE active unit may exist here.
 ## Current In Progress
 
 ```txt id="gvl2dx"
-packages — db — drizzle setup + postgres connection
+packages — queues — BullMQ queue infrastructure
 ```
 
 ---
@@ -138,9 +139,9 @@ packages — db — drizzle setup + postgres connection
 
 Next 3 implementation units only.
 
-1. `packages — db — drizzle setup + postgres connection`
-2. `packages — queues — BullMQ queue infrastructure`
-3. `packages — integrations — integration package foundation`
+1. `packages — queues — BullMQ queue infrastructure`
+2. `packages — integrations — integration package foundation`
+3. `api — setup — express bootstrap`
 
 ---
 
@@ -536,6 +537,44 @@ Future runtime logging must consume `@workspace/logger`, preserve generic logger
 
 ---
 
+## Decision: Database Package Export and Dependency Strategy
+
+### Decision
+
+The shared database package is exported as:
+
+```txt id="db-export"
+@workspace/db -> ./src/index.ts
+@workspace/db/schema -> ./src/schema/index.ts
+```
+
+The package owns direct dependencies on:
+
+```txt id="db-dependencies"
+drizzle-orm
+postgres
+```
+
+Drizzle migrations are configured from the repository root through:
+
+```txt id="drizzle-config"
+drizzle.config.ts
+```
+
+---
+
+### Reason
+
+Centralized database infrastructure gives API, worker, and future repository layers one PostgreSQL and Drizzle connection foundation without introducing business-domain schemas during infrastructure setup.
+
+---
+
+### Impact
+
+Future database schemas must be introduced only by scoped roadmap units through `packages/db/src/schema/index.ts` exports. Repositories must consume `@workspace/db` rather than creating independent database clients.
+
+---
+
 # 14. Repository Conventions
 
 - Repositories return raw persistence data only
@@ -693,7 +732,6 @@ In progress
 
 ### Remaining Core Units
 
-- drizzle setup
 - queue infrastructure
 - integrations foundation
 
@@ -865,6 +903,22 @@ Not started
 - Formatted `specs/07-common-utils.md` after explicit user approval because it blocked the root format check.
 - Completed `packages — utils — common utilities setup`.
 - Advanced current scope to `packages — db — drizzle setup + postgres connection`.
+- Implemented `@workspace/db` infrastructure under `packages/db/src`.
+- Added PostgreSQL connection helpers with centralized `DATABASE_URL` access in `packages/db/src/connection.ts`.
+- Added Drizzle database factory helpers in `packages/db/src/client.ts` without domain schemas, repositories, migrations, or queries.
+- Added empty schema export foundation in `packages/db/src/schema/index.ts`.
+- Added `@workspace/db` and `@workspace/db/schema` package exports pointing at TypeScript source entrypoints.
+- Added root `drizzle.config.ts` with PostgreSQL dialect, future schema path, migrations output path, and `DATABASE_URL` migration credentials.
+- Added approved database dependencies: `drizzle-orm` and `postgres` to `@workspace/db`; added approved root dev dependency `drizzle-kit`.
+- Verified `npm.cmd run typecheck -w @workspace/db`, `npm.cmd run lint -w @workspace/db`, and `npm.cmd run format -w @workspace/db` pass.
+- Verified `@workspace/db` resolves to `packages/db/src/index.ts` and `@workspace/db/schema` resolves to `packages/db/src/schema/index.ts`.
+- Verified `packages/db` has no imports from apps or unrelated shared packages.
+- Verified full `npm.cmd run typecheck` passes across the workspace.
+- Verified full `npm.cmd run lint` passes across all 13 lint workspaces.
+- Updated `.prettierignore` after explicit user instruction so root-level `/specs` and `/fixes` files are excluded from repository formatting checks.
+- Verified full `npm.cmd run format` passes across the workspace after the Prettier ignore update.
+- Completed `packages — db — drizzle setup + postgres connection`.
+- Advanced current scope to `packages — queues — BullMQ queue infrastructure`.
 
 ---
 

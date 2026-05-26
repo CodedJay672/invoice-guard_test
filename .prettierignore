@@ -3,7 +3,8 @@ node_modules
 .turbo
 dist
 context
-fixes
+/fixes
+/specs
 build
 coverage
 package-lock.json
