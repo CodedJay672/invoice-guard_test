@@ -2,6 +2,8 @@ node_modules
 .next
 .turbo
 dist
+context
+fixes
 build
 coverage
 package-lock.json

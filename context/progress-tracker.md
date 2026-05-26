@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — types — base shared contracts setup
+packages — validation — zod validation infrastructure
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — types — base shared contracts setup
+## packages — validation — zod validation infrastructure
 
 ### Scope Status
 
@@ -65,10 +65,10 @@ Not started
 
 ### Included
 
-- Base shared contracts package review
-- Shared type export structure setup
+- Shared validation package review
+- Zod validation infrastructure setup
 - Package-level typecheck verification
-- Contract naming and organization alignment
+- Validation export structure alignment
 
 ---
 
@@ -81,7 +81,7 @@ Not started
 - Express bootstrap
 - Frontend implementation
 - Drizzle configuration
-- Validation schemas
+- Business-domain validation schemas
 - Database schemas
 - API routes
 - Service/repository/controller layers
@@ -92,10 +92,10 @@ Not started
 
 A unit is only complete if all are true:
 
-- [ ] Requirements reviewed
-- [ ] Scope confirmed
-- [ ] Shared contracts package reviewed
-- [ ] Base exports verified
+- [x] Requirements reviewed
+- [x] Scope confirmed
+- [ ] Validation package reviewed
+- [ ] Validation infrastructure implemented
 - [ ] Typecheck passes
 - [ ] Progress tracker updated
 
@@ -112,6 +112,7 @@ List completed units in order.
 2. packages — setup — shared tsconfig standardization
 3. packages — setup — shared eslint standardization
 4. packages — setup — shared prettier configuration
+5. packages — types — base shared contracts setup
 ```
 
 ---
@@ -123,7 +124,7 @@ Only ONE active unit may exist here.
 ## Current In Progress
 
 ```txt id="gvl2dx"
-None
+packages — validation — zod validation infrastructure
 ```
 
 ---
@@ -132,9 +133,9 @@ None
 
 Next 3 implementation units only.
 
-1. `packages — types — base shared contracts setup`
-2. `packages — validation — zod validation infrastructure`
-3. `packages — logger — pino logger infrastructure`
+1. `packages — validation — zod validation infrastructure`
+2. `packages — logger — pino logger infrastructure`
+3. `packages — utils — common utilities setup`
 
 ---
 
@@ -627,7 +628,6 @@ In progress
 
 ### Remaining Core Units
 
-- shared types setup
 - validation infrastructure
 - logger infrastructure
 - utils setup
@@ -754,6 +754,20 @@ Not started
 - Verified `npm.cmd run format` passes across the repository.
 - Verified `npm.cmd run typecheck` passes across the workspace.
 - Verified `npm.cmd run lint` passes across all 13 lint workspaces after repo-wide formatting.
+- Implemented the base `@workspace/types` shared contract structure under `packages/types/src`.
+- Added generic common, identifier, timestamp, pagination, and API response/error contracts only; no business-domain contracts were introduced.
+- Added `@workspace/types` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/types/src/index.ts`.
+- Used type-only barrel exports with explicit `.js` specifiers to satisfy the workspace NodeNext TypeScript resolution rules.
+- Verified `npm.cmd run typecheck -w @workspace/types`, `npm.cmd run lint -w @workspace/types`, and `npm.cmd run format -w @workspace/types` pass.
+- Verified full `npm.cmd run typecheck` passes across the workspace.
+- Verified full `npm.cmd run lint` passes across all 13 lint workspaces.
+- Formatted `specs/04-base-contracts.md` only to clear the shared contracts validation blocker.
+- Formatted `fixes/01-fix-formatter.md` after explicit user approval because it also blocked the root format check.
+- Verified full `npm.cmd run format` passes across the repository.
+- Verified full `npm.cmd run typecheck` passes across the workspace.
+- Verified full `npm.cmd run lint` passes across all 13 lint workspaces.
+- Completed `packages — types — base shared contracts setup`.
+- Advanced current scope to `packages — validation — zod validation infrastructure`.
 
 ---
 
