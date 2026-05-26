@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — validation — zod validation infrastructure
+packages — utils — common utilities setup
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — validation — zod validation infrastructure
+## packages — utils — common utilities setup
 
 ### Scope Status
 
@@ -65,10 +65,10 @@ Not started
 
 ### Included
 
-- Shared validation package review
-- Zod validation infrastructure setup
+- Shared utils package review
+- Common utilities setup
 - Package-level typecheck verification
-- Validation export structure alignment
+- Utils export structure alignment
 
 ---
 
@@ -81,10 +81,11 @@ Not started
 - Express bootstrap
 - Frontend implementation
 - Drizzle configuration
-- Business-domain validation schemas
+- Business-domain logging workflows
 - Database schemas
 - API routes
 - Service/repository/controller layers
+- Logger infrastructure changes
 
 ---
 
@@ -92,10 +93,10 @@ Not started
 
 A unit is only complete if all are true:
 
-- [x] Requirements reviewed
-- [x] Scope confirmed
-- [ ] Validation package reviewed
-- [ ] Validation infrastructure implemented
+- [ ] Requirements reviewed
+- [ ] Scope confirmed
+- [ ] Utils package reviewed
+- [ ] Common utilities implemented
 - [ ] Typecheck passes
 - [ ] Progress tracker updated
 
@@ -113,6 +114,8 @@ List completed units in order.
 3. packages — setup — shared eslint standardization
 4. packages — setup — shared prettier configuration
 5. packages — types — base shared contracts setup
+6. packages — validation — zod validation infrastructure
+7. packages — logger — pino logger infrastructure
 ```
 
 ---
@@ -124,7 +127,7 @@ Only ONE active unit may exist here.
 ## Current In Progress
 
 ```txt id="gvl2dx"
-packages — validation — zod validation infrastructure
+packages — utils — common utilities setup
 ```
 
 ---
@@ -133,9 +136,9 @@ packages — validation — zod validation infrastructure
 
 Next 3 implementation units only.
 
-1. `packages — validation — zod validation infrastructure`
-2. `packages — logger — pino logger infrastructure`
-3. `packages — utils — common utilities setup`
+1. `packages — utils — common utilities setup`
+2. `packages — db — drizzle setup + postgres connection`
+3. `packages — queues — BullMQ queue infrastructure`
 
 ---
 
@@ -471,6 +474,66 @@ Future workspace packages should inherit root Prettier behavior and expose a non
 
 ---
 
+## Decision: Validation Package Export and Dependency Strategy
+
+### Decision
+
+The shared validation package is exported as:
+
+```txt id="validation-export"
+@workspace/validation -> ./src/index.ts
+```
+
+The package owns a direct dependency on:
+
+```txt id="validation-dependency"
+zod
+```
+
+---
+
+### Reason
+
+Validation schemas and parsing helpers need a single reusable source of truth that can be consumed by apps and shared packages without coupling to Express, Next.js, databases, queues, or integrations.
+
+---
+
+### Impact
+
+Future validation schemas must be added through `packages/validation` when their roadmap unit is active, use Zod, and preserve NodeNext-compatible `.js` export specifiers in source barrels.
+
+---
+
+## Decision: Logger Package Export and Dependency Strategy
+
+### Decision
+
+The shared logger package is exported as:
+
+```txt id="logger-export"
+@workspace/logger -> ./src/index.ts
+```
+
+The package owns a direct dependency on:
+
+```txt id="logger-dependency"
+pino
+```
+
+---
+
+### Reason
+
+Pino provides structured JSON logging for API, worker, and shared package runtimes through one reusable logger package without coupling logging infrastructure to Express, BullMQ, databases, or business-domain modules.
+
+---
+
+### Impact
+
+Future runtime logging must consume `@workspace/logger`, preserve generic logger context as the base contract, avoid logging sensitive data, and keep request, queue, webhook, and business-event wiring inside their later scoped roadmap units.
+
+---
+
 # 14. Repository Conventions
 
 - Repositories return raw persistence data only
@@ -628,8 +691,6 @@ In progress
 
 ### Remaining Core Units
 
-- validation infrastructure
-- logger infrastructure
 - utils setup
 - drizzle setup
 - queue infrastructure
@@ -768,6 +829,29 @@ Not started
 - Verified full `npm.cmd run lint` passes across all 13 lint workspaces.
 - Completed `packages — types — base shared contracts setup`.
 - Advanced current scope to `packages — validation — zod validation infrastructure`.
+- Implemented `@workspace/validation` shared Zod infrastructure under `packages/validation/src`.
+- Added generic validation primitives only: non-empty strings, email, UUID, ISO datetime strings, positive integers, and pagination number bounds.
+- Added framework-independent parsing helpers: `parseWithSchema` and `safeParseWithSchema`.
+- Added a generic `ValidationErrorIssue` contract without duplicating Zod internals.
+- Added `@workspace/validation` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/validation/src/index.ts`.
+- Added Zod as a direct `@workspace/validation` dependency; no unrelated validation libraries were introduced.
+- Verified `npm.cmd run typecheck -w @workspace/validation`, `npm.cmd run lint -w @workspace/validation`, and `npm.cmd run format -w @workspace/validation` pass.
+- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
+- Formatted `specs/05-zod-validation-setup.md` after explicit user approval because it blocked the root format check.
+- Completed `packages — validation — zod validation infrastructure`.
+- Advanced current scope to `packages — logger — pino logger infrastructure`.
+- Implemented `@workspace/logger` shared Pino infrastructure under `packages/logger/src`.
+- Added generic `LogContext` fields for request, queue job, module, action, event, user, and organization correlation without adding business-domain identifiers.
+- Added `serializeError(error: unknown)` to safely serialize Error instances and non-Error thrown values without exposing arbitrary unknown object contents.
+- Added `createLogger` with environment-aware default levels, structured JSON output, and conservative redaction paths for common sensitive fields.
+- Added `createChildLogger` for binding generic context to a parent Pino logger.
+- Added `@workspace/logger` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/logger/src/index.ts`.
+- Added Pino as a direct `@workspace/logger` dependency; no other logging, pretty-printing, Sentry, OpenTelemetry, Express, BullMQ, database, validation, integration, or UI dependencies were introduced.
+- Verified `npm.cmd run typecheck -w @workspace/logger`, `npm.cmd run lint -w @workspace/logger`, and `npm.cmd run format -w @workspace/logger` pass.
+- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
+- Formatted `specs/06-pino-logger-setup.md` after explicit user approval because it blocked the root format check.
+- Completed `packages — logger — pino logger infrastructure`.
+- Advanced current scope to `packages — utils — common utilities setup`.
 
 ---
 
