@@ -12,7 +12,7 @@
     "pg:push": "npx drizzle-kit push",
     "pg:migrate": "npx drizzle-kit migrate",
     "pg:generate": "npx drizzle-kit generate",
-    "pg:studio": "npx drizzle=kit studio"
+    "pg:studio": "npx drizzle-kit studio"
   },
   "devDependencies": {
     "@workspace/eslint-config": "*",

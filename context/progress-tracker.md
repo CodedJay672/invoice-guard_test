@@ -1,4 +1,4 @@
-# Progress Tracker
+﻿# Progress Tracker
 
 This file is the single source of truth for InvoiceGuard implementation state.
 
@@ -19,7 +19,7 @@ Update this file after every completed implementation unit.
 
 **Current Phase:**
 
-- Phase 1 — Monorepo Infrastructure Hardening
+- Phase 1 â€” Monorepo Infrastructure Hardening
 
 ---
 
@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages — queues — BullMQ queue infrastructure
+packages â€” integrations â€” integration package foundation
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages — queues — BullMQ queue infrastructure
+## packages â€” integrations â€” integration package foundation
 
 ### Scope Status
 
@@ -65,10 +65,9 @@ Not started
 
 ### Included
 
-- Shared queues package review
-- BullMQ queue infrastructure setup
-- Redis connection foundation
-- Queue export structure alignment
+- Shared integrations package review
+- Integration package foundation setup
+- Export structure alignment
 - Package-level typecheck verification
 
 ---
@@ -82,7 +81,7 @@ Not started
 - Express bootstrap
 - Frontend implementation
 - Business-domain logging workflows
-- Business-domain queue definitions
+- Business-domain integration adapters
 - API routes
 - Service/repository/controller layers
 - Logger infrastructure changes
@@ -95,9 +94,8 @@ A unit is only complete if all are true:
 
 - [ ] Requirements reviewed
 - [ ] Scope confirmed
-- [ ] Queues package reviewed
-- [ ] BullMQ setup implemented
-- [ ] Redis connection foundation implemented
+- [ ] Integrations package reviewed
+- [ ] Integration package foundation implemented
 - [ ] Typecheck passes
 - [ ] Progress tracker updated
 
@@ -110,15 +108,16 @@ List completed units in order.
 ## Completed
 
 ```txt id="lwmjlwm"
-1. packages — setup — monorepo configuration hardening
-2. packages — setup — shared tsconfig standardization
-3. packages — setup — shared eslint standardization
-4. packages — setup — shared prettier configuration
-5. packages — types — base shared contracts setup
-6. packages — validation — zod validation infrastructure
-7. packages — logger — pino logger infrastructure
-8. packages — utils — common utilities setup
-9. packages — db — drizzle setup + postgres connection
+1. packages â€” setup â€” monorepo configuration hardening
+2. packages â€” setup â€” shared tsconfig standardization
+3. packages â€” setup â€” shared eslint standardization
+4. packages â€” setup â€” shared prettier configuration
+5. packages â€” types â€” base shared contracts setup
+6. packages â€” validation â€” zod validation infrastructure
+7. packages â€” logger â€” pino logger infrastructure
+8. packages â€” utils â€” common utilities setup
+9. packages â€” db â€” drizzle setup + postgres connection
+10. packages â€” queues â€” BullMQ queue infrastructure
 ```
 
 ---
@@ -130,7 +129,7 @@ Only ONE active unit may exist here.
 ## Current In Progress
 
 ```txt id="gvl2dx"
-packages — queues — BullMQ queue infrastructure
+packages â€” integrations â€” integration package foundation
 ```
 
 ---
@@ -139,9 +138,9 @@ packages — queues — BullMQ queue infrastructure
 
 Next 3 implementation units only.
 
-1. `packages — queues — BullMQ queue infrastructure`
-2. `packages — integrations — integration package foundation`
-3. `api — setup — express bootstrap`
+1. `packages â€” integrations â€” integration package foundation`
+2. `api â€” setup â€” express bootstrap`
+3. `api â€” setup â€” async wrapper + global error middleware`
 
 ---
 
@@ -194,23 +193,23 @@ These rules must NEVER be violated.
 
 ```txt id="1x76pf"
 User Search
-      ↓
+      â†“
 Company Resolution
-      ↓
+      â†“
 Cache Lookup
-      ↓
+      â†“
 External Intelligence Aggregation
-      ↓
+      â†“
 Teaser Report Generation
-      ↓
+      â†“
 Stripe Checkout
-      ↓
+      â†“
 Webhook Verification
-      ↓
+      â†“
 Report Entitlement
-      ↓
+      â†“
 PDF Generation
-      ↓
+      â†“
 Email Delivery
 ```
 
@@ -575,6 +574,39 @@ Future database schemas must be introduced only by scoped roadmap units through 
 
 ---
 
+## Decision: Queue Package Export and Dependency Strategy
+
+### Decision
+
+The shared queue package is exported as:
+
+```txt id="queues-export"
+@workspace/queues -> ./src/index.ts
+```
+
+The package owns direct dependencies on:
+
+```txt id="queues-dependencies"
+bullmq
+ioredis
+```
+
+Generic queue creation uses BullMQ `Queue` instances with centralized Redis connection creation and production-safe default job options.
+
+---
+
+### Reason
+
+Centralized queue infrastructure gives API and worker runtimes one reusable BullMQ foundation without introducing business-domain queues, workers, processors, or payload contracts during the infrastructure setup unit.
+
+---
+
+### Impact
+
+Future queue units must define business queue names and payload contracts only when their roadmap unit is active, consume `@workspace/queues`, preserve NodeNext-compatible `.js` export specifiers, and avoid creating workers or processors inside the shared queue factory.
+
+---
+
 # 14. Repository Conventions
 
 - Repositories return raw persistence data only
@@ -683,7 +715,7 @@ Not started
 #### Status
 
 ```txt id="0jlwm1"
-Not started
+Foundation complete
 ```
 
 ---
@@ -732,7 +764,6 @@ In progress
 
 ### Remaining Core Units
 
-- queue infrastructure
 - integrations foundation
 
 ---
@@ -796,132 +827,20 @@ Not started
 
 # 19. Session Notes
 
-- Completed `packages — setup — monorepo configuration hardening`.
-- npm workspace configuration verified with `npm install`.
-- Root scripts standardized for `build`, `dev`, `lint`, `test`, `typecheck`, and `format`.
-- Turborepo task resolution verified for `dev` and `build`.
-- Root `build`, `lint`, `test`, and `typecheck` pass.
-- Shared workspace paths registered for `apps/api`, `apps/worker`, `packages/db`, `packages/types`, `packages/validation`, `packages/queues`, `packages/integrations`, `packages/logger`, and `packages/utils`.
-- shadcn UI package exports and workspace imports remain valid.
-- `.env.example` added with required Phase A environment variable names.
-- `.gitignore` hardened for dependencies, build outputs, caches, logs, and OS files.
-- Root README aligned to npm workspace usage.
-- Git status required a one-off `safe.directory` override; the checkout currently has many untracked project files and `README.md` as the only tracked diff visible from this sandbox user.
-- npm audit currently reports 2 dependency vulnerabilities from the existing dependency tree; no dependency changes were made for this unit.
-- Company Search is Phase A implementation priority
-- Phase A is monetization-first sequencing, NOT reduced scope
-- Invoice enforcement remains part of overall MVP
-- Queue infrastructure is foundational
-- Stripe is mandatory Phase A infrastructure
-- Search aggregation must support caching and stale refresh patterns
-- Heavy workflows must remain asynchronous
-- Report generation is queue-driven
-- Webhook infrastructure is first-class infrastructure
-- Modular monolith architecture approved
-- Event-driven internal architecture approved
-- Worker runtime separated from API runtime
-- Phase B systems intentionally deferred to later roadmap units
-- Completed `packages - setup - shared tsconfig standardization`.
-- Shared TypeScript baseline now explicitly enforces `strict`, `noImplicitAny`, `strictNullChecks`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `forceConsistentCasingInFileNames`, and `skipLibCheck`.
-- Added shared Node.js and package-build TypeScript presets under `packages/typescript-config`.
-- Added tsconfig inheritance for `apps/api`, `apps/worker`, and foundation packages without adding application or business logic.
-- Converted placeholder typecheck scripts in API, worker, and foundation packages to `tsc --noEmit`.
-- Preserved the existing Next.js/shadcn web tsconfig and `@workspace/ui` import paths.
-- Verified `npm run typecheck` passes across the workspace.
-- Verified `npm run build` passes; existing placeholder build scripts still emit Turbo output warnings.
-- Completed `packages - setup - shared eslint standardization`.
-- Standardized shared ESLint presets under `packages/eslint-config` with TypeScript-aware linting, explicit `no-explicit-any`, ignored-name handling for intentionally unused identifiers, Turbo environment variable checks, and a direct app-import restriction.
-- Added a shared Node.js ESLint preset and workspace `eslint.config.*` inheritance for `apps/api`, `apps/worker`, `packages/db`, `packages/types`, `packages/validation`, `packages/queues`, `packages/integrations`, `packages/logger`, `packages/utils`, `packages/typescript-config`, and `packages/eslint-config`.
-- Preserved Next.js App Router lint compatibility for `apps/web` using the ESLint CLI, `@next/eslint-plugin-next`, Core Web Vitals rules, and an App Router-compatible `no-html-link-for-pages` override.
-- Replaced placeholder lint scripts with `eslint .` for API, worker, and foundation package workspaces; root `npm run lint` continues to execute through Turborepo.
-- Verified `npm run lint -- --force` reaches all 13 lint workspaces; 12 pass and `web` fails only on existing forbidden-scope file `apps/web/app/layout.tsx` for unused `Geist` import.
-- Left `apps/web/app/layout.tsx` unchanged because `apps/**/app/**` is forbidden by `specs/02-eslint-config.md`; this lint issue is recorded in Current Blockers.
-- Verified `npm run typecheck` passes across the workspace after ESLint standardization.
-- Applied shared Prettier baseline in `.prettierrc` with semicolons enabled, double quotes, trailing commas, 100-character print width, 2-space tabs, LF endings, and the existing Tailwind plugin integration preserved.
-- Updated `.prettierignore` to exclude generated/dependency outputs required by `specs/03-prettier-setup.md`, including `node_modules`, `.next`, `.turbo`, `dist`, `build`, `coverage`, and `package-lock.json`.
-- Standardized root and workspace `format` scripts to `prettier --check .` so validation is non-mutating and cannot rewrite forbidden-scope source files during this unit.
-- Verified Prettier configuration discovery from the repository root with `npx.cmd prettier --find-config-path package.json`, which resolved to `.prettierrc`.
-- Verified `.prettierignore` excludes `package-lock.json` with `npx.cmd prettier --file-info package-lock.json`, which returned ignored.
-- Verified all workspace package manifests expose `format: prettier --check .` through `npm.cmd pkg get scripts --workspaces`.
-- Verified representative workspace format behavior with `npm.cmd run format -w @workspace/types`; the command resolves but reports existing formatting in `packages/types/eslint.config.js`, which is outside this unit's allowed edit scope.
-- Verified changed configuration and package manifest files pass Prettier with `npx.cmd prettier --check --ignore-unknown ...`.
-- `npm.cmd run format` initially resolved correctly but reported existing formatting differences in 48 non-scope files; no forbidden-scope files were formatted during the original scoped Prettier unit.
-- `npm.cmd run typecheck` initially failed because existing package `tsconfig.json` files used `"ignoreDeprecations": "6.0"`, which TypeScript rejected; those blockers were cleared after explicit user approval to resolve validation blockers.
-- `npm.cmd run lint` passes across all 13 workspaces; the previously documented `apps/web/app/layout.tsx` unused Geist lint blocker is no longer present in the current checkout.
-- Completed `packages — setup — shared prettier configuration`.
-- Cleared the Prettier blocker by running `npx.cmd prettier --write .` after explicit user approval to resolve full-repo formatting issues outside the original Prettier unit scope.
-- Removed invalid `"ignoreDeprecations": "6.0"` compiler options from `apps/web/tsconfig.json` and foundation package `tsconfig.json` files because TypeScript rejected the value during validation.
-- Verified `npm.cmd run format` passes across the repository.
-- Verified `npm.cmd run typecheck` passes across the workspace.
-- Verified `npm.cmd run lint` passes across all 13 lint workspaces after repo-wide formatting.
-- Implemented the base `@workspace/types` shared contract structure under `packages/types/src`.
-- Added generic common, identifier, timestamp, pagination, and API response/error contracts only; no business-domain contracts were introduced.
-- Added `@workspace/types` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/types/src/index.ts`.
-- Used type-only barrel exports with explicit `.js` specifiers to satisfy the workspace NodeNext TypeScript resolution rules.
-- Verified `npm.cmd run typecheck -w @workspace/types`, `npm.cmd run lint -w @workspace/types`, and `npm.cmd run format -w @workspace/types` pass.
-- Verified full `npm.cmd run typecheck` passes across the workspace.
-- Verified full `npm.cmd run lint` passes across all 13 lint workspaces.
-- Formatted `specs/04-base-contracts.md` only to clear the shared contracts validation blocker.
-- Formatted `fixes/01-fix-formatter.md` after explicit user approval because it also blocked the root format check.
-- Verified full `npm.cmd run format` passes across the repository.
-- Verified full `npm.cmd run typecheck` passes across the workspace.
-- Verified full `npm.cmd run lint` passes across all 13 lint workspaces.
-- Completed `packages — types — base shared contracts setup`.
-- Advanced current scope to `packages — validation — zod validation infrastructure`.
-- Implemented `@workspace/validation` shared Zod infrastructure under `packages/validation/src`.
-- Added generic validation primitives only: non-empty strings, email, UUID, ISO datetime strings, positive integers, and pagination number bounds.
-- Added framework-independent parsing helpers: `parseWithSchema` and `safeParseWithSchema`.
-- Added a generic `ValidationErrorIssue` contract without duplicating Zod internals.
-- Added `@workspace/validation` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/validation/src/index.ts`.
-- Added Zod as a direct `@workspace/validation` dependency; no unrelated validation libraries were introduced.
-- Verified `npm.cmd run typecheck -w @workspace/validation`, `npm.cmd run lint -w @workspace/validation`, and `npm.cmd run format -w @workspace/validation` pass.
+- Completed `packages — queues — BullMQ queue infrastructure`.
+- Implemented `@workspace/queues` infrastructure under `packages/queues/src` with `connection.ts`, `queue.ts`, `names.ts`, `options.ts`, and `index.ts`.
+- Added centralized `REDIS_URL` lookup and lazy BullMQ Redis connection creation using `ioredis`; no Redis connection is created at module import time.
+- Added generic BullMQ queue factory helpers with no business-domain queue names, payload contracts, processors, workers, routes, services, repositories, or runtime wiring.
+- Added generic queue naming infrastructure with `QUEUE_NAMES` intentionally empty until scoped business queue units are active.
+- Added production-safe generic default job options for attempts, exponential backoff, and completed/failed job cleanup.
+- Added `@workspace/queues` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/queues/src/index.ts`.
+- Added approved queue dependencies `bullmq` and `ioredis` to `@workspace/queues`, with `ioredis` aligned to BullMQ's bundled client version for TypeScript compatibility.
+- Verified `npm.cmd run typecheck -w @workspace/queues`, `npm.cmd run lint -w @workspace/queues`, and `npm.cmd run format -w @workspace/queues` pass.
 - Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
-- Formatted `specs/05-zod-validation-setup.md` after explicit user approval because it blocked the root format check.
-- Completed `packages — validation — zod validation infrastructure`.
-- Advanced current scope to `packages — logger — pino logger infrastructure`.
-- Implemented `@workspace/logger` shared Pino infrastructure under `packages/logger/src`.
-- Added generic `LogContext` fields for request, queue job, module, action, event, user, and organization correlation without adding business-domain identifiers.
-- Added `serializeError(error: unknown)` to safely serialize Error instances and non-Error thrown values without exposing arbitrary unknown object contents.
-- Added `createLogger` with environment-aware default levels, structured JSON output, and conservative redaction paths for common sensitive fields.
-- Added `createChildLogger` for binding generic context to a parent Pino logger.
-- Added `@workspace/logger` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/logger/src/index.ts`.
-- Added Pino as a direct `@workspace/logger` dependency; no other logging, pretty-printing, Sentry, OpenTelemetry, Express, BullMQ, database, validation, integration, or UI dependencies were introduced.
-- Verified `npm.cmd run typecheck -w @workspace/logger`, `npm.cmd run lint -w @workspace/logger`, and `npm.cmd run format -w @workspace/logger` pass.
-- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
-- Formatted `specs/06-pino-logger-setup.md` after explicit user approval because it blocked the root format check.
-- Completed `packages — logger — pino logger infrastructure`.
-- Advanced current scope to `packages — utils — common utilities setup`.
-- Implemented the `@workspace/utils` shared common utilities package under `packages/utils/src`.
-- Added generic string helpers only: `isNonEmptyString`, `normalizeWhitespace`, and `toKebabCase`.
-- Added generic object helpers only: `isRecord`, `omitUndefined`, and `pickDefined`, using shallow immutable object filtering and no `any`.
-- Added generic async helpers only: `sleep` and `withTimeout`, including timer cleanup for timeout races.
-- Added generic framework-independent URL query helper `appendQueryParams`, preserving existing query parameters and omitting `null` and `undefined` values.
-- Added `@workspace/utils` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/utils/src/index.ts`.
-- Kept `@workspace/utils` dependency-free with no imports from apps, database, validation, queues, integrations, logger, or UI packages.
-- Verified `npm.cmd run typecheck -w @workspace/utils`, `npm.cmd run lint -w @workspace/utils`, and `npm.cmd run format -w @workspace/utils` pass.
-- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
-- Formatted `specs/07-common-utils.md` after explicit user approval because it blocked the root format check.
-- Completed `packages — utils — common utilities setup`.
-- Advanced current scope to `packages — db — drizzle setup + postgres connection`.
-- Implemented `@workspace/db` infrastructure under `packages/db/src`.
-- Added PostgreSQL connection helpers with centralized `DATABASE_URL` access in `packages/db/src/connection.ts`.
-- Added Drizzle database factory helpers in `packages/db/src/client.ts` without domain schemas, repositories, migrations, or queries.
-- Added empty schema export foundation in `packages/db/src/schema/index.ts`.
-- Added `@workspace/db` and `@workspace/db/schema` package exports pointing at TypeScript source entrypoints.
-- Added root `drizzle.config.ts` with PostgreSQL dialect, future schema path, migrations output path, and `DATABASE_URL` migration credentials.
-- Added approved database dependencies: `drizzle-orm` and `postgres` to `@workspace/db`; added approved root dev dependency `drizzle-kit`.
-- Verified `npm.cmd run typecheck -w @workspace/db`, `npm.cmd run lint -w @workspace/db`, and `npm.cmd run format -w @workspace/db` pass.
-- Verified `@workspace/db` resolves to `packages/db/src/index.ts` and `@workspace/db/schema` resolves to `packages/db/src/schema/index.ts`.
-- Verified `packages/db` has no imports from apps or unrelated shared packages.
-- Verified full `npm.cmd run typecheck` passes across the workspace.
-- Verified full `npm.cmd run lint` passes across all 13 lint workspaces.
-- Updated `.prettierignore` after explicit user instruction so root-level `/specs` and `/fixes` files are excluded from repository formatting checks.
-- Verified full `npm.cmd run format` passes across the workspace after the Prettier ignore update.
-- Completed `packages — db — drizzle setup + postgres connection`.
-- Advanced current scope to `packages — queues — BullMQ queue infrastructure`.
+- Verified `packages/queues` has no imports from apps, database, validation, integrations, logger, utils, or UI packages.
+- Advanced current scope to `packages — integrations — integration package foundation`.
 
 ---
-
 # 20. Rules For Maintaining This File
 
 - Must be updated after every completed unit
