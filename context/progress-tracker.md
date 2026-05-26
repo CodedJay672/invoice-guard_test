@@ -27,7 +27,7 @@ Update this file after every completed implementation unit.
 
 **Current App:**
 
-- packages
+- api
 
 ---
 
@@ -46,14 +46,14 @@ chore/monorepo-foundation
 **Current Unit:**
 
 ```txt id="v3ht2l"
-packages â€” integrations â€” integration package foundation
+api â€” setup â€” express bootstrap
 ```
 
 ---
 
 # 5. Current Unit Scope Definition
 
-## packages â€” integrations â€” integration package foundation
+## api â€” setup â€” express bootstrap
 
 ### Scope Status
 
@@ -65,26 +65,25 @@ Not started
 
 ### Included
 
-- Shared integrations package review
-- Integration package foundation setup
-- Export structure alignment
-- Package-level typecheck verification
+- Express application foundation
+- API runtime bootstrap review
+- Package export/startup alignment
+- Typecheck verification
 
 ---
 
 ### Excluded
 
-- Business logic
-- Database schema setup
-- Clerk setup
-- Stripe setup
-- Express bootstrap
+- Business-domain logic
+- Database schema changes
+- Clerk integration
+- Stripe integration
 - Frontend implementation
-- Business-domain logging workflows
-- Business-domain integration adapters
 - API routes
 - Service/repository/controller layers
-- Logger infrastructure changes
+- Worker runtime setup
+- Queue processors
+- Business-domain integration adapters
 
 ---
 
@@ -94,8 +93,8 @@ A unit is only complete if all are true:
 
 - [ ] Requirements reviewed
 - [ ] Scope confirmed
-- [ ] Integrations package reviewed
-- [ ] Integration package foundation implemented
+- [ ] API setup reviewed
+- [ ] Express bootstrap implemented
 - [ ] Typecheck passes
 - [ ] Progress tracker updated
 
@@ -118,6 +117,7 @@ List completed units in order.
 8. packages â€” utils â€” common utilities setup
 9. packages â€” db â€” drizzle setup + postgres connection
 10. packages â€” queues â€” BullMQ queue infrastructure
+11. packages â€” integrations â€” integration package foundation
 ```
 
 ---
@@ -129,7 +129,7 @@ Only ONE active unit may exist here.
 ## Current In Progress
 
 ```txt id="gvl2dx"
-packages â€” integrations â€” integration package foundation
+api â€” setup â€” express bootstrap
 ```
 
 ---
@@ -138,9 +138,9 @@ packages â€” integrations â€” integration package foundation
 
 Next 3 implementation units only.
 
-1. `packages â€” integrations â€” integration package foundation`
-2. `api â€” setup â€” express bootstrap`
-3. `api â€” setup â€” async wrapper + global error middleware`
+1. `api â€” setup â€” async wrapper + global error middleware`
+2. `api â€” setup â€” security middleware`
+3. `api — setup — environment validation`
 
 ---
 
@@ -607,6 +607,40 @@ Future queue units must define business queue names and payload contracts only w
 
 ---
 
+## Decision: Integrations Package Export and Contract Strategy
+
+### Decision
+
+The shared integrations package is exported as:
+
+```txt id="integrations-export"
+@workspace/integrations -> ./src/index.ts
+```
+
+The package owns no runtime dependencies during the foundation unit and exposes provider-agnostic contracts for:
+
+```txt id="integrations-contracts"
+HTTP metadata
+integration results
+integration errors
+external service config
+retry options
+```
+
+---
+
+### Reason
+
+Generic integration contracts give future provider adapters a consistent foundation without coupling shared infrastructure to provider SDKs, Express, BullMQ, database access, validation schemas, logging infrastructure, or business-domain workflows.
+
+---
+
+### Impact
+
+Future provider adapter units must consume and extend `@workspace/integrations`, preserve NodeNext-compatible `.js` export specifiers, validate external payloads inside their scoped units, and avoid introducing provider-specific behavior into the generic foundation files.
+
+---
+
 # 14. Repository Conventions
 
 - Repositories return raw persistence data only
@@ -759,12 +793,12 @@ Deferred
 ### Status
 
 ```txt id="wlvm9v"
-In progress
+Foundation complete
 ```
 
 ### Remaining Core Units
 
-- integrations foundation
+- None
 
 ---
 
@@ -773,7 +807,7 @@ In progress
 ### Status
 
 ```txt id="vlq8e7"
-Not started
+In progress
 ```
 
 ### Remaining Core Units
@@ -827,6 +861,15 @@ Not started
 
 # 19. Session Notes
 
+- Completed `packages — integrations — integration package foundation`.
+- Implemented `@workspace/integrations` infrastructure under `packages/integrations/src` with `config.ts`, `errors.ts`, `http.ts`, `result.ts`, `retry.ts`, and `index.ts`.
+- Added provider-agnostic contracts for HTTP methods, request/response metadata, integration success/failure results, generic integration errors, external service configuration, auth configuration, and retry options.
+- Added `@workspace/integrations` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/integrations/src/index.ts`.
+- Added no runtime dependencies and no provider SDKs.
+- Verified `npm.cmd run typecheck -w @workspace/integrations`, `npm.cmd run lint -w @workspace/integrations`, and `npm.cmd run format -w @workspace/integrations` pass.
+- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
+- Verified `packages/integrations` has no imports from apps, database, validation, queues, logger, utils, UI packages, Express, Next.js, BullMQ, Drizzle, Zod, or Pino.
+- Advanced current scope to `api — setup — express bootstrap`.
 - Completed `packages — queues — BullMQ queue infrastructure`.
 - Implemented `@workspace/queues` infrastructure under `packages/queues/src` with `connection.ts`, `queue.ts`, `names.ts`, `options.ts`, and `index.ts`.
 - Added centralized `REDIS_URL` lookup and lazy BullMQ Redis connection creation using `ioredis`; no Redis connection is created at module import time.
