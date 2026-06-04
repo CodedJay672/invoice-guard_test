@@ -1,6 +1,20 @@
 declare module "express" {
+  export type RequestHandler = (
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) => unknown;
+
   export interface Request {
+    clerkUserId?: string;
     ip?: string;
+    query: Record<string, unknown>;
+    params: Record<string, string | undefined>;
+    headers: Record<string, string | string[] | undefined>;
+    socket: {
+      remoteAddress?: string;
+    };
+    get(name: string): string | undefined;
   }
 
   export interface Response {
@@ -14,8 +28,8 @@ declare module "express" {
 
   export interface Express {
     disable(setting: string): void;
-    get(path: string, handler: (request: Request, response: Response) => void): void;
-    use(handler: (request: Request, response: Response, next: NextFunction) => void): void;
+    get(path: string, handler: RequestHandler): void;
+    use(handler: RequestHandler): void;
     use(
       handler: (error: unknown, request: Request, response: Response, next: NextFunction) => void,
     ): void;

@@ -11,7 +11,7 @@
     "build": "echo \"integrations build not configured yet\"",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"integrations tests not configured yet\"",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   }
 }

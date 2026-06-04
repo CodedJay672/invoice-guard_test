@@ -12,11 +12,11 @@ Update this file after every meaningful implementation change. The tracker must 
 
 ## Current Sprint
 
-- Sprint 1 - Company Search Foundation
+- Sprint 2 - Free Preview
 
 ## Current Unit
 
-- A5 - Companies House Integration
+- A8 - London Gazette Integration
 
 ## Current Status
 
@@ -29,6 +29,9 @@ Update this file after every meaningful implementation change. The tracker must 
 - A2 - Database foundation
 - A3 - Shared validation, config, and logging foundation
 - A4 - Provider integration contracts
+- A5 - Companies House integration
+- A6 - Company search API
+- A7 - Anonymous search rate limiting and search logs
 
 ## In Progress
 
@@ -36,10 +39,10 @@ Update this file after every meaningful implementation change. The tracker must 
 
 ## Next Up
 
-1. A5 - Companies House integration
-2. A6 - Company search API
-3. A7 - Anonymous search rate limiting and search logs
-4. A8 - London Gazette integration
+1. A8 - London Gazette integration
+2. A9 - Insolvency and disqualified officers integration
+3. A10 - Free preview API
+4. A11 - Free preview UI
 
 ## Unit Checklist
 
@@ -53,9 +56,9 @@ Update this file after every meaningful implementation change. The tracker must 
 ### Sprint 1 - Company Search Foundation
 
 - [x] A4 - Provider integration contracts
-- [ ] A5 - Companies House integration
-- [ ] A6 - Company search API
-- [ ] A7 - Anonymous search rate limiting and search logs
+- [x] A5 - Companies House integration
+- [x] A6 - Company search API
+- [x] A7 - Anonymous search rate limiting and search logs
 
 ### Sprint 2 - Free Preview
 
@@ -134,8 +137,13 @@ Update this file after every meaningful implementation change. The tracker must 
 ## Last Completed Work
 
 - Completed A4 provider integration contracts.
-- Added `ProviderResult<TData>`, normalized provider failure fields, provider names, mock/live provider mode, and `ProviderAdapter<TInput, TData>`.
-- Reconciled the baseline scaffold and completed Sprint 0 foundation work.
+- Completed A5 Companies House integration.
+- Completed A6 Company search API.
+- Completed A7 anonymous search rate limiting and search logs.
+- Added mock-first and live Companies House clients behind shared provider contracts.
+- Added Companies House config defaults, normalized search/profile/officer-count responses, and filing/charges fetch foundations.
+- Added `GET /companies/search?q=` and `GET /companies/:companyNumber` routes with validated inputs and safe provider errors.
+- Added Redis-backed anonymous search limiting with in-memory local/test fallback and hashed IP search logging.
 
 ## Tests / Checks Run
 
@@ -146,9 +154,26 @@ Update this file after every meaningful implementation change. The tracker must 
 - `node --import tsx apps/worker/src/index.ts` - passed.
 - `npm.cmd run typecheck` after A4 - passed.
 - `npm.cmd run format` after A4 - passed.
+- `npm.cmd run typecheck -w @workspace/integrations` after A5 - passed.
+- `npm.cmd run lint -w @workspace/integrations` after A5 - passed.
+- `npm.cmd run test -w @workspace/integrations` after A5 - passed.
+- `npm.cmd run typecheck -w api` after A6 - passed.
+- `npm.cmd run lint -w api` after A6 - passed.
+- `npm.cmd run test -w api` after A6 - passed.
+- `npm.cmd run typecheck -w api` after A7 - passed.
+- `npm.cmd run lint -w api` after A7 - passed.
+- `npm.cmd run test -w api` after A7 - passed.
+- `npm.cmd run typecheck` after Sprint 1 - passed.
+- `npm.cmd run lint` after Sprint 1 - passed.
+- `npm.cmd run test` after Sprint 1 - passed.
+- `npm.cmd run format` after Sprint 1 - passed.
 
 ## Session Notes
 
 - Use `context/sprint-roadmap.md` as the source of truth for implementation order.
 - Use this tracker to choose the next implementation unit.
-- Next implementation should start with A5 Companies House integration.
+- A5 was implemented mock-first so company search can be verified without live Companies House credentials.
+- A6 introduced injectable API dependencies so route tests can run without a live PostgreSQL instance.
+- A7 uses Redis when `REDIS_URL` is configured and an in-memory limiter only for local/test operation.
+- Sprint 1 is complete; company identity resolution is now available through API routes and remains Companies House number-led.
+- Next implementation should start with A8 London Gazette integration.

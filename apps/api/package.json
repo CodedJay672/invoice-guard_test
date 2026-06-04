@@ -8,12 +8,17 @@
     "dev": "tsx src/index.ts",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"api tests not configured yet\"",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@workspace/config": "*",
+    "@workspace/db": "*",
+    "@workspace/integrations": "*",
     "@workspace/logger": "*",
-    "express": "^5.2.1"
+    "@workspace/validation": "*",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "ioredis": "5.10.1"
   }
 }

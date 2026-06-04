@@ -2,13 +2,18 @@ import { loadAppConfig } from "@workspace/config";
 import { createLogger } from "@workspace/logger";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 
+import { registerCompanyRoutes } from "./companies/routes.js";
+import { createApiDependencies, type ApiDependencies } from "./dependencies.js";
+
 const config = loadAppConfig();
 const logger = createLogger({
   name: "invoiceguard-api",
   environment: config.environment,
 });
 
-export function createApiApp(): Express {
+export function createApiApp(
+  dependencies: ApiDependencies = createApiDependencies(config),
+): Express {
   const app = express();
 
   app.disable("x-powered-by");
@@ -21,6 +26,11 @@ export function createApiApp(): Express {
       environment: config.environment,
       enableFlagSummary: config.enableFlagSummary,
     });
+  });
+
+  registerCompanyRoutes(app, {
+    companyService: dependencies.companyService,
+    anonymousSearchRateLimiter: dependencies.anonymousSearchRateLimiter,
   });
 
   app.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {

@@ -15,6 +15,13 @@ const appConfigSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   POSTMARK_API_KEY: z.string().min(1).optional(),
   ADMIN_ALERT_EMAIL: z.string().email().optional(),
+  COMPANIES_HOUSE_PROVIDER_MODE: z.enum(["mock", "live"]).default("mock"),
+  COMPANIES_HOUSE_BASE_URL: z
+    .string()
+    .url()
+    .default("https://api.company-information.service.gov.uk"),
+  COMPANIES_HOUSE_API_KEY: z.string().min(1).optional(),
+  COMPANIES_HOUSE_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
   ENABLE_FLAG_SUMMARY: z.string().optional(),
 });
 
@@ -31,6 +38,10 @@ export interface AppConfig {
   stripeSecretKey: string | undefined;
   stripeWebhookSecret: string | undefined;
   postmarkApiKey: string | undefined;
+  companiesHouseProviderMode: "mock" | "live";
+  companiesHouseBaseUrl: string;
+  companiesHouseApiKey: string | undefined;
+  companiesHouseTimeoutMs: number;
   enableFlagSummary: boolean;
 }
 
@@ -50,6 +61,10 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     stripeSecretKey: parsed.STRIPE_SECRET_KEY,
     stripeWebhookSecret: parsed.STRIPE_WEBHOOK_SECRET,
     postmarkApiKey: parsed.POSTMARK_API_KEY,
+    companiesHouseProviderMode: parsed.COMPANIES_HOUSE_PROVIDER_MODE,
+    companiesHouseBaseUrl: parsed.COMPANIES_HOUSE_BASE_URL,
+    companiesHouseApiKey: parsed.COMPANIES_HOUSE_API_KEY,
+    companiesHouseTimeoutMs: parsed.COMPANIES_HOUSE_TIMEOUT_MS,
     enableFlagSummary: readBooleanFlag(parsed.ENABLE_FLAG_SUMMARY, false),
   };
 }
