@@ -3,7 +3,25 @@ import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import test from "node:test";
 
-import { MockCompaniesHouseClient } from "@workspace/integrations";
+import {
+  createProviderSuccess,
+  MockCompaniesHouseClient,
+  MockInsolvencyDisqualifiedOfficersClient,
+  MockLondonGazetteClient,
+  type CompaniesHouseClient,
+  type CompaniesHouseCompanyNumberInput,
+  type CompaniesHouseCompanyProfile,
+  type CompaniesHouseSearchInput,
+  type CompaniesHouseSearchResult,
+  type InsolvencyDisqualifiedOfficersClient,
+  type InsolvencyDisqualifiedOfficersFreePreviewFlags,
+  type InsolvencyDisqualifiedOfficersInput,
+  type LondonGazetteClient,
+  type LondonGazetteCompanyInput,
+  type LondonGazetteFreePreviewFlags,
+  type ProviderMode,
+  type ProviderResult,
+} from "@workspace/integrations";
 import express from "express";
 
 import { createApiApp } from "../app.js";
@@ -55,6 +73,144 @@ void test("GET /companies/:companyNumber returns canonical company profile data"
   await close();
 });
 
+void test("GET /companies/:companyNumber/free-preview returns clean-path preview data", async () => {
+  const { baseUrl, close } = await startTestServer();
+
+  const response = await fetch(`${baseUrl}/companies/12345678/free-preview`);
+  const body = (await response.json()) as {
+    data: {
+      preview: {
+        previewPath: string;
+        cleanReassurance: string;
+        adverseBanners: unknown[];
+        courtRecordsPrompt: { label: string };
+        tierCards: unknown[];
+        company: { companiesHouseNumber: string; activeDirectorCount: number };
+      };
+    };
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.preview.company.companiesHouseNumber, "12345678");
+  assert.equal(body.data.preview.previewPath, "clean");
+  assert.equal(body.data.preview.adverseBanners.length, 0);
+  assert.equal(
+    body.data.preview.cleanReassurance,
+    "No insolvency events, director disqualifications, or gazette notices found on the free check.",
+  );
+  assert.equal(body.data.preview.courtRecordsPrompt.label, "COURT RECORDS — NOT YET CHECKED");
+  assert.equal(body.data.preview.tierCards.length, 3);
+
+  await close();
+});
+
+void test("GET /companies/:companyNumber/free-preview returns adverse banners", async () => {
+  const { baseUrl, close } = await startTestServer();
+
+  const response = await fetch(`${baseUrl}/companies/87654321/free-preview`);
+  const body = (await response.json()) as {
+    data: {
+      preview: {
+        previewPath: string;
+        freeSourceFlags: {
+          insolvencyFlag: boolean;
+          gazetteStrikeoffFlag: boolean;
+        };
+        adverseBanners: Array<{ flag: string }>;
+        courtRecordsPrompt: { button: string };
+      };
+    };
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.preview.previewPath, "adverse");
+  assert.equal(body.data.preview.freeSourceFlags.insolvencyFlag, true);
+  assert.equal(body.data.preview.freeSourceFlags.gazetteStrikeoffFlag, true);
+  assert.deepEqual(
+    body.data.preview.adverseBanners.map((banner) => banner.flag),
+    ["insolvency", "gazette_strikeoff"],
+  );
+  assert.equal(body.data.preview.courtRecordsPrompt.button, "Check the Court Records");
+
+  await close();
+});
+
+void test("GET /companies/:companyNumber/free-preview validates company number", async () => {
+  const { baseUrl, close } = await startTestServer();
+
+  const response = await fetch(`${baseUrl}/companies/not-valid-number/free-preview`);
+  const body = (await response.json()) as { error: { code: string } };
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error.code, "invalid_companies_house_number");
+
+  await close();
+});
+
+void test("free preview clean path is only used for active companies", async () => {
+  const searchLogRepository = new InMemorySearchLogRepository();
+  const companyService = new CompanyService({
+    companiesHouseClient: new SingleCompanyCompaniesHouseClient({
+      companiesHouseNumber: "ZZ000001",
+      companyName: "DORMANT EXAMPLE LIMITED",
+      companyStatus: "dissolved",
+      companyType: "ltd",
+      incorporationDate: "2020-01-01",
+      registeredOfficeAddress: {
+        locality: "Leeds",
+        region: "West Yorkshire",
+        country: "England",
+      },
+      sicCodes: ["62020"],
+      activeDirectorCount: 0,
+    }),
+    londonGazetteClient: new MockLondonGazetteClient(),
+    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
+    companyRepository: new InMemoryCompanyRepository(),
+    searchLogRepository,
+  });
+  const app = createApiApp({
+    companyService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const response = await fetch(`${baseUrl}/companies/ZZ000001/free-preview`);
+  const body = (await response.json()) as { data: { preview: { previewPath: string } } };
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.preview.previewPath, "standard");
+
+  await close();
+});
+
+void test("free preview calls only the three approved provider clients", async () => {
+  const companiesHouseClient = new CountingCompaniesHouseClient();
+  const londonGazetteClient = new CountingLondonGazetteClient();
+  const insolvencyDisqualifiedOfficersClient = new CountingInsolvencyDisqualifiedOfficersClient();
+  const companyService = new CompanyService({
+    companiesHouseClient,
+    londonGazetteClient,
+    insolvencyDisqualifiedOfficersClient,
+    companyRepository: new InMemoryCompanyRepository(),
+    searchLogRepository: new InMemorySearchLogRepository(),
+  });
+  const app = createApiApp({
+    companyService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const response = await fetch(`${baseUrl}/companies/12345678/free-preview`);
+
+  assert.equal(response.status, 200);
+  assert.equal(companiesHouseClient.profileCalls, 1);
+  assert.equal(londonGazetteClient.noticeCalls, 1);
+  assert.equal(insolvencyDisqualifiedOfficersClient.checkCalls, 1);
+
+  await close();
+});
+
 void test("GET /companies/search validates query input", async () => {
   const { baseUrl, close } = await startTestServer();
 
@@ -89,6 +245,8 @@ void test("GET /companies/search bypasses anonymous rate limits for trusted auth
   const searchLogRepository = new InMemorySearchLogRepository();
   const companyService = new CompanyService({
     companiesHouseClient: new MockCompaniesHouseClient(),
+    londonGazetteClient: new MockLondonGazetteClient(),
+    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository,
   });
@@ -144,6 +302,8 @@ async function startTestServer(
 ): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   const companyService = new CompanyService({
     companiesHouseClient: new MockCompaniesHouseClient(),
+    londonGazetteClient: new MockLondonGazetteClient(),
+    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository,
   });
@@ -154,6 +314,134 @@ async function startTestServer(
   });
 
   return listen(app);
+}
+
+class SingleCompanyCompaniesHouseClient implements CompaniesHouseClient {
+  readonly mode: ProviderMode = "mock";
+
+  readonly provider = "companies_house" as const;
+
+  constructor(private readonly company: CompaniesHouseCompanyProfile) {}
+
+  searchCompanies(
+    _input: CompaniesHouseSearchInput,
+  ): Promise<ProviderResult<CompaniesHouseSearchResult>> {
+    const { activeDirectorCount: _activeDirectorCount, ...summary } = this.company;
+
+    return Promise.resolve(createProviderSuccess(this.provider, { matches: [summary] }));
+  }
+
+  getCompanyProfile(
+    _input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseCompanyProfile>> {
+    return Promise.resolve(createProviderSuccess(this.provider, this.company));
+  }
+
+  getActiveOfficerCount(): Promise<
+    ProviderResult<{ companiesHouseNumber: string; activeDirectorCount: number }>
+  > {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: this.company.companiesHouseNumber,
+        activeDirectorCount: this.company.activeDirectorCount ?? 0,
+      }),
+    );
+  }
+
+  getFilingHistory(): Promise<
+    ProviderResult<{ companiesHouseNumber: string; filings: unknown[] }>
+  > {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: this.company.companiesHouseNumber,
+        filings: [],
+      }),
+    );
+  }
+
+  getCharges(): Promise<ProviderResult<{ companiesHouseNumber: string; charges: unknown[] }>> {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: this.company.companiesHouseNumber,
+        charges: [],
+      }),
+    );
+  }
+}
+
+class CountingCompaniesHouseClient extends SingleCompanyCompaniesHouseClient {
+  profileCalls = 0;
+
+  constructor() {
+    super({
+      companiesHouseNumber: "12345678",
+      companyName: "ACME SUPPLIES LIMITED",
+      companyStatus: "active",
+      companyType: "ltd",
+      incorporationDate: "2018-04-12",
+      registeredOfficeAddress: {
+        locality: "Manchester",
+        region: "Greater Manchester",
+        country: "England",
+      },
+      sicCodes: ["46900"],
+      activeDirectorCount: 2,
+    });
+  }
+
+  override getCompanyProfile(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseCompanyProfile>> {
+    this.profileCalls += 1;
+
+    return super.getCompanyProfile(input);
+  }
+}
+
+class CountingLondonGazetteClient implements LondonGazetteClient {
+  readonly mode: ProviderMode = "mock";
+
+  readonly provider = "london_gazette" as const;
+
+  noticeCalls = 0;
+
+  checkCompanyNotices(
+    input: LondonGazetteCompanyInput,
+  ): Promise<ProviderResult<LondonGazetteFreePreviewFlags>> {
+    this.noticeCalls += 1;
+
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: input.companyNumber,
+        gazetteStrikeoffFlag: false,
+        gazetteWindingupFlag: false,
+        notices: [],
+      }),
+    );
+  }
+}
+
+class CountingInsolvencyDisqualifiedOfficersClient implements InsolvencyDisqualifiedOfficersClient {
+  readonly mode: ProviderMode = "mock";
+
+  readonly provider = "insolvency_disqualified_officers" as const;
+
+  checkCalls = 0;
+
+  checkCompany(
+    input: InsolvencyDisqualifiedOfficersInput,
+  ): Promise<ProviderResult<InsolvencyDisqualifiedOfficersFreePreviewFlags>> {
+    this.checkCalls += 1;
+
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: input.companyNumber,
+        insolvencyFlag: false,
+        disqualifiedDirectorsFlag: false,
+        disqualifiedOfficers: [],
+      }),
+    );
+  }
 }
 
 async function listen(app: { listen: (port: number) => unknown }): Promise<{

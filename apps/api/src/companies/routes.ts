@@ -18,6 +18,13 @@ export function registerCompanyRoutes(app: Express, dependencies: CompanyRouteDe
   });
 
   app.get(
+    "/companies/:companyNumber/free-preview",
+    (request: Request, response: Response, next: NextFunction) => {
+      void handleFreePreview(request, response, dependencies.companyService).catch(next);
+    },
+  );
+
+  app.get(
     "/companies/:companyNumber",
     (request: Request, response: Response, next: NextFunction) => {
       void handleCompanyProfile(request, response, dependencies.companyService).catch(next);
@@ -69,6 +76,36 @@ async function handleCompanySearch(
 
     response.json({
       data: searchResult,
+    });
+  } catch (error) {
+    handleCompanyError(error, response);
+  }
+}
+
+async function handleFreePreview(
+  request: Request,
+  response: Response,
+  companyService: CompanyService,
+): Promise<void> {
+  const parsedCompanyNumber = companiesHouseNumberSchema.safeParse(request.params["companyNumber"]);
+
+  if (!parsedCompanyNumber.success) {
+    sendApiError(
+      response,
+      400,
+      "invalid_companies_house_number",
+      "Companies House number must be 2-16 letters or numbers.",
+    );
+    return;
+  }
+
+  try {
+    const preview = await companyService.getFreePreview(parsedCompanyNumber.data);
+
+    response.json({
+      data: {
+        preview,
+      },
     });
   } catch (error) {
     handleCompanyError(error, response);

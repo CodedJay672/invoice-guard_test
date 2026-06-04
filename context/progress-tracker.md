@@ -12,11 +12,11 @@ Update this file after every meaningful implementation change. The tracker must 
 
 ## Current Sprint
 
-- Sprint 2 - Free Preview
+- Sprint 3 - Report Products and Payments
 
 ## Current Unit
 
-- A8 - London Gazette Integration
+- A12 - Report products and tier configuration
 
 ## Current Status
 
@@ -32,6 +32,10 @@ Update this file after every meaningful implementation change. The tracker must 
 - A5 - Companies House integration
 - A6 - Company search API
 - A7 - Anonymous search rate limiting and search logs
+- A8 - London Gazette integration
+- A9 - Insolvency and disqualified officers integration
+- A10 - Free preview API
+- A11 - Free preview UI
 
 ## In Progress
 
@@ -39,10 +43,10 @@ Update this file after every meaningful implementation change. The tracker must 
 
 ## Next Up
 
-1. A8 - London Gazette integration
-2. A9 - Insolvency and disqualified officers integration
-3. A10 - Free preview API
-4. A11 - Free preview UI
+1. A12 - Report products and tier configuration
+2. A13 - Stripe one-off checkout
+3. A14 - Stripe webhook and idempotency
+4. A15 - Purchased report creation and pending lifecycle
 
 ## Unit Checklist
 
@@ -62,10 +66,10 @@ Update this file after every meaningful implementation change. The tracker must 
 
 ### Sprint 2 - Free Preview
 
-- [ ] A8 - London Gazette integration
-- [ ] A9 - Insolvency and disqualified officers integration
-- [ ] A10 - Free preview API
-- [ ] A11 - Free preview UI
+- [x] A8 - London Gazette integration
+- [x] A9 - Insolvency and disqualified officers integration
+- [x] A10 - Free preview API
+- [x] A11 - Free preview UI
 
 ### Sprint 3 - Report Products and Payments
 
@@ -136,10 +140,21 @@ Update this file after every meaningful implementation change. The tracker must 
 
 ## Last Completed Work
 
+- Completed A11 free preview UI.
+- Completed A10 free preview API.
+- Completed A8 London Gazette integration.
+- Completed A9 insolvency and disqualified officers integration.
+- Replaced the starter web page with company search, selectable results, clean/adverse free preview rendering, Court Records prompt, curiosity cards, and report tier cards.
+- Added Next.js same-origin proxy routes for company search and free preview API access.
+- Added InvoiceGuard brand colour custom properties to the shared UI globals.
+- Added `GET /companies/:companyNumber/free-preview` with Companies House, insolvency/disqualified officers, and London Gazette provider checks only.
+- Added free preview payload assembly for clean, adverse, and standard paths with Court Records prompt and tier cards.
 - Completed A4 provider integration contracts.
 - Completed A5 Companies House integration.
 - Completed A6 Company search API.
 - Completed A7 anonymous search rate limiting and search logs.
+- Added mock-first and live-shaped London Gazette clients with normalized strike-off and winding-up flags.
+- Added mock-first and live-shaped insolvency/disqualified officers clients with normalized insolvency and director disqualification flags.
 - Added mock-first and live Companies House clients behind shared provider contracts.
 - Added Companies House config defaults, normalized search/profile/officer-count responses, and filing/charges fetch foundations.
 - Added `GET /companies/search?q=` and `GET /companies/:companyNumber` routes with validated inputs and safe provider errors.
@@ -167,6 +182,21 @@ Update this file after every meaningful implementation change. The tracker must 
 - `npm.cmd run lint` after Sprint 1 - passed.
 - `npm.cmd run test` after Sprint 1 - passed.
 - `npm.cmd run format` after Sprint 1 - passed.
+- `npm.cmd run typecheck -w @workspace/integrations` after A8/A9 - passed.
+- `npm.cmd run test -w @workspace/integrations` after A8/A9 - passed.
+- `npm.cmd run typecheck -w api` after A10 - passed.
+- `npm.cmd run test -w api` after A10 - passed.
+- `npm.cmd run typecheck -w web` after A11 - passed.
+- `npm.cmd run lint -w web` after A11 - passed.
+- `npm.cmd run typecheck` after Sprint 2 - passed.
+- `npm.cmd run lint` after Sprint 2 - passed.
+- `npm.cmd run test` after Sprint 2 - passed.
+- `npm.cmd run format` after Sprint 2 - passed.
+- Local smoke: `http://localhost:4000/health` returned ok.
+- Local smoke: `http://localhost:3000` returned 200 and contained `InvoiceGuard`.
+- Local smoke: `http://localhost:3000/api/companies/search?q=acme` returned ACME search results.
+- Local smoke: `http://localhost:3000/api/companies/12345678/free-preview` returned clean-path preview data.
+- Local smoke: `http://localhost:3000/api/companies/87654321/free-preview` returned adverse-path preview data.
 
 ## Session Notes
 
@@ -176,4 +206,7 @@ Update this file after every meaningful implementation change. The tracker must 
 - A6 introduced injectable API dependencies so route tests can run without a live PostgreSQL instance.
 - A7 uses Redis when `REDIS_URL` is configured and an in-memory limiter only for local/test operation.
 - Sprint 1 is complete; company identity resolution is now available through API routes and remains Companies House number-led.
-- Next implementation should start with A8 London Gazette integration.
+- Sprint 2 provider integrations are mock-first and expose deterministic clean/adverse fixtures for free preview verification.
+- Free preview API tests prove the route calls only the three approved provider clients and does not include Registry Trust.
+- Browser plugin verification was attempted, but no in-app browser backend was available in this session.
+- Sprint 2 is complete; next implementation should start with A12 report products and tier configuration.

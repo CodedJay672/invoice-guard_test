@@ -22,6 +22,18 @@ const appConfigSchema = z.object({
     .default("https://api.company-information.service.gov.uk"),
   COMPANIES_HOUSE_API_KEY: z.string().min(1).optional(),
   COMPANIES_HOUSE_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
+  LONDON_GAZETTE_PROVIDER_MODE: z.enum(["mock", "live"]).default("mock"),
+  LONDON_GAZETTE_BASE_URL: z
+    .string()
+    .url()
+    .default("https://www.thegazette.co.uk/company-notices/data.json"),
+  LONDON_GAZETTE_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
+  INSOLVENCY_DISQUALIFIED_OFFICERS_PROVIDER_MODE: z.enum(["mock", "live"]).default("mock"),
+  INSOLVENCY_DISQUALIFIED_OFFICERS_BASE_URL: z
+    .string()
+    .url()
+    .default("https://api.company-information.service.gov.uk/free-preview-adverse-checks"),
+  INSOLVENCY_DISQUALIFIED_OFFICERS_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
   ENABLE_FLAG_SUMMARY: z.string().optional(),
 });
 
@@ -42,6 +54,12 @@ export interface AppConfig {
   companiesHouseBaseUrl: string;
   companiesHouseApiKey: string | undefined;
   companiesHouseTimeoutMs: number;
+  londonGazetteProviderMode: "mock" | "live";
+  londonGazetteBaseUrl: string;
+  londonGazetteTimeoutMs: number;
+  insolvencyDisqualifiedOfficersProviderMode: "mock" | "live";
+  insolvencyDisqualifiedOfficersBaseUrl: string;
+  insolvencyDisqualifiedOfficersTimeoutMs: number;
   enableFlagSummary: boolean;
 }
 
@@ -65,6 +83,13 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     companiesHouseBaseUrl: parsed.COMPANIES_HOUSE_BASE_URL,
     companiesHouseApiKey: parsed.COMPANIES_HOUSE_API_KEY,
     companiesHouseTimeoutMs: parsed.COMPANIES_HOUSE_TIMEOUT_MS,
+    londonGazetteProviderMode: parsed.LONDON_GAZETTE_PROVIDER_MODE,
+    londonGazetteBaseUrl: parsed.LONDON_GAZETTE_BASE_URL,
+    londonGazetteTimeoutMs: parsed.LONDON_GAZETTE_TIMEOUT_MS,
+    insolvencyDisqualifiedOfficersProviderMode:
+      parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_PROVIDER_MODE,
+    insolvencyDisqualifiedOfficersBaseUrl: parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_BASE_URL,
+    insolvencyDisqualifiedOfficersTimeoutMs: parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_TIMEOUT_MS,
     enableFlagSummary: readBooleanFlag(parsed.ENABLE_FLAG_SUMMARY, false),
   };
 }
