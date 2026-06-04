@@ -1,901 +1,154 @@
-﻿# Progress Tracker
+# InvoiceGuard Progress Tracker
 
-This file is the single source of truth for InvoiceGuard implementation state.
+Update this file after every meaningful implementation change. The tracker must reflect actual implementation state, not planned or assumed progress.
 
-It must ALWAYS reflect:
+## Current Phase
 
-- actual implementation state
-- current execution scope
-- architecture decisions
-- roadmap alignment
+- Phase A - Company Search and Paid Reports
 
-Never track speculative or assumed progress.
+## Current Goal
 
-Update this file after every completed implementation unit.
+- Build Phase A paid MVP incrementally from the verified foundation.
 
----
+## Current Sprint
 
-# 1. Current Phase
+- Sprint 1 - Company Search Foundation
 
-**Current Phase:**
+## Current Unit
 
-- Phase 1 â€” Monorepo Infrastructure Hardening
+- A5 - Companies House Integration
 
----
+## Current Status
 
-# 2. Current App in Focus
+- Not Started
 
-**Current App:**
+## Completed Units
 
-- api
+- A0 - Product confirmation and implementation baseline
+- A1 - Monorepo and environment foundation
+- A2 - Database foundation
+- A3 - Shared validation, config, and logging foundation
+- A4 - Provider integration contracts
 
----
+## In Progress
 
-# 3. Current Git Branch
+- None currently.
 
-**Current Branch:**
+## Next Up
 
-```txt id="q7m1wp"
-chore/monorepo-foundation
-```
+1. A5 - Companies House integration
+2. A6 - Company search API
+3. A7 - Anonymous search rate limiting and search logs
+4. A8 - London Gazette integration
 
----
+## Unit Checklist
 
-# 4. Current Unit of Work
+### Sprint 0 - Foundation and Baseline
 
-**Current Unit:**
+- [x] A0 - Product confirmation and implementation baseline
+- [x] A1 - Monorepo and environment foundation
+- [x] A2 - Database foundation
+- [x] A3 - Shared validation, config, and logging foundation
 
-```txt id="v3ht2l"
-api â€” setup â€” express bootstrap
-```
+### Sprint 1 - Company Search Foundation
 
----
+- [x] A4 - Provider integration contracts
+- [ ] A5 - Companies House integration
+- [ ] A6 - Company search API
+- [ ] A7 - Anonymous search rate limiting and search logs
 
-# 5. Current Unit Scope Definition
+### Sprint 2 - Free Preview
 
-## api â€” setup â€” express bootstrap
+- [ ] A8 - London Gazette integration
+- [ ] A9 - Insolvency and disqualified officers integration
+- [ ] A10 - Free preview API
+- [ ] A11 - Free preview UI
 
-### Scope Status
+### Sprint 3 - Report Products and Payments
 
-```txt id="9rf7mw"
-Not started
-```
+- [ ] A12 - Report products and tier configuration
+- [ ] A13 - Stripe one-off checkout
+- [ ] A14 - Stripe webhook and idempotency
+- [ ] A15 - Purchased report creation and pending lifecycle
 
----
+### Sprint 4 - Paid Report Generation
 
-### Included
+- [ ] A16 - Paid report generation queue
+- [ ] A17 - Registry Trust paid-only integration boundary
+- [ ] A18 - Paid report provider orchestration
+- [ ] A19 - Report data snapshot storage
 
-- Express application foundation
-- API runtime bootstrap review
-- Package export/startup alignment
-- Typecheck verification
+### Sprint 5 - Report Delivery and Guest Access
 
----
+- [ ] A20 - Report delivery page
+- [ ] A21 - Guest report secure access links
+- [ ] A22 - Email delivery foundation
 
-### Excluded
+### Sprint 6 - PDF, Compliance, and Templates
 
-- Business-domain logic
-- Database schema changes
-- Clerk integration
-- Stripe integration
-- Frontend implementation
-- API routes
-- Service/repository/controller layers
-- Worker runtime setup
-- Queue processors
-- Business-domain integration adapters
+- [ ] A23 - Premium PDF generation
+- [ ] A24 - Mandatory disclaimer and report issue link
+- [ ] A25 - Master Copy Template engine behind feature flag
+- [ ] A26 - Fair Payment Code scraper for Premium reports
 
----
+### Sprint 7 - Admin and Operations
 
-### Completion Checklist
+- [ ] A27 - Admin dashboard foundation
+- [ ] A28 - Admin refund tool
+- [ ] A29 - Provider failure and admin alerting
+- [ ] A30 - Phase A analytics and conversion tracking
 
-A unit is only complete if all are true:
+### Sprint 8 - Maintenance, QA, and Launch Readiness
 
-- [ ] Requirements reviewed
-- [ ] Scope confirmed
-- [ ] API setup reviewed
-- [ ] Express bootstrap implemented
-- [ ] Typecheck passes
-- [ ] Progress tracker updated
+- [ ] A31 - Search log IP anonymisation job
+- [ ] A32 - Guest report expiry job
+- [ ] A33 - Stuck report detection job
+- [ ] A34 - QA, UAT, and production readiness
 
----
+## Open Questions
 
-# 6. Completed Units
+- Mandatory legal disclaimer text is not yet supplied. Production launch remains blocked until Lucky provides approved wording.
+- ICO registration is not yet confirmed. Production launch remains blocked until Lucky confirms registration.
 
-List completed units in order.
+## Architecture Decisions
 
-## Completed
-
-```txt id="lwmjlwm"
-1. packages â€” setup â€” monorepo configuration hardening
-2. packages â€” setup â€” shared tsconfig standardization
-3. packages â€” setup â€” shared eslint standardization
-4. packages â€” setup â€” shared prettier configuration
-5. packages â€” types â€” base shared contracts setup
-6. packages â€” validation â€” zod validation infrastructure
-7. packages â€” logger â€” pino logger infrastructure
-8. packages â€” utils â€” common utilities setup
-9. packages â€” db â€” drizzle setup + postgres connection
-10. packages â€” queues â€” BullMQ queue infrastructure
-11. packages â€” integrations â€” integration package foundation
-```
-
----
-
-# 7. In Progress
-
-Only ONE active unit may exist here.
-
-## Current In Progress
-
-```txt id="gvl2dx"
-api â€” setup â€” express bootstrap
-```
-
----
-
-# 8. Next Units (Queue)
-
-Next 3 implementation units only.
-
-1. `api â€” setup â€” async wrapper + global error middleware`
-2. `api â€” setup â€” security middleware`
-3. `api — setup — environment validation`
-
----
-
-# 9. Blockers
+- Phase A is company search and paid reports only.
+- Invoice chasing is Phase F and must not be implemented in Phase A.
+- Phase B-E are gated until Phase A reaches at least 30 real paid transactions.
+- Companies House number is the canonical company identity.
+- Registry Trust is never called before Stripe payment confirmation.
+- Stripe webhooks create paid reports; frontend redirects do not.
+- PostgreSQL is the only approved core database.
+- Drizzle ORM is the selected typed ORM for this codebase.
+- BullMQ handles background jobs.
+- Postmark is the Phase A transactional email provider.
+- Provider development is mock-first; live adapters are added behind the same contracts when credentials are ready.
+- `ENABLE_FLAG_SUMMARY` defaults to false in all environments.
+- Mandatory report disclaimer appears on every paid report and PDF from day one once approved wording is supplied.
+- Admin access is allowlisted by `ADMIN_EMAIL`.
 
 ## Current Blockers
 
-```txt id="3t5t7f"
-None
-```
+- None for the current implementation unit.
 
----
+## Last Completed Work
 
-# 10. Open Questions
+- Completed A4 provider integration contracts.
+- Added `ProviderResult<TData>`, normalized provider failure fields, provider names, mock/live provider mode, and `ProviderAdapter<TInput, TData>`.
+- Reconciled the baseline scaffold and completed Sprint 0 foundation work.
 
-Questions requiring architectural clarification before implementation.
+## Tests / Checks Run
 
-## Current Open Questions
+- `npm.cmd run typecheck` - passed.
+- `npm.cmd run lint` - passed.
+- `$env:DATABASE_URL='postgres://user:pass@localhost:5432/invoiceguard'; npm.cmd run pg:generate` - generated `packages/db/drizzle/0000_loving_stephen_strange.sql`.
+- `node --import tsx -e "const mod = await import('./apps/api/src/app.ts'); mod.createApiApp(); console.log('api app created')"` - passed.
+- `node --import tsx apps/worker/src/index.ts` - passed.
+- `npm.cmd run typecheck` after A4 - passed.
+- `npm.cmd run format` after A4 - passed.
 
-```txt id="l0wwti"
-Should report purchases be organization-scoped or user-scoped?
-```
+## Session Notes
 
----
-
-# 11. System Invariants
-
-These rules must NEVER be violated.
-
-- Controllers never access database directly
-- Services contain business logic only
-- Repositories own persistence logic only
-- Validation executes before controller logic
-- Shared validation lives in `packages/validation`
-- Shared types live in `packages/types`
-- Shared queues live in `packages/queues`
-- Heavy async workflows must use BullMQ
-- Webhooks must verify signatures
-- Stripe is authoritative for payment verification
-- Queue jobs must be idempotent
-- Frontend apps consume shared packages only
-- Only ONE implementation unit may be active at a time
-- Phase B systems must not be implemented during active Phase A scope
-
----
-
-# 12. Phase A Architecture Snapshot
-
-## Company Search Flow
-
-```txt id="1x76pf"
-User Search
-      â†“
-Company Resolution
-      â†“
-Cache Lookup
-      â†“
-External Intelligence Aggregation
-      â†“
-Teaser Report Generation
-      â†“
-Stripe Checkout
-      â†“
-Webhook Verification
-      â†“
-Report Entitlement
-      â†“
-PDF Generation
-      â†“
-Email Delivery
-```
-
----
-
-## Search Data Sources
-
-Current planned integrations:
-
-- Companies House API
-- Registry Trust API
-- Insolvency Service API
-- London Gazette API
-- Fair Payment Code Register
-
----
-
-## Report Tiers
-
-### Basic
-
-- limited intelligence visibility
-
-### Standard
-
-- expanded insights
-
-### Premium
-
-- full report
-- PDF export
-- email delivery
-
----
-
-## Payment Strategy
-
-### Stripe Checkout
-
-- server-generated checkout sessions
-- webhook-based verification
-- entitlement-driven access control
-
----
-
-## Queue Strategy
-
-Heavy workflows handled asynchronously:
-
-- report generation
-- PDF rendering
-- email delivery
-- webhook processing
-- cache refresh jobs
-
----
-
-# 13. Architecture Decisions (Log)
-
-## Decision: Architecture Style
-
-### Decision
-
-InvoiceGuard will use:
-
-```txt id="e0o6po"
-Modular Monolith + Event-Driven Internals
-```
-
----
-
-### Reason
-
-Supports:
-
-- maintainability
-- queue-driven workflows
-- scalable async processing
-- implementation simplicity
-
-without premature microservices complexity.
-
----
-
-### Impact
-
-All future systems must:
-
-- preserve module isolation
-- preserve queue orchestration patterns
-- preserve centralized persistence architecture
-
----
-
-## Decision: Queue Infrastructure
-
-### Decision
-
-Async workflows will use:
-
-```txt id="mjlwm5"
-BullMQ + Redis
-```
-
----
-
-### Reason
-
-Supports:
-
-- retries
-- delayed jobs
-- workflow orchestration
-- queue monitoring
-- event-driven processing
-
----
-
-### Impact
-
-Heavy workflows must NEVER execute inline inside controllers.
-
----
-
-## Decision: Authentication Provider
-
-### Decision
-
-Authentication handled using:
-
-```txt id="7f91i6"
-Clerk
-```
-
----
-
-### Reason
-
-Reduces:
-
-- auth complexity
-- credential management burden
-- OAuth implementation overhead
-
-while improving security and implementation speed.
-
----
-
-### Impact
-
-Backend auth middleware must validate Clerk sessions consistently.
-
----
-
-## Decision: Payment Provider
-
-### Decision
-
-Payments handled using:
-
-```txt id="4lzk7u"
-Stripe
-```
-
----
-
-### Reason
-
-Supports:
-
-- checkout sessions
-- webhooks
-- entitlement workflows
-- subscription expansion later
-
----
-
-### Impact
-
-Stripe webhook infrastructure becomes mandatory.
-
----
-
-## Decision: TypeScript Configuration Inheritance
-
-### Decision
-
-InvoiceGuard workspaces inherit shared TypeScript baselines from:
-
-```txt id="tsconfig-inheritance"
-@workspace/typescript-config
-```
-
----
-
-### Reason
-
-Centralized TypeScript presets keep strict compiler behavior consistent across apps and packages while preserving Next.js-specific and Node.js-specific runtime settings.
-
----
-
-### Impact
-
-All future app and package workspaces must extend the shared TypeScript presets unless a roadmap unit explicitly approves a different configuration.
-
----
-
-## Decision: ESLint Configuration Inheritance
-
-### Decision
-
-InvoiceGuard workspaces inherit shared ESLint baselines from:
-
-```txt id="eslint-inheritance"
-@workspace/eslint-config
-```
-
-The shared package exposes separate presets for:
-
-```txt id="eslint-presets"
-base
-node
-next-js
-react-internal
-```
-
----
-
-### Reason
-
-Centralized ESLint presets keep TypeScript-aware linting, unused variable handling, no-explicit-any enforcement, Turbo environment checks, React rules, Next.js rules, and Node.js globals consistent across apps and packages.
-
----
-
-### Impact
-
-All future app and package workspaces must use the shared ESLint package unless a roadmap unit explicitly approves a different linting strategy. Next.js linting must continue to run through the ESLint CLI because Next.js 16 removed `next lint`.
-
----
-
-## Decision: Prettier Configuration Strategy
-
-### Decision
-
-InvoiceGuard uses a root `.prettierrc` as the shared Prettier configuration source for all workspaces.
-
-Workspace `format` scripts use:
-
-```txt id="prettier-check-script"
-prettier --check .
-```
-
----
-
-### Reason
-
-A root Prettier config keeps formatting rules consistent across TypeScript, TSX, JSON, Markdown, CSS, and configuration files while check-only scripts avoid mutating forbidden-scope source files during infrastructure verification units.
-
----
-
-### Impact
-
-Future workspace packages should inherit root Prettier behavior and expose a non-mutating `format` check unless a later roadmap unit explicitly approves a separate write-format workflow.
-
----
-
-## Decision: Validation Package Export and Dependency Strategy
-
-### Decision
-
-The shared validation package is exported as:
-
-```txt id="validation-export"
-@workspace/validation -> ./src/index.ts
-```
-
-The package owns a direct dependency on:
-
-```txt id="validation-dependency"
-zod
-```
-
----
-
-### Reason
-
-Validation schemas and parsing helpers need a single reusable source of truth that can be consumed by apps and shared packages without coupling to Express, Next.js, databases, queues, or integrations.
-
----
-
-### Impact
-
-Future validation schemas must be added through `packages/validation` when their roadmap unit is active, use Zod, and preserve NodeNext-compatible `.js` export specifiers in source barrels.
-
----
-
-## Decision: Logger Package Export and Dependency Strategy
-
-### Decision
-
-The shared logger package is exported as:
-
-```txt id="logger-export"
-@workspace/logger -> ./src/index.ts
-```
-
-The package owns a direct dependency on:
-
-```txt id="logger-dependency"
-pino
-```
-
----
-
-### Reason
-
-Pino provides structured JSON logging for API, worker, and shared package runtimes through one reusable logger package without coupling logging infrastructure to Express, BullMQ, databases, or business-domain modules.
-
----
-
-### Impact
-
-Future runtime logging must consume `@workspace/logger`, preserve generic logger context as the base contract, avoid logging sensitive data, and keep request, queue, webhook, and business-event wiring inside their later scoped roadmap units.
-
----
-
-## Decision: Database Package Export and Dependency Strategy
-
-### Decision
-
-The shared database package is exported as:
-
-```txt id="db-export"
-@workspace/db -> ./src/index.ts
-@workspace/db/schema -> ./src/schema/index.ts
-```
-
-The package owns direct dependencies on:
-
-```txt id="db-dependencies"
-drizzle-orm
-postgres
-```
-
-Drizzle migrations are configured from the repository root through:
-
-```txt id="drizzle-config"
-drizzle.config.ts
-```
-
----
-
-### Reason
-
-Centralized database infrastructure gives API, worker, and future repository layers one PostgreSQL and Drizzle connection foundation without introducing business-domain schemas during infrastructure setup.
-
----
-
-### Impact
-
-Future database schemas must be introduced only by scoped roadmap units through `packages/db/src/schema/index.ts` exports. Repositories must consume `@workspace/db` rather than creating independent database clients.
-
----
-
-## Decision: Queue Package Export and Dependency Strategy
-
-### Decision
-
-The shared queue package is exported as:
-
-```txt id="queues-export"
-@workspace/queues -> ./src/index.ts
-```
-
-The package owns direct dependencies on:
-
-```txt id="queues-dependencies"
-bullmq
-ioredis
-```
-
-Generic queue creation uses BullMQ `Queue` instances with centralized Redis connection creation and production-safe default job options.
-
----
-
-### Reason
-
-Centralized queue infrastructure gives API and worker runtimes one reusable BullMQ foundation without introducing business-domain queues, workers, processors, or payload contracts during the infrastructure setup unit.
-
----
-
-### Impact
-
-Future queue units must define business queue names and payload contracts only when their roadmap unit is active, consume `@workspace/queues`, preserve NodeNext-compatible `.js` export specifiers, and avoid creating workers or processors inside the shared queue factory.
-
----
-
-## Decision: Integrations Package Export and Contract Strategy
-
-### Decision
-
-The shared integrations package is exported as:
-
-```txt id="integrations-export"
-@workspace/integrations -> ./src/index.ts
-```
-
-The package owns no runtime dependencies during the foundation unit and exposes provider-agnostic contracts for:
-
-```txt id="integrations-contracts"
-HTTP metadata
-integration results
-integration errors
-external service config
-retry options
-```
-
----
-
-### Reason
-
-Generic integration contracts give future provider adapters a consistent foundation without coupling shared infrastructure to provider SDKs, Express, BullMQ, database access, validation schemas, logging infrastructure, or business-domain workflows.
-
----
-
-### Impact
-
-Future provider adapter units must consume and extend `@workspace/integrations`, preserve NodeNext-compatible `.js` export specifiers, validate external payloads inside their scoped units, and avoid introducing provider-specific behavior into the generic foundation files.
-
----
-
-# 14. Repository Conventions
-
-- Repositories return raw persistence data only
-- Repositories never contain business logic
-- Repositories never throw HTTP errors
-- Services orchestrate repositories
-- Controllers map HTTP requests to services
-- Validation must happen before controller execution
-- Queue dispatching belongs in services/workers only
-
----
-
-# 15. Environment Variables In Use
-
-## Active Environment Variables
-
-```txt id="krmj4z"
-DATABASE_URL
-REDIS_URL
-CLERK_SECRET_KEY
-CLERK_PUBLISHABLE_KEY
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
-POSTMARK_API_KEY
-APP_URL
-NODE_ENV
-```
-
----
-
-# 16. Deferred Systems
-
-These systems are intentionally deferred until active roadmap scope requires them.
-
-## Deferred Until Phase B
-
-- Xero integration
-- QuickBooks integration
-- OCR processing
-- invoice ingestion
-- demand letters
-- dispute workflows
-- response portal
-- Twilio SMS workflows
-- payment confirmation workflows
-
----
-
-## Deferred Beyond MVP
-
-- AI-generated legal letters
-- predictive payment scoring
-- ML risk analysis
-- mobile applications
-- multi-region deployments
-- multi-language support
-
----
-
-# 17. Test Coverage Tracking
-
-## Phase A Systems
-
-### Company Search
-
-#### Status
-
-```txt id="5e4x1d"
-Not started
-```
-
----
-
-### Stripe Integration
-
-#### Status
-
-```txt id="mwlvm0"
-Not started
-```
-
----
-
-### Report Generation
-
-#### Status
-
-```txt id="q79jlwm"
-Not started
-```
-
----
-
-### Email Delivery
-
-#### Status
-
-```txt id="7gjlwm"
-Not started
-```
-
----
-
-### Queue Infrastructure
-
-#### Status
-
-```txt id="0jlwm1"
-Foundation complete
-```
-
----
-
-## Phase B Systems
-
-### Invoice Ingestion
-
-#### Status
-
-```txt id="jjlwm9"
-Deferred
-```
-
----
-
-### Demand Letters
-
-#### Status
-
-```txt id="ljlwm2"
-Deferred
-```
-
----
-
-### OCR Processing
-
-#### Status
-
-```txt id="fjlwm8"
-Deferred
-```
-
----
-
-# 18. App Progress Breakdown
-
-## Packages
-
-### Status
-
-```txt id="wlvm9v"
-Foundation complete
-```
-
-### Remaining Core Units
-
-- None
-
----
-
-## API
-
-### Status
-
-```txt id="vlq8e7"
-In progress
-```
-
-### Remaining Core Units
-
-- express bootstrap
-- security middleware
-- Clerk integration
-- Stripe integration
-- company search modules
-- report infrastructure
-- webhook infrastructure
-
----
-
-## Worker
-
-### Status
-
-```txt id="yjlwm4"
-Not started
-```
-
-### Remaining Core Units
-
-- BullMQ setup
-- queue processors
-- report workers
-- PDF generation workers
-- email delivery workers
-
----
-
-## Web Frontend
-
-### Status
-
-```txt id="2jlwm7"
-Not started
-```
-
-### Remaining Core Units
-
-- application shell
-- public landing pages
-- company search UI
-- report pages
-- Stripe checkout flow
-- dashboard foundation
-
----
-
-# 19. Session Notes
-
-- Completed `packages — integrations — integration package foundation`.
-- Implemented `@workspace/integrations` infrastructure under `packages/integrations/src` with `config.ts`, `errors.ts`, `http.ts`, `result.ts`, `retry.ts`, and `index.ts`.
-- Added provider-agnostic contracts for HTTP methods, request/response metadata, integration success/failure results, generic integration errors, external service configuration, auth configuration, and retry options.
-- Added `@workspace/integrations` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/integrations/src/index.ts`.
-- Added no runtime dependencies and no provider SDKs.
-- Verified `npm.cmd run typecheck -w @workspace/integrations`, `npm.cmd run lint -w @workspace/integrations`, and `npm.cmd run format -w @workspace/integrations` pass.
-- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
-- Verified `packages/integrations` has no imports from apps, database, validation, queues, logger, utils, UI packages, Express, Next.js, BullMQ, Drizzle, Zod, or Pino.
-- Advanced current scope to `api — setup — express bootstrap`.
-- Completed `packages — queues — BullMQ queue infrastructure`.
-- Implemented `@workspace/queues` infrastructure under `packages/queues/src` with `connection.ts`, `queue.ts`, `names.ts`, `options.ts`, and `index.ts`.
-- Added centralized `REDIS_URL` lookup and lazy BullMQ Redis connection creation using `ioredis`; no Redis connection is created at module import time.
-- Added generic BullMQ queue factory helpers with no business-domain queue names, payload contracts, processors, workers, routes, services, repositories, or runtime wiring.
-- Added generic queue naming infrastructure with `QUEUE_NAMES` intentionally empty until scoped business queue units are active.
-- Added production-safe generic default job options for attempts, exponential backoff, and completed/failed job cleanup.
-- Added `@workspace/queues` package exports pointing at `./src/index.ts` and verified Node export resolution resolves to `packages/queues/src/index.ts`.
-- Added approved queue dependencies `bullmq` and `ioredis` to `@workspace/queues`, with `ioredis` aligned to BullMQ's bundled client version for TypeScript compatibility.
-- Verified `npm.cmd run typecheck -w @workspace/queues`, `npm.cmd run lint -w @workspace/queues`, and `npm.cmd run format -w @workspace/queues` pass.
-- Verified full `npm.cmd run typecheck`, `npm.cmd run lint`, and `npm.cmd run format` pass across the workspace.
-- Verified `packages/queues` has no imports from apps, database, validation, integrations, logger, utils, or UI packages.
-- Advanced current scope to `packages — integrations — integration package foundation`.
-
----
-# 20. Rules For Maintaining This File
-
-- Must be updated after every completed unit
-- Must reflect REAL implementation state
-- Only one active unit at a time
-- Do not leave stale entries
-- Do not carry outdated queue items
-- Keep architecture snapshots synchronized with implementation
-- Keep deferred systems synchronized with roadmap sequencing
-
----
-
-# 21. Final Definition
-
-A structured execution log tracking InvoiceGuard implementation state, roadmap sequencing, architecture decisions, queue infrastructure evolution, system invariants, testing coverage, and phased execution progress for disciplined AI-assisted production-grade system development.
+- Use `context/sprint-roadmap.md` as the source of truth for implementation order.
+- Use this tracker to choose the next implementation unit.
+- Next implementation should start with A5 Companies House integration.

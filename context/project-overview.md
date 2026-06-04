@@ -1,663 +1,195 @@
-# Product Overview — InvoiceGuard MVP Context
+# InvoiceGuard Project Overview
 
-## 1. System Summary
+## Product Summary
 
-InvoiceGuard is a UK-focused SaaS platform designed to help SMEs, freelancers, agencies, consultants, and creative professionals recover overdue B2B invoice payments while also providing company payment intelligence reports.
+InvoiceGuard is a UK-focused company intelligence and paid report platform for SMEs, freelancers, agencies, contractors, and other businesses that want to check a company before deciding whether to work with it.
 
-The platform combines:
+The product originally included invoice chasing and late payment recovery. The confirmed implementation direction is now search-first. The first commercial build is Phase A: company search and paid reports only. Invoice chasing is Phase F and must not be scoped or implemented until Phase A proves commercial traction.
 
-- company intelligence search
-- payment behavior aggregation
-- overdue invoice enforcement workflows
-- statutory interest calculation
-- demand letter generation
-- accounting platform integrations
+## Confirmed Phase Structure
 
-The system is built in two implementation phases but remains one unified product platform.
+| Phase | Name | Build Timing | Purpose |
+| --- | --- | --- | --- |
+| Phase A | Company Search and Paid Reports | Build now | Let users search a UK company, view a free preview, pay for a report, and access/download the report where allowed. |
+| Phase B | User Accounts and Dashboard | After Phase A reaches at least 30 real paid transactions | Let users save reports, view report history, add saved companies, add notes, and recheck stale reports. |
+| Phase C | Starter Watchlists and Alerts | After Phase B | Starter monthly monitoring for non-CCJ alert sources. |
+| Phase D | Pro, Business, Enterprise Watchlists | After Phase C | Higher-tier watchlists including Registry Trust CCJ monitoring and Enterprise admin setup. |
+| Phase E | Payment Signal Collection | After sufficient Premium report usage | Collect structured payment experiences from eligible Premium buyers. |
+| Phase F | Invoice Recovery and Chasing | Future separate scope | Invoice upload, Xero, QuickBooks, statutory interest, demand letters, and recovery workflows. |
 
----
+## Phase Gate
 
-# 2. Product Strategy
+Do not build Phase B, C, D, or E until Phase A has processed at least 30 real paid transactions from real users.
 
-InvoiceGuard is intentionally divided into two implementation phases:
+A transaction counts toward this gate only if:
 
----
+- It is a real user purchase.
+- It is not a test payment.
+- It is not refunded.
+- A report was generated and delivered.
 
-## 2.1 Phase A — Company Search & Intelligence Platform
+If Phase A conversion is poor, improve Phase A instead of adding later features.
 
-Phase A is the first production release and revenue-generating layer of the platform.
+## Phase A Goal
 
-This phase focuses on:
+Build and launch a working commercial flow:
 
-- company search
-- intelligence aggregation
-- premium report monetization
-- Stripe payments
-- PDF report generation
-- email delivery
+1. Visitor searches a UK company.
+2. System resolves the company to a Companies House number.
+3. Visitor sees a free preview.
+4. Visitor chooses Basic, Standard, or Premium report.
+5. Visitor pays via Stripe.
+6. Stripe webhook confirms payment.
+7. System generates a paid report from fresh provider data.
+8. User views the report.
+9. Guest buyers receive a secure report access email link.
+10. Premium reports include a branded PDF.
+11. Admin can monitor report generation, provider failures, and refunds.
 
-This phase allows the platform to:
+## Phase A Explicit Exclusions
 
-- generate revenue immediately
-- validate market demand
-- establish intelligence infrastructure
-- build foundational platform systems
+Do not build the following in Phase A:
 
-without requiring invoice enforcement infrastructure first.
+- Full user dashboard.
+- Saved companies.
+- Saved company notes.
+- Watchlists.
+- Monthly subscriptions.
+- Payment signal submission.
+- Invoice upload.
+- OCR.
+- Xero integration.
+- QuickBooks integration.
+- Late payment calculator.
+- Demand letter templates.
+- Company response portal.
+- SMS overdue notifications.
+- Invoice recovery/chasing.
+- AI-generated legal copy.
+- Risk scores or colour-band risk ratings.
 
----
+## Company Identity Rule
 
-## 2.2 Phase B — Invoice Enforcement Platform
+Company name is not identity.
 
-Phase B expands the platform into a full late-payment recovery workflow system.
+Companies House registration number is the canonical company identifier across the system.
 
-This phase introduces:
+Every report, provider snapshot, search result, watchlist entry, saved company, payment signal, and future invoice intelligence record must use Companies House number as the stable company key.
 
-- Xero integration
-- QuickBooks integration
-- invoice ingestion
-- interest calculation
-- dispute tracking
-- demand letter generation
-- company response portal
-- payment confirmation workflows
-- intelligence feed generation
+## Free Preview
 
-Phase B reuses the infrastructure established in Phase A.
+The free preview is shown before payment. It has two jobs:
 
----
+1. Show enough genuine value to build trust.
+2. Leave meaningful unanswered questions that the paid report can answer.
 
-# 3. System Goals
+### Free Preview API Calls
 
-## 3.1 Primary Goals
+The free preview makes exactly three external provider calls:
 
-- Help UK businesses recover overdue invoice payments
-- Provide trustworthy company payment intelligence
-- Monetize company intelligence reports
-- Centralize late payment workflows
-- Create a scalable payment intelligence database
+1. Companies House company profile.
+2. Insolvency/disqualified officer data accessed through the Companies House/API route.
+3. London Gazette strike-off and winding-up notices.
 
----
+Registry Trust must never be called on the free preview under any circumstances. CCJ data is fetched only after Stripe confirms payment for Basic or above.
 
-## 3.2 Secondary Goals
+### Free Preview Always Shows
 
-- Validate recurring demand for payment intelligence
-- Build reusable infrastructure for enforcement workflows
-- Aggregate verified payment behavior data
-- Establish a long-term defensible intelligence moat
+- Company name exactly as registered at Companies House.
+- Companies House number in monospace.
+- Company status badge.
+- Incorporation date and plain-English age.
+- Registered address town and county only.
+- Number of active directors.
+- Paid report tier cards.
+- Court Records prompt card explaining Registry Trust has not yet been checked.
 
----
+### Free Preview Conversion Paths
 
-# 4. Core System Model
+#### Adverse Free-Source Path
 
-InvoiceGuard is fundamentally:
+Show adverse banners when any of these are true:
 
-> an event-driven financial workflow and intelligence platform.
+- Insolvency flag is true.
+- Disqualified director flag is true.
+- Gazette strike-off flag is true.
+- Gazette winding-up flag is true.
 
-The system combines:
+Multiple adverse banners may be stacked.
 
-- public company data
-- internal payment intelligence
-- asynchronous workflow orchestration
-- report monetization
-- invoice enforcement operations
+#### Clean Free-Source Path
 
----
+Show reassurance line when all are true:
 
-# 5. Primary System Actors
+- Insolvency flag is false.
+- Disqualified director flag is false.
+- Gazette strike-off flag is false.
+- Gazette winding-up flag is false.
+- Company status is active.
 
-## 5.1 Admin
+Then show Court Records card plus clean-path curiosity cards.
 
-Responsibilities:
+## Report Products
 
-- manage platform operations
-- monitor intelligence reports
-- manage integrations
-- oversee payment intelligence systems
-- manage legal templates
-- monitor enforcement workflows
+| Tier | Price | Contents |
+| --- | ---: | --- |
+| Free Preview | £0 | Company name, Companies House number, company status, incorporation date, plain-English SIC industry, partial registered address, active director count, free-source adverse banners. |
+| Basic | £7.99 | Free preview data plus CCJ count, court name, year of registration for each CCJ, director names and appointment dates, registered address history from AD01 filings. No PDF. |
+| Standard | £14.99 | Basic plus full CCJ amounts and satisfaction status, last three filing records with compliance assessment, charges including holder name/date/status. Standard may support paid PDF add-on later. |
+| Premium | £27.00 | Standard plus director disqualification checks, insolvency/admin history, related companies under same directors, previous dissolved/insolvent companies connected to directors, Fair Payment Code status, Confidence Indicator, branded PDF, timestamped reference number, Plain English Flag Summary placeholder or enabled template output. |
 
----
+## Paid Report Freshness Rules
 
-## 5.2 Business User
+- Every paid report attempts a fresh fetch from every provider included in the purchased tier.
+- Do not use cached data older than 24 hours for a paid report fetch.
+- Store fetched provider responses in `company_data_snapshots` with timestamps and provider statuses.
+- Delivered reports are frozen and are not updated after generation.
+- Rechecks create new reports; they never overwrite previous reports.
 
-Represents:
+## Provider Failure Rules
 
-- SMEs
-- freelancers
-- agencies
-- consultants
-- creative professionals
+- Companies House is foundational. If Companies House fails during paid report generation, the report cannot be generated and the user receives a full automatic Stripe refund.
+- For non-critical provider failures, generate a partial report with a clear data source status section.
+- If Registry Trust fails on Basic or Standard, generate a partial report and offer a free recheck within 7 days when the provider recovers.
+- If Registry Trust fails on Premium, allow Lucky to decide between a free recheck and a partial refund.
+- Every provider failure on a paid report sends an admin alert to `ADMIN_ALERT_EMAIL`.
 
-Capabilities:
+## Guest Purchases
 
-- search companies
-- purchase intelligence reports
-- connect accounting platforms
-- upload invoices
-- send demand letters
-- monitor overdue payments
+Guest checkout is allowed.
 
----
+Rules:
 
-## 5.3 Client Company (External Party)
+- Guest users receive a secure report access link by email.
+- Guest access link is valid for 30 days.
+- After 30 days, the link expires.
+- The underlying guest report data is retained for 12 months from generation.
+- If a guest later creates an account with the same verified email, all matching guest purchased reports are linked to that account.
+- Never link reports using an unverified email address.
 
-Represents:
+## Legal and Compliance Requirements
 
-- companies receiving demand letters
+- InvoiceGuard is not a credit reference agency.
+- InvoiceGuard does not provide credit assessments, financial advice, or legal advice.
+- Every paid report at every tier must include the mandatory report disclaimer from day one.
+- The disclaimer is separate from the Plain English Flag Summary and is not controlled by `ENABLE_FLAG_SUMMARY`.
+- Report issue link must appear on every delivered report page, every PDF report, and later every dashboard report card.
+- Lucky handles disputes manually through email in Phase A.
+- Admin refund tool must allow Lucky to trigger full or partial Stripe refunds from the report record.
+- ICO registration must be confirmed by Lucky before production launch.
 
-Capabilities:
+## Plain English Flag Summary
 
-- confirm payment
-- raise disputes
-- upload payment proof
-- respond through portal
+The Plain English Flag Summary uses pre-approved master templates only.
 
----
+Rules:
 
-# 6. Phase A — Company Search & Intelligence Platform
+- `ENABLE_FLAG_SUMMARY` defaults to `false` in all environments, including production.
+- When false, show: `Detailed plain English analysis of this company's public record is coming very soon.`
+- When true, assemble the summary using approved templates only.
+- Lucky enables the flag only after solicitor sign-off.
+- No developer may reword, paraphrase, invent, or add legally sensitive wording without Lucky's written approval.
 
-## 6.1 Overview
+## Future Phase Notes
 
-Phase A establishes InvoiceGuard as a monetized intelligence platform.
-
-Users can:
-
-- search UK companies
-- view intelligence previews
-- unlock premium reports
-- receive downloadable PDF reports
-
----
-
-## 6.2 Core Workflow
-
-```text
-Search Company
-    ↓
-Resolve Company Identity
-    ↓
-Aggregate Public Data
-    ↓
-Merge Internal Intelligence
-    ↓
-Render Report Preview
-    ↓
-Stripe Checkout
-    ↓
-Unlock Report
-    ↓
-Generate PDF
-    ↓
-Deliver via Email
-```
-
----
-
-# 7. Company Search System
-
-## 7.1 Search Model
-
-Users search using:
-
-- company name
-- Companies House number
-
-The system resolves all companies into:
-
-- a normalized internal company identity
-
----
-
-## 7.2 External Intelligence Sources
-
-Phase A integrates with:
-
-- Companies House API
-- Registry Trust API
-- Insolvency Service API
-- London Gazette API
-- Fair Payment Code register
-- Internal payment intelligence database
-
----
-
-## 7.3 Search Result Architecture
-
-The search experience includes:
-
-- teaser report sections
-- locked premium sections
-- paywall prompts
-- tiered report visibility
-
-Search responses must support:
-
-- caching
-- stale refresh logic
-- rate limiting
-- graceful degradation
-
----
-
-# 8. Intelligence Report System
-
-## 8.1 Report Tiers
-
-### Basic Report
-
-- lower-cost entry report
-- limited intelligence visibility
-
-### Standard Report
-
-- expanded company insights
-- additional payment behavior data
-
-### Premium Report
-
-- full intelligence report
-- downloadable PDF
-- email delivery
-
----
-
-## 8.2 Report Generation Model
-
-Reports are generated dynamically from:
-
-- aggregated public data
-- internal intelligence data
-- payment behavior analytics
-
-PDF generation is asynchronous and queue-driven.
-
----
-
-## 8.3 PDF Delivery
-
-Premium reports support:
-
-- branded PDF rendering
-- downloadable access
-- email delivery
-- persistent purchase access
-
----
-
-# 9. Stripe Payment Infrastructure
-
-## 9.1 Payment Flow
-
-```text
-Select Report Tier
-      ↓
-Stripe Checkout Session
-      ↓
-Payment Confirmation
-      ↓
-Webhook Verification
-      ↓
-Entitlement Creation
-      ↓
-Report Unlock
-```
-
----
-
-## 9.2 Payment Rules
-
-- Stripe is the authoritative payment source.
-- Report access must always be entitlement-driven.
-- Frontend payment states are never trusted directly.
-- Webhook verification is mandatory.
-
----
-
-# 10. Email Delivery System
-
-Phase A email responsibilities include:
-
-- report delivery
-- purchase confirmation
-- PDF attachment delivery
-
-Providers:
-
-- Postmark
-- Resend
-- SendGrid
-
-Email delivery events are tracked via webhooks.
-
----
-
-# 11. Internal Intelligence System
-
-## 11.1 Purpose
-
-The payment intelligence system aggregates:
-
-- payment behavior
-- lateness trends
-- escalation frequency
-- dispute patterns
-
-This becomes the long-term proprietary dataset of InvoiceGuard.
-
----
-
-## 11.2 Privacy Model
-
-Public reports never expose:
-
-- exact invoice amounts
-- identifiable business user information
-- raw internal records
-
-Threshold rules must protect anonymity.
-
----
-
-# 12. Phase B — Invoice Enforcement Platform
-
-Phase B expands the platform into a complete payment recovery workflow engine.
-
----
-
-# 13. Invoice Ingestion System
-
-## Supported Sources
-
-- Xero
-- QuickBooks Online
-- PDF uploads
-- CSV uploads
-- XLSX uploads
-- JPG/PNG uploads
-- Manual forms
-
-All ingestion paths normalize into a unified invoice schema.
-
----
-
-# 14. Accounting Platform Integrations
-
-## Phase B Integrations
-
-### Included
-
-- Xero
-- QuickBooks Online
-
-### Deferred
-
-- Sage
-- FreeAgent
-- FreshBooks
-
-All integrations use:
-
-- OAuth 2.0
-- token refresh
-- queue-based synchronization
-
----
-
-# 15. Interest Calculation Engine
-
-The system calculates:
-
-- statutory interest
-- compensation fees
-- overdue duration
-
-using:
-
-- Bank of England base rates
-- UK late payment legislation
-
-Calculations are:
-
-- deterministic
-- auditable
-- queue-driven
-
----
-
-# 16. Demand Letter System
-
-The platform generates:
-
-- Letter 1
-- Letter 2
-- Letter 3
-
-using:
-
-- template-based rendering
-- PDF generation
-- email delivery workflows
-
-AI-generated legal letters are NOT part of the MVP.
-
----
-
-# 17. Company Response Portal
-
-Client companies can:
-
-- confirm payment
-- raise disputes
-- upload payment proof
-
-through secure tokenized response links.
-
----
-
-# 18. Payment Confirmation System
-
-Payments may be confirmed through:
-
-- Xero synchronization
-- QuickBooks synchronization
-- manual user confirmation
-- company response portal
-
-All confirmations generate:
-
-- payment intelligence records
-
----
-
-# 19. Event-Driven Architecture
-
-InvoiceGuard is internally event-driven.
-
-Examples:
-
-- invoice_uploaded
-- report_purchased
-- report_generated
-- payment_confirmed
-- demand_letter_sent
-- dispute_raised
-
-Architecture pattern:
-
-```text
-Event Occurs
-    ↓
-Queue Job Created
-    ↓
-Worker Processes
-    ↓
-Database Updated
-    ↓
-Internal Event Emitted
-```
-
----
-
-# 20. Queue & Workflow System
-
-The platform relies heavily on asynchronous processing.
-
-Core queues include:
-
-- report-generation-queue
-- email-delivery-queue
-- company-search-queue
-- webhook-processing-queue
-- invoice-sync-queue
-- OCR-processing-queue
-- interest-calculation-queue
-
-All workers must:
-
-- support retries
-- be idempotent
-- log failures
-- emit structured events
-
----
-
-# 21. Webhook Infrastructure
-
-Webhooks are used for:
-
-- Stripe payment confirmation
-- email delivery tracking
-- OAuth lifecycle events
-- future payment integrations
-
-Webhook architecture:
-
-- signature verification
-- queue-first processing
-- retry-safe execution
-- observability support
-
----
-
-# 22. Core Technology Stack
-
-## Frontend
-
-- Next.js
-- React
-- TailwindCSS
-- Shadcn UI
-
-## Backend
-
-- Node.js
-- Express.js
-- TypeScript
-
-## Infrastructure
-
-- PostgreSQL
-- Redis
-- BullMQ
-- Cloudflare R2
-- Vercel
-- Render/Railway
-
----
-
-# 23. Data Storage Model
-
-## PostgreSQL
-
-Primary transactional database.
-
-## Redis
-
-Queue and caching infrastructure.
-
-## Object Storage
-
-PDFs and uploaded files.
-
-## BigQuery
-
-Future analytics infrastructure.
-
----
-
-# 24. Features In Scope
-
-## Phase A
-
-- company search
-- intelligence reports
-- Stripe integration
-- report paywalls
-- PDF generation
-- email delivery
-
-## Phase B
-
-- invoice ingestion
-- accounting integrations
-- interest calculations
-- demand letters
-- response portal
-- payment confirmation
-
----
-
-# 25. Out of Scope (MVP)
-
-## AI Features
-
-- AI-generated legal letters
-- predictive scoring
-- machine learning risk models
-
-## Platform Expansion
-
-- mobile apps
-- multi-language support
-- multi-region deployments
-
-## Financial Infrastructure
-
-- escrow systems
-- fund holding
-- FCA-regulated payment handling
-
----
-
-# 26. Success Criteria
-
-## Phase A Success Signals
-
-- successful report purchases
-- repeat search activity
-- report conversion rates
-- stable payment workflows
-
-## Phase B Success Signals
-
-- successful invoice recovery workflows
-- stable accounting integrations
-- reliable demand letter delivery
-- active payment intelligence growth
-
----
-
-# 27. Strategic Notes
-
-- The intelligence dataset is the long-term strategic moat.
-- Search monetization validates demand before enforcement expansion.
-- Event-driven architecture is required due to async workflow complexity.
-- Queue reliability is mission-critical.
-- Workflow integrity is more important than rapid feature expansion.
-
----
-
-# 28. Final System Definition
-
-InvoiceGuard is a UK-focused SaaS platform combining company payment intelligence, monetized business reporting, and overdue invoice enforcement workflows into a unified event-driven financial operations platform.
+Later phases include accounts, saved companies, watchlists, subscriptions, alerts, payment signals, and invoice recovery. Architecture may prepare for these, but implementation must not begin before the proper phase gate.

@@ -1,955 +1,459 @@
-# Architecture Context — InvoiceGuard MVP Technical Design
+# InvoiceGuard Architecture Context
 
-# 1. Architecture Overview
+## Confirmed Stack
 
-InvoiceGuard follows a split-architecture system with clear separation between:
+| Layer | Technology | Role |
+| --- | --- | --- |
+| Frontend | Next.js + React + TypeScript | Marketing pages, company search, free preview, checkout initiation, report delivery, admin UI. |
+| UI | Tailwind CSS + shadcn/ui | Component system and styling. |
+| Backend | Node.js + Express | API server, provider orchestration, Stripe webhooks, admin endpoints. |
+| Database | PostgreSQL | Source of truth for company metadata, report products, purchased reports, snapshots, logs, Stripe events, admin audit records. |
+| ORM | Prisma or equivalent typed ORM | Schema migrations and database access. |
+| Cache / Rate Limiting | Redis / Upstash | Anonymous search rate limiting, idempotency helpers, queue backing where needed. |
+| Background Jobs | BullMQ | Paid report generation, provider fetches, PDF generation, expiry jobs, anonymisation jobs, admin alert jobs. |
+| Authentication | Clerk | Optional user auth, admin access protection, future account dashboard. |
+| Payments | Stripe | One-off paid reports in Phase A; subscriptions in later phases. |
+| Email | Resend, SendGrid, Postmark, or equivalent | Guest access links, report-ready notices, admin alerts. |
+| PDF Generation | HTML-to-PDF service/library | Branded PDF generation for Premium reports and allowed tiers. |
+| Deployment | Vercel for web; Render or equivalent for API/worker | Production deployment. |
+| Version Control | GitHub | Full codebase access at milestones. |
 
-- frontend application
-- backend API
-- asynchronous worker infrastructure
-
-The platform is built as a modular monolith with event-driven internals.
-
-The system is intentionally designed this way because InvoiceGuard contains:
-
-- asynchronous workflows
-- third-party integrations
-- report generation pipelines
-- webhook-driven infrastructure
-- delayed workflow processing
-- retry-sensitive operations
-
----
-
-# 2. High-Level System Structure
-
-## Frontend
-
-Next.js application responsible for:
-
-- public marketing pages
-- company search UI
-- intelligence reports
-- dashboard interfaces
-- enforcement workflows
-- account management
-
----
-
-## Backend API
-
-Node.js + Express API responsible for:
-
-- REST endpoints
-- authentication
-- orchestration
-- validation
-- transactional operations
-- webhook handling
-
----
-
-## Worker Infrastructure
-
-Dedicated worker runtime responsible for:
-
-- report generation
-- email delivery
-- OCR processing
-- invoice synchronization
-- interest recalculation
-- scheduled workflows
-- retry-safe processing
-
-Workers MUST remain isolated from API runtime.
-
----
-
-# 3. Monorepo Structure
-
-Managed using Turborepo.
+## Runtime Applications
 
 ```txt
-/apps
-  /web           → Next.js frontend
-  /api           → Express backend API
-  /worker        → Background workers & queues
+apps/
+  web/       # Next.js frontend
+  api/       # Express API server
+  worker/    # BullMQ workers and scheduled jobs
 
-/packages
-  /db            → Drizzle schema + database client
-  /types         → Shared TypeScript contracts
-  /validation    → Shared Zod schemas
-  /queues        → Queue definitions
-  /integrations  → Third-party adapters
-  /notifications → Email/SMS abstractions
-  /logger        → Shared logging utilities
-  /utils         → Shared utilities
-
-/config
-  /eslint
-  /tsconfig
-
-/context
-  → Project context and AI execution files
+packages/
+  database/
+  validation/
+  config/
+  logger/
+  integrations/
+  companies/
+  reports/
+  payments/
+  notifications/
+  queues/
+  documents/
 ```
 
----
-
-# 4. Tech Stack Decisions
-
-## Frontend
-
-- Next.js App Router
-- React
-- TypeScript (strict mode)
-- Tailwind CSS
-- Shadcn UI
-- TanStack Query
-
----
-
-## Backend
-
-- Node.js
-- Express.js
-- TypeScript (strict mode)
-- Layer-based architecture
-
----
-
-## Database
-
-- PostgreSQL
-- Drizzle ORM
-
-PostgreSQL is the ONLY approved primary database.
-
-MongoDB is permanently excluded.
-
----
-
-## Queue Infrastructure
-
-- Redis
-- BullMQ
-
-BullMQ is required for:
-
-- asynchronous workflows
-- retries
-- delayed jobs
-- scheduled processing
-
----
-
-## Object Storage
-
-- Cloudflare R2
-  OR
-- S3-compatible object storage
-
-Used for:
-
-- PDF reports
-- uploaded invoice documents
-- generated demand letters
-- payment proof uploads
-
----
-
-## Authentication
-
-- Clerk Authentication
-
-Supports:
-
-- email/password
-- Google OAuth
-- social sign-ins
-
----
-
-## Payments
-
-- Stripe
-
-Stripe is authoritative for:
-
-- payment verification
-- entitlement activation
-- purchase confirmation
-
-Webhook verification is mandatory.
-
----
-
-## Email Delivery
-
-- Postmark
-  OR
-- Resend
-
-Used for:
-
-- intelligence report delivery
-- demand letters
-- notifications
-- payment confirmations
-
----
-
-## SMS Notifications
-
-- Twilio
-
-Used in Phase B only.
-
----
-
-## OCR Processing
-
-- Tesseract OCR
-
-Used for:
-
-- PDF invoice extraction
-- image invoice extraction
-
-Phase B only.
-
----
-
-## Logging & Monitoring
-
-Backend:
-
-- Pino structured logger
-- Sentry
-
-Frontend:
-
-- Console logging (MVP)
-- Optional PostHog
-
----
-
-## Testing
-
-Required:
-
-- unit tests
-- integration tests
-- API tests
-- queue tests
-- webhook tests
-
----
-
-# 5. System Architecture Style
-
-InvoiceGuard follows:
-
-## Modular Monolith Architecture
-
-NOT microservices.
-
-The platform remains:
-
-- one backend application
-- one primary database
-- one deployment domain
-
-with:
-
-- isolated modules
-- strict boundaries
-- queue-driven workflows
-
----
-
-# 6. Event-Driven Internal Architecture
-
-InvoiceGuard is internally event-driven.
-
-This is critical.
-
-The system reacts to:
-
-- business events
-- queue events
-- webhook events
-- workflow transitions
-
----
-
-## Example Events
-
-```txt
-company_searched
-report_purchased
-report_generated
-invoice_uploaded
-invoice_overdue
-payment_confirmed
-demand_letter_sent
-dispute_raised
+## System Boundaries
+
+### `apps/web`
+
+Responsible for:
+
+- Company search UI.
+- Free preview UI.
+- Report tier selection.
+- Checkout initiation.
+- Report delivery page.
+- Guest report token page.
+- Admin dashboard UI.
+
+Not responsible for:
+
+- Calling external provider APIs directly.
+- Creating paid reports.
+- Running payment confirmation logic.
+- Generating legal/report copy from raw data.
+
+### `apps/api`
+
+Responsible for:
+
+- Request validation.
+- Auth and admin checks.
+- Search and free preview API routes.
+- Stripe checkout creation.
+- Stripe webhook processing.
+- Report access validation.
+- Admin refund endpoints.
+- Thin orchestration into service modules.
+
+Not responsible for:
+
+- Long-running report generation.
+- PDF rendering jobs.
+- Scheduled expiry/anonymisation work.
+
+### `apps/worker`
+
+Responsible for:
+
+- Paid report generation jobs.
+- Provider fetch orchestration after payment.
+- PDF generation jobs.
+- Guest report link expiry.
+- Search log IP anonymisation.
+- Stuck report detection.
+- Admin alert dispatch.
+- Future watchlist monitoring jobs.
+
+## Core Modules
+
+### Company Module
+
+Handles:
+
+- Companies House identity resolution.
+- Company profile normalization.
+- Company metadata persistence.
+- Free preview assembly.
+- Paid report provider inputs.
+
+### Provider Integrations Module
+
+Handles:
+
+- Companies House client.
+- Registry Trust client.
+- London Gazette client.
+- Insolvency/disqualified officers integration.
+- Fair Payment Code scraper for Premium reports.
+- Provider result normalization.
+- Provider usage logging.
+- Provider failure status.
+
+Every provider returns a standard result shape:
+
+```ts
+interface ProviderResult<TData> {
+  provider: string;
+  status: "success" | "failed";
+  checkedAt: string;
+  data?: TData;
+  errorCode?: string;
+  errorMessage?: string;
+}
 ```
 
----
+### Reports Module
 
-## Event Flow Pattern
+Handles:
+
+- Report product tiers.
+- Entitlement checks.
+- Report generation orchestration.
+- Frozen report JSON assembly.
+- Report reference generation.
+- Report display payload creation.
+- Recheck support later.
+
+### Payments Module
+
+Handles:
+
+- Stripe checkout sessions.
+- Stripe webhook signature verification.
+- Stripe event idempotency.
+- Purchased report creation.
+- Refund processing.
+- Payment/audit logging.
+
+### Notifications Module
+
+Handles:
+
+- Guest report access email.
+- Report-ready email.
+- Admin provider failure alerts.
+- Stuck report alerts.
+- Failed webhook alerts.
+
+### Documents Module
+
+Handles:
+
+- HTML report rendering.
+- PDF generation.
+- Mandatory disclaimer insertion.
+- Plain English Flag Summary template assembly.
+
+## Data Ownership Model
+
+Phase A supports both guest and optional authenticated access.
+
+- Guest reports are associated with `guest_email` and secure access tokens.
+- Authenticated users are associated with `clerk_user_id`.
+- Guest reports can later be claimed by a verified Clerk account using the same email address.
+- Never link a guest report to an account until the email is verified.
+
+## Storage Model
+
+### PostgreSQL Stores
+
+- Company identity and metadata.
+- Provider snapshots.
+- Search logs.
+- Report products and prices.
+- Purchased reports and report JSON.
+- Stripe event records.
+- Provider usage logs.
+- Guest access token hashes.
+- Admin audit logs.
+- Refund records.
+- Future account/watchlist/payment signal records.
+
+### File/Object Storage Stores
+
+- Generated PDF files.
+- Any static report export files if needed.
+
+Store file URL/reference in PostgreSQL. Do not store PDF binary data directly in PostgreSQL.
+
+## Core Database Tables — Phase A
+
+### `companies`
+
+Canonical company identity table.
+
+Key fields:
+
+- `id`
+- `companies_house_number` unique
+- `company_name`
+- `company_status`
+- `company_type`
+- `incorporation_date`
+- `registered_office_locality`
+- `registered_office_region`
+- `registered_office_country`
+- `sic_codes`
+- `industry_label`
+- `active_director_count`
+- `last_fetched_at`
+- `created_at`
+- `updated_at`
+
+### `company_data_snapshots`
+
+Stores raw/normalized provider data per fetch.
+
+Key fields:
+
+- `id`
+- `companies_house_number`
+- `provider`
+- `source_context` (`free_preview`, `paid_report`, `watchlist`, etc.)
+- `report_tier`
+- `snapshot_data` JSONB
+- `snapshot_hash`
+- `status`
+- `error_code`
+- `error_message`
+- `fetched_at`
+
+### `search_logs`
+
+Tracks search usage and conversion analytics.
+
+Key fields:
+
+- `id`
+- `clerk_user_id` nullable
+- `ip_hash`
+- `query`
+- `matched_companies_count`
+- `selected_companies_house_number`
+- `created_at`
+- `ip_anonymised_at`
+
+### `report_products`
+
+Stores report tier config.
+
+Key fields:
+
+- `id`
+- `tier`
+- `name`
+- `price_pence`
+- `currency`
+- `includes_pdf`
+- `is_active`
+- `entitlements` JSONB
+- `created_at`
+- `updated_at`
+
+### `purchased_reports`
+
+One row per purchased report. Append-only for delivered reports.
+
+Key fields:
+
+- `id`
+- `report_reference`
+- `clerk_user_id` nullable
+- `guest_email` nullable
+- `companies_house_number`
+- `company_name`
+- `report_tier`
+- `stripe_payment_id`
+- `stripe_checkout_session_id`
+- `status` (`pending`, `generating`, `ready`, `failed`, `refund_required`, `refunded`)
+- `report_data` JSONB
+- `provider_statuses` JSONB
+- `pdf_storage_url`
+- `guest_access_token_hash`
+- `guest_access_expires_at`
+- `claimed_at`
+- `created_at`
+- `updated_at`
+
+### `stripe_events`
+
+Prevents duplicate webhook processing.
+
+Key fields:
+
+- `id` Stripe event ID, primary key
+- `event_type`
+- `processed_at`
+- `payload` JSONB
+- `created_at`
+
+### `provider_usage_logs`
+
+Tracks paid provider calls and cost modelling.
+
+Key fields:
+
+- `id`
+- `provider`
+- `operation`
+- `companies_house_number`
+- `report_id`
+- `subscription_tier` nullable
+- `estimated_cost_pence`
+- `status`
+- `created_at`
+
+### `admin_audit_logs`
+
+Tracks sensitive admin actions.
+
+Key fields:
+
+- `id`
+- `admin_clerk_user_id`
+- `action`
+- `target_type`
+- `target_id`
+- `metadata` JSONB
+- `created_at`
+
+## Background Job Design
+
+### Queue Names
 
 ```txt
-Business Event Occurs
-        ↓
-Queue Job Created
-        ↓
-Worker Processes
-        ↓
-Database Updated
-        ↓
-Internal Event Emitted
-```
-
----
-
-# 7. Backend Architecture (Layer-Based)
-
-Every backend module follows the same structure.
-
-```txt
-/modules
-  /auth
-  /company-search
-  /reports
-  /payments
-  /webhooks
-  /invoices
-  /letters
-  /notifications
-```
-
----
-
-## Example Module Structure
-
-```txt
-/company-search
-  company-search.controller.ts
-  company-search.service.ts
-  company-search.repository.ts
-  company-search.routes.ts
-  company-search.validation.ts
-  company-search.types.ts
-```
-
----
-
-# 8. Layer Responsibilities
-
-## Controller
-
-Responsibilities:
-
-- HTTP request handling
-- response formatting
-- validation orchestration
-
-Controllers must NEVER:
-
-- access database directly
-- contain business logic
-
----
-
-## Service
-
-Responsibilities:
-
-- business logic
-- workflow orchestration
-- queue dispatching
-- transaction coordination
-
----
-
-## Repository
-
-Responsibilities:
-
-- database queries
-- persistence logic
-- relational access
-
-Repositories must ONLY contain database logic.
-
----
-
-## Worker Processors
-
-Responsibilities:
-
-- async processing
-- retries
-- delayed workflows
-- heavy operations
-
-Examples:
-
-- PDF generation
-- email delivery
-- OCR processing
-- report aggregation
-
----
-
-## Validation
-
-Responsibilities:
-
-- input validation
-- schema enforcement
-- DTO safety
-
-All validation uses:
-
-- Zod
-
----
-
-# 9. API Design
-
-## Style
-
-- RESTful
-- resource-based
-- modular endpoint grouping
-
----
-
-# 10. Example Endpoints
-
-## Auth
-
-```txt
-POST /api/auth/register
-POST /api/auth/login
-```
-
----
-
-## Company Search
-
-```txt
-GET /api/companies/search
-GET /api/companies/:id
-```
-
----
-
-## Reports
-
-```txt
-POST /api/reports/purchase
-GET /api/reports/:id
-POST /api/reports/generate
-```
-
----
-
-## Stripe
-
-```txt
-POST /api/payments/checkout
-POST /api/webhooks/stripe
-```
-
----
-
-## Invoices (Phase B)
-
-```txt
-POST /api/invoices/upload
-GET /api/invoices
-GET /api/invoices/:id
-```
-
----
-
-## Demand Letters (Phase B)
-
-```txt
-POST /api/letters/generate
-POST /api/letters/send
-```
-
----
-
-# 11. Authentication & Authorization
-
-## Authentication
-
-Handled through:
-
-- Clerk
-
-The backend validates:
-
-- session tokens
-- organization ownership
-- role permissions
-
----
-
-## Authorization Model
-
-Initial roles:
-
-```txt
-ADMIN
-USER
-```
-
-Future expansion may introduce:
-
-- organization members
-- legal operators
-- support roles
-
----
-
-## Access Rules
-
-Only authenticated users may:
-
-- purchase reports
-- connect accounting integrations
-- upload invoices
-- generate letters
-
-Admin-only operations:
-
-- system management
-- report moderation
-- intelligence oversight
-
----
-
-# 12. Queue Architecture
-
-Queue infrastructure is mission-critical.
-
----
-
-## Core Queues
-
-```txt
-company-search-queue
 report-generation-queue
-pdf-render-queue
-email-delivery-queue
-webhook-processing-queue
-invoice-sync-queue
-ocr-processing-queue
-interest-calculation-queue
-notification-queue
+pdf-generation-queue
+email-queue
+provider-alert-queue
+maintenance-queue
 ```
 
----
+### Phase A Jobs
 
-# 13. Queue Rules
+| Job | Queue | Purpose |
+| --- | --- | --- |
+| `generate_paid_report` | `report-generation-queue` | Fetch tier providers, assemble report JSON, save frozen report. |
+| `generate_report_pdf` | `pdf-generation-queue` | Generate PDF for Premium and allowed tiers. |
+| `send_guest_report_link` | `email-queue` | Send secure report access link to guest buyer. |
+| `send_admin_alert` | `provider-alert-queue` | Notify Lucky of provider failure, stuck report, or failed webhook. |
+| `detect_stuck_reports` | `maintenance-queue` | Find reports stuck in pending/generating beyond threshold. |
+| `expire_guest_report_links` | `maintenance-queue` | Expire guest report links after 30 days. |
+| `anonymise_old_search_logs` | `maintenance-queue` | Remove/anonymise identifiable IP data after 90 days. |
+| `scrape_fair_payment_code` | `maintenance-queue` | Refresh Fair Payment Code register every 7 days. |
 
-All workers must:
+## Critical Flows
 
-- be idempotent
-- support retries
-- support exponential backoff
-- log failures
-- emit structured events
-
-No heavy async workflow should execute directly inside controllers.
-
----
-
-# 14. Webhook Architecture
-
-Webhook infrastructure is first-class infrastructure.
-
----
-
-## Supported Webhooks
-
-### Phase A
-
-- Stripe webhooks
-- email delivery webhooks
-
-### Phase B
-
-- OAuth lifecycle webhooks
-- future payment webhooks
-
----
-
-## Webhook Processing Rules
-
-All webhook endpoints must:
-
-- verify signatures
-- enqueue jobs immediately
-- respond quickly
-- avoid inline processing
-
----
-
-## Webhook Flow
+### Free Preview Flow
 
 ```txt
-Webhook Received
-      ↓
-Signature Verification
-      ↓
-Queue Job Created
-      ↓
-Worker Processing
-      ↓
-Database Update
+User searches company
+→ API resolves Companies House entity
+→ API applies anonymous rate limit if not logged in
+→ API calls Companies House, Insolvency/disqualified officers, London Gazette
+→ API assembles free preview response
+→ UI renders adverse path or clean path
+→ Court Records card always appears
+→ Registry Trust is never called
 ```
 
----
-
-# 15. Database Architecture
-
-## ORM
-
-- Drizzle ORM
-
----
-
-## Primary Database
-
-- PostgreSQL
-
----
-
-# 16. Core Entities
-
-## Phase A
-
-- users
-- organizations
-- companies
-- company_reports
-- purchases
-- report_entitlements
-- webhook_events
-- report_generation_jobs
-
----
-
-## Phase B
-
-- invoices
-- invoice_uploads
-- demand_letters
-- payment_events
-- disputes
-- company_responses
-- payment_intelligence
-
----
-
-# 17. Data Design Principles
-
-## Important Rules
-
-- financial records should be append-only where possible
-- workflow events should remain auditable
-- exact intelligence source data should remain traceable
-- queue jobs should be recoverable
-
----
-
-# 18. Company Search Architecture
-
-Company search is Phase A priority.
-
----
-
-## Search Flow
+### Paid Report Flow
 
 ```txt
-Search Request
-      ↓
-Normalize Query
-      ↓
-Resolve Company Identity
-      ↓
-Check Cache
-      ↓
-If stale → Refresh Queue
-      ↓
-Aggregate Intelligence
-      ↓
-Return Teaser Report
+User selects report tier
+→ API creates Stripe checkout session
+→ User pays on Stripe
+→ Stripe sends webhook
+→ API verifies signature
+→ API checks stripe_events idempotency
+→ API creates purchased_report status=pending
+→ API enqueues generate_paid_report
+→ Worker fetches tier-specific providers
+→ Worker stores provider snapshots and statuses
+→ Worker assembles frozen report_data
+→ Worker marks report ready or refund_required
+→ Email sends guest access link/report ready notice
+→ PDF job runs if tier includes PDF
 ```
 
----
-
-# 19. Caching Strategy
-
-Redis caching is required.
-
----
-
-## Cached Systems
-
-- company search results
-- Companies House responses
-- Registry Trust responses
-- Fair Payment Code responses
-- Bank of England base rates
-
----
-
-## Cache Rules
-
-- stale refresh pattern preferred
-- avoid synchronous multi-API aggregation on every request
-- graceful degradation required
-
----
-
-# 20. Report Generation Architecture
-
-## Report Flow
+### Provider Failure Flow
 
 ```txt
-Purchase Confirmed
-      ↓
-Entitlement Created
-      ↓
-Report Generation Queue
-      ↓
-PDF Render Worker
-      ↓
-Object Storage Upload
-      ↓
-Email Delivery Queue
+Provider fails during paid report generation
+→ Worker records provider status=failed
+→ If Companies House failed: mark report refund_required and trigger automatic refund
+→ If other provider failed: generate partial report with data source status notice
+→ Send admin alert to ADMIN_ALERT_EMAIL
 ```
 
----
-
-# 21. PDF Generation
-
-Reports and demand letters use:
-
-- server-rendered PDF generation
-
-Recommended:
-
-- Puppeteer
-
-Reasons:
-
-- print consistency
-- branded layouts
-- reliable formatting
-
----
-
-# 22. Invoice Ingestion Architecture (Phase B)
-
-Invoice ingestion supports:
-
-- Xero
-- QuickBooks
-- PDF
-- CSV
-- XLSX
-- image uploads
-- manual forms
-
----
-
-## Ingestion Flow
-
-```txt
-Upload/API Sync
-      ↓
-Normalization
-      ↓
-Validation
-      ↓
-Unified Invoice Schema
-      ↓
-Persistence
-      ↓
-Workflow Trigger
-```
-
----
-
-# 23. OCR Processing Flow
-
-```txt
-File Upload
-      ↓
-Object Storage
-      ↓
-OCR Queue
-      ↓
-Field Extraction
-      ↓
-Validation
-      ↓
-User Confirmation
-```
-
-OCR output must NEVER bypass user confirmation.
-
----
-
-# 24. Demand Letter Architecture (Phase B)
-
-## Flow
-
-```txt
-Invoice Overdue
-      ↓
-Letter Generation Queue
-      ↓
-Template Rendering
-      ↓
-PDF Generation
-      ↓
-Email Delivery
-      ↓
-Webhook Tracking
-```
-
-AI-generated legal letters are NOT permitted in MVP.
-
----
-
-# 25. Deployment Architecture
-
-## Frontend
-
-- Vercel
-
----
-
-## Backend & Workers
-
-- Render
-  OR
-- Railway
-
-Separate deployments:
-
-- API runtime
-- worker runtime
-
----
-
-## Database
-
-- Neon PostgreSQL
-  OR
-- Supabase PostgreSQL
-
----
-
-## Redis
-
-- Upstash Redis
-
----
-
-# 26. Security Architecture
-
-## Required Security Measures
-
-- Zod validation
-- RBAC
-- HTTPS everywhere
-- signed webhook verification
-- secure token generation
-- encrypted secrets
-- rate limiting
-- upload validation
-
----
-
-# 27. Observability Strategy
-
-## Required
-
-- structured logs
-- Sentry error tracking
-- queue monitoring
-- webhook monitoring
-
----
-
-## Critical Monitoring Targets
-
-- failed jobs
-- retry spikes
-- webhook failures
-- report generation latency
-- email delivery failures
-
----
-
-# 28. Testing Strategy
-
-## Required Coverage
-
-- unit tests
-- integration tests
-- queue tests
-- webhook tests
-- API tests
-- end-to-end critical flows
-
----
-
-## Recommended Tools
-
-- Vitest
-- Supertest
-- Playwright
-
----
-
-# 29. Constraints & Tradeoffs
-
-## Intentional Decisions
-
-- modular monolith over microservices
-- queue-based async processing
-- reusable infrastructure between phases
-- phased implementation sequencing
-
----
-
-## Tradeoffs
-
-- split API/worker architecture adds complexity
-- queues increase operational overhead
-- caching increases consistency complexity
-- report generation introduces infrastructure cost
-
-These tradeoffs are intentional to support:
-
-- reliability
-- scalability
-- workflow integrity
-
----
-
-# 30. Final Architecture Definition
-
-InvoiceGuard is a modular-monolith, event-driven SaaS platform built within a Turborepo monorepo, where a Next.js frontend communicates with an Express.js backend API backed by PostgreSQL and Redis, using BullMQ-driven asynchronous workflows, Stripe-powered monetization, third-party intelligence integrations, and dedicated worker infrastructure to power company intelligence reporting and overdue invoice enforcement workflows.
+## Admin Model
+
+- Admin routes live under `/admin`.
+- A user must be authenticated with Clerk.
+- The verified Clerk email must exactly match `ADMIN_EMAIL`.
+- Lucky is the only admin in Phase A.
+- Admin actions that affect money or reports are written to `admin_audit_logs`.
+
+Admin features in Phase A:
+
+- View reports.
+- View report statuses.
+- View provider failures.
+- View Stripe payment references.
+- Trigger full or partial refunds.
+- View Phase A transaction count.
+- View search and conversion metrics.
+
+## Security Invariants
+
+1. Registry Trust is never called before confirmed Stripe payment.
+2. Stripe webhook signature is verified before processing.
+3. Stripe event IDs are idempotent.
+4. Paid reports are created only from Stripe webhook success, never from frontend redirect.
+5. Guest report tokens are random, time-limited, and stored hashed.
+6. Admin routes require Clerk authentication and `ADMIN_EMAIL` allowlist.
+7. Report data is immutable after `status=ready` except admin-controlled refund/status metadata.
+8. Provider failures must be visible in report status and admin alerts.
+9. No raw IP address is retained beyond 90 days.
+10. Mandatory report disclaimer is never omitted.
+
+## Future-Phase Architecture Reserved Tables
+
+These may be added later, but not implemented in Phase A unless explicitly planned:
+
+- `saved_companies`
+- `user_subscriptions`
+- `watchlist_companies`
+- `company_snapshots`
+- `company_alerts`
+- `payment_signals`
+- invoice recovery tables

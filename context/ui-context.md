@@ -1,818 +1,312 @@
-# UI Context
+# InvoiceGuard UI Context
 
-## 1. Theme
+## Brand Direction
 
-InvoiceGuard uses a **light-first fintech intelligence theme with full dark mode support**.
+InvoiceGuard should feel trustworthy, professional, and commercially serious. It is not a playful fintech app. It is a business due-diligence and company intelligence product.
 
-The visual language combines:
+The UI should help users answer one question:
 
-- fintech professionalism
-- legal-tech clarity
-- intelligence-dashboard structure
-- premium SaaS polish
+> Should I work with this company, and what information should I check before deciding?
 
-The platform must feel:
+## Visual Language
 
-- trustworthy
-- data-driven
-- operationally serious
-- modern
-- highly readable
+Recommended visual direction:
 
-The UI should resemble a blend of:
+- Clean B2B SaaS interface.
+- Strong use of white space.
+- Dark navy for trust and authority.
+- Teal/cyan accent for primary actions.
+- Muted greys for secondary information.
+- Clear status badges for company state and provider results.
+- Avoid sensational risk-score styling.
 
-- Stripe
-- Ramp
-- Mercury
-- modern intelligence dashboards
+## Colour Roles
 
-rather than:
+Define colours as CSS custom properties in `globals.css` and map them to Tailwind tokens. Avoid raw hex usage in components.
 
-- social products
-- consumer apps
-- playful startup interfaces
+| Role | Suggested Value | Usage |
+| --- | --- | --- |
+| `--color-navy` | `#061B33` | Primary dark brand panels and Court Records card. |
+| `--color-navy-soft` | `#0B2A4A` | Hover/elevated dark surfaces. |
+| `--color-teal` | `#00B8C8` | Primary CTA, key accents. |
+| `--color-teal-dark` | `#0098A6` | CTA hover. |
+| `--color-bg` | `#F8FAFC` | Page background. |
+| `--color-surface` | `#FFFFFF` | Cards and panels. |
+| `--color-border` | `#E2E8F0` | Default borders. |
+| `--color-text` | `#0F172A` | Main text. |
+| `--color-muted` | `#64748B` | Secondary text. |
+| `--color-success` | `#16A34A` | Clean confirmations. |
+| `--color-warning` | `#D97706` | Attention, stale reports, partial data. |
+| `--color-danger` | `#DC2626` | Critical adverse flags. |
 
----
+## Typography
 
-## 1.1 Design Philosophy
+- Use a modern sans-serif font for UI text.
+- Use a monospace font only for Companies House numbers, report references, and technical identifiers.
+- Keep report copy readable and formal.
+- Avoid marketing exaggeration inside paid reports.
 
-InvoiceGuard is NOT:
+## Component Library
 
-- a flashy startup dashboard
-- crypto-style neon UI
-- dense enterprise ERP
-- overly playful SaaS
+Use shadcn/ui as the component foundation.
 
-The product should feel like:
+Rules:
 
-> a premium financial intelligence and workflow operations platform.
+- Do not modify base `components/ui/*` unless explicitly required.
+- Compose product-specific components at app/feature level.
+- Use consistent card, badge, button, alert, table, and dialog components.
 
-Key visual characteristics:
+## Layout Patterns
 
-- structured layouts
-- generous whitespace
-- strong typography hierarchy
-- high information clarity
-- restrained accent usage
-- subtle data emphasis
-- premium dashboard feel
+### Public Marketing/Search Layout
 
----
+- Top navigation with logo, search entry, and sign-in/admin links where relevant.
+- Main content centered with clear company search input.
+- Search results displayed as selectable company cards.
 
-## 1.2 Color System
+### Free Preview Layout
 
-The system uses:
+Recommended layout:
 
-- neutral grayscale foundations
-- dark navy/slate surfaces
-- restrained fintech blue accents
-- semantic status colors
+```txt
+[Navbar]
+[Breadcrumb: Home / Company Search / Company Name]
+[Company Header Card]
+[Adverse banners OR clean reassurance line]
+[Court Records Prompt Card]
+[Curiosity Cards on clean path only]
+[Main data preview]
+[Right sidebar: Report tier cards]
+```
 
-All colors MUST be defined as:
+On mobile, sidebar cards should stack below preview content.
 
-- CSS custom properties
-- mapped to Tailwind tokens
+### Paid Report Layout
 
-No hardcoded hex values.
-No raw Tailwind colors.
+Recommended layout:
 
----
+```txt
+[Report Header]
+[Report reference + timestamp]
+[Company identity]
+[Data source status section]
+[Tier-specific sections]
+[Plain English Flag Summary placeholder or enabled summary]
+[PDF download if available]
+[Mandatory disclaimer]
+[Report issue link]
+```
 
-### Light Mode (Default)
+### Admin Layout
 
-| Role             | CSS Variable       | Value                     |
-| ---------------- | ------------------ | ------------------------- |
-| Page background  | `--bg-base`        | `#ffffff`                 |
-| Surface          | `--bg-surface`     | `#f8fafc`                 |
-| Elevated surface | `--bg-elevated`    | `#ffffff`                 |
-| Subtle surface   | `--bg-subtle`      | `#f1f5f9`                 |
-| Border default   | `--border-default` | `#e2e8f0`                 |
-| Border subtle    | `--border-subtle`  | `#f1f5f9`                 |
-| Primary text     | `--text-primary`   | `#0f172a`                 |
-| Secondary text   | `--text-secondary` | `#334155`                 |
-| Muted text       | `--text-muted`     | `#64748b`                 |
-| Faint text       | `--text-faint`     | `#94a3b8`                 |
-| Accent primary   | `--accent-primary` | `#2563eb`                 |
-| Accent dim       | `--accent-dim`     | `rgba(37, 99, 235, 0.12)` |
-| Success          | `--state-success`  | `#16a34a`                 |
-| Error            | `--state-error`    | `#dc2626`                 |
-| Warning          | `--state-warning`  | `#d97706`                 |
-| Info             | `--state-info`     | `#2563eb`                 |
+- Protected `/admin` area.
+- Simple operational dashboard.
+- Tables for reports, payments, provider failures, refunds, search activity.
+- Use explicit statuses and timestamps.
 
----
+## Free Preview UI Specification
 
-### Dark Mode
+The free preview has two conversion paths.
 
-| Role             | CSS Variable       | Value                      |
-| ---------------- | ------------------ | -------------------------- |
-| Page background  | `--bg-base`        | `#0b1120`                  |
-| Surface          | `--bg-surface`     | `#111827`                  |
-| Elevated surface | `--bg-elevated`    | `#172033`                  |
-| Subtle surface   | `--bg-subtle`      | `#1e293b`                  |
-| Border default   | `--border-default` | `#334155`                  |
-| Border subtle    | `--border-subtle`  | `#1e293b`                  |
-| Primary text     | `--text-primary`   | `#f8fafc`                  |
-| Secondary text   | `--text-secondary` | `#cbd5e1`                  |
-| Muted text       | `--text-muted`     | `#94a3b8`                  |
-| Faint text       | `--text-faint`     | `#64748b`                  |
-| Accent primary   | `--accent-primary` | `#3b82f6`                  |
-| Accent dim       | `--accent-dim`     | `rgba(59, 130, 246, 0.15)` |
-| Success          | `--state-success`  | `#22c55e`                  |
-| Error            | `--state-error`    | `#ef4444`                  |
-| Warning          | `--state-warning`  | `#f59e0b`                  |
-| Info             | `--state-info`     | `#60a5fa`                  |
+### Always Visible Fields
 
----
+Show these on every free preview:
 
-## 1.3 Tailwind Mapping Rules
+- Company name exactly as registered.
+- Companies House number in monospace.
+- Company status badge.
+- Incorporation date and plain-English age.
+- Registered address town/county only.
+- Number of active directors.
 
-Use semantic utility names only:
+### Adverse Path
 
-- `bg-base`
-- `bg-surface`
-- `bg-elevated`
-- `bg-subtle`
-- `text-primary`
-- `text-secondary`
-- `text-muted`
-- `border-default`
-- `border-subtle`
-- `bg-accent`
-- `text-accent`
-- `bg-success`
-- `bg-error`
+Trigger when any free-source adverse condition exists:
 
-Never use raw Tailwind color classes directly.
+- Insolvency flag true.
+- Disqualified director flag true.
+- Gazette strike-off flag true.
+- Gazette winding-up flag true.
 
----
+Show all relevant banners stacked under the company header.
 
-## 1.4 Accent Usage Rules
+Approved banner copy:
 
-Accent color usage must remain restrained.
+- Insolvency: `Insolvency or administration records found on this company in the Insolvency Service register. Unlock a paid report to see the full detail.`
+- Disqualification: `A director disqualification was found connected to this company. Unlock a paid report to see which director and when.`
+- Gazette strike-off: `A compulsory strike-off notice was found for this company in the London Gazette. Unlock a paid report to see the full detail.`
+- Gazette winding-up: `A winding-up petition notice was found for this company in the London Gazette. Unlock a paid report to see the full detail.`
 
-Use accent for:
+Then show Court Records card and paid report tier cards.
 
-- primary CTAs
-- active states
-- important metrics
-- selected filters
-- pricing emphasis
-- chart highlights
+### Clean Path
 
-Do NOT use accent for:
+Trigger when all are true:
 
-- page backgrounds
-- large sections
-- dashboard surfaces
-- entire cards
+- Insolvency flag false.
+- Disqualified director flag false.
+- Gazette strike-off flag false.
+- Gazette winding-up flag false.
+- Company status is active.
 
-The product should feel:
+Show reassurance line:
 
-- professional
-- controlled
-- trustworthy
+`No insolvency events, director disqualifications, or gazette notices found on the free check.`
 
-not visually noisy.
+Then show Court Records card, three curiosity cards, and paid report tier cards.
 
----
+## Court Records Prompt Card
 
-# 2. Typography
-
-| Role    | Font       | Usage                           |
-| ------- | ---------- | ------------------------------- |
-| UI Text | Inter      | Entire UI                       |
-| Mono    | Geist Mono | Financial figures / IDs / codes |
-
----
-
-## Typography Rules
-
-### Headings
-
-- bold
-- compact spacing
-- strong hierarchy
-
-### Body Text
-
-- medium weight
-- highly readable
-- generous line spacing
-
-### Labels
-
-- smaller
-- muted
-- low visual weight
-
-### Financial Metrics
-
-- large
-- bold
-- high contrast
-- tightly aligned
-
----
-
-# 3. Layout Architecture
-
-InvoiceGuard is structured as a unified SaaS platform.
-
-Primary application sections:
-
-- Public marketing site
-- Company search experience
-- Intelligence report experience
-- Authenticated dashboard
-- Future enforcement workflows
-- Admin operations panel
-
----
-
-# 4. Public Marketing Experience
-
-## Tone
-
-The marketing site should feel:
-
-- premium
-- trustworthy
-- data-driven
-- professional
-
-Avoid:
-
-- excessive gradients
-- startup clichés
-- oversized illustrations
-
----
-
-## Hero Section Priorities
-
-Primary emphasis:
-
-1. Company search
-2. Intelligence reports
-3. Payment insights
-4. Enforcement workflows
-
----
-
-## Search CTA Priority
-
-The company search bar is the primary conversion surface.
-
-It must feel:
-
-- immediate
-- trustworthy
-- highly prominent
-
----
-
-# 5. Company Search Experience
-
-## 5.1 Search UX
-
-Search is the core Phase A product experience.
-
-Requirements:
-
-- instant search feedback
-- intelligent loading states
-- strong search clarity
-- premium data presentation
-
----
-
-## 5.2 Search Layout
-
-Desktop:
-
-- centered search bar
-- spacious report layout
-- split intelligence sections
-
-Mobile:
-
-- stacked sections
-- collapsible report panels
-
----
-
-## 5.3 Search Result Design
-
-Search results should resemble:
-
-- professional intelligence briefings
-- credit risk dashboards
-- business intelligence reports
-
-NOT:
-
-- ecommerce search
-- social feeds
-
----
-
-## 5.4 Search Priorities
-
-1. Company identity clarity
-2. Risk indicators
-3. Payment intelligence
-4. Premium report upsell
-5. Supporting metadata
-
----
-
-# 6. Intelligence Report UI
-
-## Design Direction
-
-Reports should feel like:
-
-> a premium business intelligence dossier.
-
-Visual style:
-
-- clean grids
-- structured sections
-- restrained highlights
-- strong metric typography
-
----
-
-## Report Sections
-
-Examples:
-
-- company profile
-- insolvency indicators
-- court judgments
-- payment behavior
-- fair payment status
-- risk analysis
-
----
-
-## Locked Panel Design
-
-Locked sections must:
-
-- preview teaser content
-- visibly communicate premium value
-- encourage upgrade without feeling spammy
-
-Use:
-
-- blur overlays
-- locked cards
-- teaser metrics
-- upgrade prompts
-
-Avoid:
-
-- aggressive popups
-- obstructive gating
-
----
-
-# 7. Dashboard Experience
-
-## Tone
-
-The dashboard should feel:
-
-- operational
-- calm
-- professional
-- analytical
-
----
-
-## Layout
-
-Desktop:
-
-- sidebar navigation
-- content workspace
-- top utility header
-
-Mobile:
-
-- bottom navigation OR collapsible menu
-- stacked cards
-
----
-
-## Dashboard Priorities
-
-Phase A:
-
-- report purchases
-- search history
-- saved companies
-- account management
-
-Phase B:
-
-- invoices
-- overdue tracking
-- enforcement workflows
-- disputes
-
----
-
-# 8. Admin Panel
-
-## Tone
-
-More operational and dense.
-
-Reduced accent usage.
-
-Focus:
-
-- clarity
-- monitoring
-- moderation
-- operational tooling
-
----
-
-## Admin UI Priorities
-
-- payment oversight
-- report generation monitoring
-- webhook visibility
-- queue health
-- integration health
-
----
-
-# 9. Cards
-
-Cards are primary layout primitives.
-
----
-
-## Card Rules
-
-Use:
-
-- subtle elevation
-- soft borders
-- consistent spacing
-- structured internal layout
-
-Avoid:
-
-- heavy shadows
-- excessive visual noise
-
----
-
-## Card Radius
-
-Preferred:
-
-- `rounded-2xl`
-
----
-
-# 10. Tables & Data Display
-
-InvoiceGuard is data-heavy.
-
-Desktop:
-
-- table-first layouts
-
-Mobile:
-
-- card transformations
-
----
-
-## Table Rules
-
-- sticky headers where useful
-- sortable columns
-- strong alignment for financial data
-- muted secondary metadata
-
----
-
-# 11. Forms
-
-## Style
-
-Forms should feel:
-
-- structured
-- minimal
-- trustworthy
-
----
-
-## Rules
-
-- clear labels
-- inline validation
-- generous spacing
-- minimal friction
-
-Avoid:
-
-- crowded layouts
-- multi-column forms on mobile
-
----
-
-# 12. Buttons
-
-## Primary Buttons
-
-- solid accent background
-- high contrast text
-
----
-
-## Secondary Buttons
-
-- outline
-- subtle surface background
-
----
-
-## Danger Actions
-
-Reserved for:
-
-- destructive workflows
-- enforcement cancellation
-- deletion
-
----
-
-# 13. Icons
-
-Library:
-
-- Lucide
+This card appears on every free preview.
 
 Style:
 
-- outline only
+- Dark navy background.
+- Teal uppercase label.
+- White heading.
+- Muted white body copy.
+- Full-width teal CTA.
 
----
+Copy:
 
-## Sizes
+Label: `COURT RECORDS — NOT YET CHECKED`
 
-Inline:
+Heading: `Has this company ever been taken to court over an unpaid debt?`
 
-- `h-4 w-4`
+Body: `County Court Judgements are held by Registry Trust, a separate official UK register from Companies House. They show whether any court has ordered this company to pay a debt and whether that debt has been settled or remains outstanding. Court records are not included in the free check. They are only retrieved when you unlock a paid report.`
 
-Actions:
+Question line: `Find out whether this company has CCJs on record.`
 
-- `h-5 w-5`
+Button: `Check the Court Records`
 
-Hero/dashboard:
+Small text: `Included in all paid reports. Basic from £7.99.`
 
-- `h-6 w-6`
+## Clean Path Curiosity Cards
 
----
+Only show these on clean free preview path.
 
-# 14. Empty States
+### Director Network Card
 
-All empty states must include:
+Question:
 
-- icon
-- explanation
-- optional CTA
+`How many other UK companies are these [director count] directors connected to right now?`
 
-Tone:
+Blurred answer:
 
-- calm
-- informative
-- non-alarming
+`[number] connected companies found`
 
----
+Fallback blurred answer:
 
-# 15. Charts & Data Visualization
+`Network not yet mapped`
 
-Charts should feel:
+Lock tag:
 
-- analytical
-- minimal
-- professional
+`Unlock to see the full director network`
 
-Preferred:
+Sub-copy:
 
-- line charts
-- bar charts
-- compact metric charts
+`Includes active roles, recent resignations, and any dissolved companies connected to these directors.`
 
-Avoid:
+### Recent Company Activity Card
 
-- excessive gradients
-- decorative charts
-- flashy animations
+Question:
 
----
+`Has anything changed at this company in the last 12 months?`
 
-## Chart Rules
+Blurred answer:
 
-- muted gridlines
-- restrained colors
-- strong numeric readability
-- accessible contrast
+`[count] changes recorded`
 
----
+Lock tag:
 
-# 16. Motion & Interaction
+`Unlock to see recent activity`
 
-## Motion Level
+Sub-copy:
 
-Moderate and restrained.
+`Covers director appointments, resignations, address changes, new charges registered, and account submissions.`
 
----
+### Full Clearance Offer Card
 
-## Allowed Motion
+Style differently from the other two cards using a green left border accent and slightly lighter background.
 
-- hover elevation
-- subtle transitions
-- skeleton loading
-- button feedback
-- panel expansion
+Heading:
 
----
+`Everything looks clean so far.`
 
-## Avoid
+Body:
 
-- excessive animation
-- floating motion
-- distracting transitions
+`The free check covers company status and the most visible public records. The full report confirms there is nothing in the detail. Court records from Registry Trust. Director disqualification check. Insolvency history. Charges registered against company assets. Filing compliance across the last three years. A complete clearance you can keep on file as proof of due diligence.`
 
----
+Button:
 
-## Duration
+`Get Full Clearance Report — Premium`
 
-Standard:
+Small text:
 
-- 150ms–250ms
+`Includes branded PDF report and timestamped reference number.`
 
----
+## Report Tier Cards
 
-# 17. Feedback System
+Cards should clearly show:
 
-## Inline Feedback
+- Tier name.
+- Price.
+- What is included.
+- PDF availability.
+- Primary CTA.
 
-Use for:
+Do not mislead users about sources not yet checked.
 
-- form validation
-- payment status
-- workflow state
+## Report Page Rules
 
----
+Every report page must show:
 
-## Toast Notifications
+- Report reference.
+- Report generated timestamp.
+- Company name and Companies House number.
+- Purchased tier.
+- Data source status section.
+- Mandatory disclaimer.
+- Report issue link.
 
-Use for:
+For partial reports:
 
-- purchases
-- report generation
-- email delivery
-- workflow confirmations
-
----
-
-# 18. PDF Report Design
-
-PDFs are premium deliverables.
-
-They must NOT feel like exported webpages.
-
----
-
-## PDF Tone
-
-- formal
-- structured
-- business-grade
-- print-friendly
-
----
+- Show what was successfully retrieved.
+- Show what could not be reached.
+- Do not silently omit failed provider sections.
 
 ## PDF Rules
 
-- strong section hierarchy
-- page-safe layouts
-- consistent spacing
-- branded header/footer
-- professional typography
+PDF reports must include:
 
----
+- Branding.
+- Report reference.
+- Generation timestamp.
+- Companies House number.
+- Tier.
+- Data source status.
+- Mandatory disclaimer on page one.
+- Report issue printed URL.
 
-## PDF Structure
+## Content Safety Rules
 
-- cover page
-- company summary
-- intelligence sections
-- findings
-- risk indicators
+Avoid words that imply credit judgement or legal advice:
 
----
+Do not use:
 
-# 19. Responsiveness
+- Safe.
+- Unsafe.
+- High risk.
+- Low risk.
+- Approved.
+- Rejected.
+- Bad payer.
+- Creditworthy.
 
-## Mobile First
+Use factual language:
 
-All UI must begin mobile-first.
-
----
-
-## Breakpoints
-
-- mobile → default
-- tablet → medium screens
-- desktop → wide workspace layouts
-
----
-
-## Responsive Rules
-
-- avoid horizontal scrolling
-- maintain readable data density
-- collapse complex tables responsibly
-
----
-
-# 20. Accessibility
-
-Required:
-
-- keyboard accessibility
-- sufficient color contrast
-- semantic HTML
-- screen-reader compatibility
-
-Avoid:
-
-- color-only indicators
-- inaccessible hover-only interactions
-
----
-
-# 21. Frontend Architecture Rules
-
-Use:
-
-- shadcn/ui components
-- token-based styling
-- reusable design primitives
-
----
-
-## Never:
-
-- hardcode colors
-- introduce inconsistent spacing
-- mix design systems
-- create isolated UI patterns
-
----
-
-# 22. Component Consistency Rules
-
-All components must:
-
-- use shared tokens
-- follow spacing system
-- follow typography hierarchy
-- maintain consistent interaction states
-
----
-
-# 23. Future Phase B UI Direction
-
-Phase B expands UI into:
-
-- invoice operations
-- enforcement workflows
-- dispute tracking
-- legal workflow management
-
-The design system must already support:
-
-- operational dashboards
-- workflow states
-- timeline views
-- audit-style interfaces
-
----
-
-# 24. Final UI Definition
-
-A premium fintech intelligence and financial workflow platform with a structured, data-driven, light-first design system that balances professional business reporting, operational dashboard clarity, and scalable SaaS interface consistency across company search, intelligence reporting, and invoice enforcement workflows.
+- Records found.
+- No records found in checked sources.
+- Source not yet checked.
+- Data could not be retrieved.
+- Public record position at time of generation.

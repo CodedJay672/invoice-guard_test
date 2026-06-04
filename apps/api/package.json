@@ -4,11 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "echo \"api build not configured yet\"",
-    "dev": "echo \"api dev not configured yet\"",
+    "build": "tsc --noEmit",
+    "dev": "tsx src/index.ts",
     "format": "prettier --check .",
     "lint": "eslint .",
     "test": "echo \"api tests not configured yet\"",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/config": "*",
+    "@workspace/logger": "*",
+    "express": "^5.2.1"
   }
 }

@@ -1,585 +1,150 @@
-# AI Workflow Rules — InvoiceGuard AI-Assisted Development Workflow
+# InvoiceGuard Development Workflow
 
-# 1. Purpose
+## Approach
 
-This document defines the execution discipline for all AI-assisted development inside the InvoiceGuard monorepo.
+Build InvoiceGuard incrementally using a spec-driven workflow.
 
-Its purpose is to ensure:
+Context files define what to build, how to build it, what is excluded, and what the current implementation state is. Always implement against the context files. Do not infer product behavior from memory or general SaaS patterns.
 
-- architectural consistency
-- deterministic implementation
-- scoped execution
-- reliable progress tracking
-- production-grade engineering quality
+## Unit-Based Execution
 
-These rules are mandatory.
+Work on one implementation unit at a time.
 
-AI agents must follow them strictly.
+Every unit should have:
 
----
+- Objective.
+- Scope.
+- Explicit exclusions.
+- Dependencies.
+- Database changes, if any.
+- API contracts, if any.
+- Background jobs, if any.
+- UI impact, if any.
+- Acceptance criteria.
+- Tests/verification steps.
 
-# 2. Core Development Philosophy
+Do not combine unrelated units.
 
-InvoiceGuard is:
+## Current Build Priority
 
-- a production SaaS platform
-- event-driven internally
-- workflow-oriented
-- integration-heavy
-- queue-based
+The active product phase is Phase A: company search and paid reports.
 
-This is NOT:
+Do not implement:
 
-- a prototype codebase
-- a rapid hackathon build
-- an unstructured MVP
+- Phase B accounts/dashboard beyond minimal guest/admin auth needs.
+- Phase C watchlists.
+- Phase D Pro/Business/Enterprise monitoring.
+- Phase E payment signal collection.
+- Phase F invoice recovery.
 
-All implementation decisions must prioritize:
+Later phases may appear in architecture for future compatibility, but they are not implementation scope until the proper gate is met.
 
-- reliability
-- maintainability
-- workflow integrity
-- long-term scalability
+## Phase Gate Rule
 
-over implementation speed.
+Before building Phase B, C, D, or E, verify:
 
----
+- Phase A has at least 30 real paid transactions.
+- Transactions are real user purchases.
+- Refunded/test payments are excluded.
+- Lucky confirms Phase A conversion is acceptable.
 
-# 3. Single Source of Truth
+If conversion is poor, improve Phase A instead of building new phases.
 
-The authoritative project context lives in:
+## How To Start a Unit
 
-```txt id="dyc8oh"
-/context
-```
+Before implementing a unit:
 
-AI agents must read ALL context files before implementation.
+1. Read `context/project-overview.md`.
+2. Read `context/architecture-context.md`.
+3. Read `context/ui-context.md` if there is UI impact.
+4. Read `context/code-standards.md`.
+5. Read `context/sprint-roadmap.md`.
+6. Read `context/progress-tracker.md`.
+7. Confirm the current unit is the next unit listed in progress tracker.
 
----
+## When To Split Work
 
-# Required Read Order
+Split a unit if it combines:
 
-1. `project-overview.md`
-2. `architecture-context.md`
-3. `ui-context.md`
-4. `code-standards.md`
-5. `ai-workflow-rules.md`
-6. `execution-roadmap.md`
-7. `progress-tracker.md`
+- UI and long-running background jobs.
+- Payment processing and report rendering.
+- Free preview and paid report generation.
+- Admin access and refund processing.
+- Multiple unrelated provider integrations.
+- Database foundation and feature UI.
+- A change that cannot be verified end to end quickly.
 
----
+## Handling Missing Requirements
 
-# 4. Strict Scope Enforcement
+Do not guess.
 
-## Critical Rule
+If a requirement is unclear:
 
-AI agents must ONLY implement:
+1. Add it under Open Questions in `context/progress-tracker.md`.
+2. Stop implementation for that ambiguous behavior.
+3. Continue only with clearly defined parts of the unit, if safe.
 
-- the currently active roadmap unit
-- the explicitly scoped implementation task
+## Protected Rules
 
-Nothing else.
+The following rules must never be violated:
 
----
+- Registry Trust is never called before Stripe payment confirmation.
+- Companies House number is the canonical company identity.
+- Stripe webhooks create paid reports; frontend redirects do not.
+- Paid reports are frozen artifacts and are not overwritten.
+- Mandatory disclaimer appears on every paid report from day one.
+- `ENABLE_FLAG_SUMMARY` defaults to false.
+- No AI-generated legal/report copy.
+- Admin access requires `ADMIN_EMAIL` allowlist.
 
-# Never:
+## Progress Updates
 
-- implement future roadmap units
-- anticipate future architecture prematurely
-- “helpfully” build ahead
-- merge unrelated concerns
-- expand scope implicitly
+Update `context/progress-tracker.md` after every meaningful implementation change.
 
----
+Progress tracker must reflect actual state, not planned state.
 
-# Correct Behavior
+Include:
 
-If the active roadmap unit is:
+- Completed units.
+- Current unit.
+- Current status.
+- Blockers.
+- Open questions.
+- Architecture decisions made.
+- Tests run.
+- Next unit.
 
-```txt id="x8d98h"
-auth — session validation schema
-```
+## Definition of Done for a Unit
 
-ONLY implement:
+A unit is done only when:
 
-- validation schema
-- related types
-- related exports
+- Its acceptance criteria pass.
+- It does not violate any architecture invariant.
+- Relevant tests/checks pass.
+- Documentation is updated where needed.
+- `progress-tracker.md` is updated.
+- Any new open questions are recorded.
 
-Do NOT implement:
+## Spec Generation Instructions
 
-- routes
-- services
-- controllers
-- middleware
-- repositories
+When asked to generate an implementation spec:
 
-unless explicitly scoped.
+- Use the next unit from `progress-tracker.md`.
+- Keep the spec narrow.
+- Include explicit non-goals.
+- Include file/module suggestions.
+- Include acceptance criteria.
+- Include tests.
+- Include exact status update instructions for progress tracker.
 
----
+## Review Instructions
 
-# 5. Implementation Sequencing Rules
+When reviewing implementation:
 
-InvoiceGuard follows strict implementation ordering.
-
----
-
-# Required Backend Order
-
-Implement backend systems in this order:
-
-1. Validation/schema
-2. Shared types/contracts
-3. Database models
-4. Repository layer
-5. Queue definitions
-6. Service layer
-7. Worker processors
-8. Controller layer
-9. Routes
-10. Tests
-11. Frontend integration
-
----
-
-# Important Rule
-
-Do NOT skip implementation layers.
-
-Do NOT collapse multiple layers into one unit.
-
----
-
-# 6. Phase Discipline
-
-InvoiceGuard is implemented in phases.
-
----
-
-# Phase A
-
-Priority systems:
-
-- authentication
-- organizations
-- company search
-- intelligence aggregation
-- report generation
-- Stripe payments
-- email delivery
-
----
-
-# Phase B
-
-Deferred systems:
-
-- invoice ingestion
-- OCR
-- Xero integration
-- QuickBooks integration
-- demand letters
-- dispute workflows
-- response portal
-
----
-
-# Critical Rule
-
-Do NOT implement:
-
-- Phase B systems
-- Phase B infrastructure
-- Phase B workflows
-
-during active Phase A execution unless explicitly required by roadmap sequencing.
-
----
-
-# 7. Architectural Discipline
-
-InvoiceGuard uses:
-
-- modular monolith architecture
-- event-driven internals
-- queue-based workflows
-
-AI agents must preserve this architecture.
-
----
-
-# NEVER:
-
-- introduce microservices
-- introduce alternative architectural patterns
-- bypass queues for heavy workflows
-- bypass repositories
-- bypass service layer
-- tightly couple modules
-
----
-
-# 8. Queue Workflow Rules
-
-InvoiceGuard relies heavily on asynchronous processing.
-
-Heavy workflows MUST use queues.
-
----
-
-# Queue-Mandatory Operations
-
-Examples:
-
-- report generation
-- PDF rendering
-- email delivery
-- OCR processing
-- webhook handling
-- invoice synchronization
-- scheduled workflows
-
----
-
-# Never Execute Heavy Logic:
-
-- inside controllers
-- inside route handlers
-- inside webhook handlers
-
----
-
-# Correct Pattern
-
-```txt id="6m9hqm"
-Request
-   ↓
-Validation
-   ↓
-Service
-   ↓
-Queue Job
-   ↓
-Worker
-   ↓
-Persistence
-```
-
----
-
-# 9. Event-Driven Rules
-
-InvoiceGuard reacts to business-domain events.
-
-Examples:
-
-```txt id="m8f3ao"
-report_purchased
-report_generated
-invoice_uploaded
-invoice_overdue
-payment_confirmed
-```
-
----
-
-# Event Rules
-
-- events must be named clearly
-- events must represent completed domain actions
-- events must remain deterministic
-- workflow transitions must remain traceable
-
----
-
-# 10. Webhook Rules
-
-Webhook systems are infrastructure components.
-
----
-
-# Webhook Requirements
-
-All webhook handlers must:
-
-- verify signatures
-- enqueue processing immediately
-- remain lightweight
-- support idempotency
-
----
-
-# NEVER:
-
-- process heavy logic inline
-- trust raw webhook payloads
-- assume single delivery
-- skip verification
-
----
-
-# 11. External Integration Rules
-
-All external systems must be isolated.
-
----
-
-# Required Integration Structure
-
-```txt id="mrh8n8"
-/packages/integrations
-```
-
----
-
-# Integration Rules
-
-- normalize all provider responses
-- validate external payloads
-- support retries
-- support graceful degradation
-- isolate provider-specific logic
-
----
-
-# 12. Database Workflow Rules
-
-PostgreSQL is the primary source of truth.
-
----
-
-# Important Rules
-
-- repositories are the ONLY DB access layer
-- financial events should remain append-only
-- workflow history should remain auditable
-- exact workflow transitions must remain traceable
-
----
-
-# Never:
-
-- mutate workflow state destructively
-- bypass repositories
-- embed raw SQL unnecessarily
-
----
-
-# 13. Testing Discipline
-
-Testing is mandatory.
-
----
-
-# Required Coverage
-
-Every meaningful unit should include:
-
-- unit tests
-- integration tests
-- queue tests where applicable
-- webhook tests where applicable
-
----
-
-# Critical Systems Requiring Coverage
-
-- Stripe webhook flow
-- report generation
-- queue workflows
-- payment verification
-- email delivery
-- invoice ingestion
-- OCR processing
-
----
-
-# A Unit Is NOT Complete If:
-
-- tests are missing
-- tests fail
-- workflows are unverified
-- queues are unverified
-
----
-
-# 14. Progress Tracking Rules
-
-The file:
-
-```txt id="oz7a11"
-context/progress-tracker.md
-```
-
-is the ONLY authoritative implementation state tracker.
-
----
-
-# AI agents MUST update:
-
-- completed units
-- current active unit
-- current branch
-- current phase
-- blockers
-- architecture changes
-
-after every meaningful implementation step.
-
----
-
-# Important Rule
-
-Progress tracking must reflect REAL implementation state.
-
-Never:
-
-- mark speculative work complete
-- assume implementation success
-- skip tracker updates
-
----
-
-# 15. Refactoring Rules
-
-Refactoring is heavily restricted.
-
----
-
-# AI Agents MUST NOT:
-
-- refactor unrelated modules
-- restructure architecture unnecessarily
-- rename systems arbitrarily
-- introduce alternative abstractions
-
-unless explicitly requested.
-
----
-
-# 16. Dependency Rules
-
-AI agents must NOT:
-
-- introduce new libraries
-- introduce infrastructure dependencies
-- add frameworks
-
-without explicit approval.
-
----
-
-# Preferred Strategy
-
-Always prefer:
-
-- existing infrastructure
-- existing patterns
-- native platform capabilities
-
-before introducing dependencies.
-
----
-
-# 17. Frontend Workflow Rules
-
-Frontend implementation is separate from backend units.
-
----
-
-# Frontend Rules
-
-- default to React Server Components
-- minimize `"use client"`
-- keep components presentation-focused
-- avoid business logic in components
-- prefer server-driven data fetching
-
----
-
-# 18. Error Handling Rules
-
-Errors must remain:
-
-- structured
-- centralized
-- observable
-
----
-
-# Never:
-
-- swallow errors silently
-- expose raw internal errors
-- ignore queue failures
-- suppress webhook failures
-
----
-
-# Required:
-
-- structured logging
-- contextual error tracking
-- retry visibility
-- failure observability
-
----
-
-# 19. AI Decision-Making Rules
-
-When uncertain:
-
-- STOP implementation
-- ask clarifying questions
-
-Never:
-
-- invent undocumented business logic
-- infer legal workflows
-- assume payment behavior
-- create speculative product rules
-
----
-
-# 20. Prohibited AI Behaviors
-
-The following are prohibited:
-
-- speculative implementation
-- future-unit implementation
-- duplicate logic generation
-- architectural drift
-- bypassing queues
-- bypassing repositories
-- bypassing validation
-- introducing inconsistent patterns
-- modifying unrelated systems
-
----
-
-# 21. Definition of Completion
-
-A roadmap unit is ONLY complete when:
-
-- implementation matches scope exactly
-- tests pass
-- architecture remains consistent
-- progress tracker updated
-- exports are wired correctly
-- no unrelated systems modified
-
----
-
-# 22. Final Workflow Definition
-
-InvoiceGuard development follows a strict AI-assisted engineering workflow where all implementation is:
-
-- roadmap-driven
-- scope-restricted
-- layer-ordered
-- event-aware
-- queue-oriented
-- fully validated
-- consistently tracked
-
-to ensure reliable, scalable, production-grade system evolution.
+- Check the active unit only.
+- Verify no excluded phase work was introduced.
+- Verify Registry Trust boundary if relevant.
+- Verify payment idempotency if relevant.
+- Verify provider failure handling if relevant.
+- Verify report immutability if relevant.
+- Verify docs/tracker were updated.
