@@ -1,41 +1,42 @@
-<!-- BEGIN:invoiceguard-agent-rules -->
+<!-- BEGIN:nextjs-agent-rules -->
 
-# InvoiceGuard Agent Instructions
+# This is NOT the Next.js you know
 
-InvoiceGuard is a UK-focused company intelligence and paid report platform. The immediate build is Phase A: company search and paid reports only. Do not implement later-phase features unless the current unit explicitly says to do so.
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 
-## Read Before Implementing
+<!-- END:nextjs-agent-rules -->
 
-Read the following files in order before writing code, changing architecture, or generating implementation specs:
+## Read Before Anything Else
 
-1. `context/project-overview.md` — product definition, commercial goal, phase boundaries, report tiers, and exclusions.
-2. `context/architecture-context.md` — system structure, runtime boundaries, storage model, background jobs, and invariants.
-3. `context/ui-context.md` — visual language, UI rules, free preview paths, report page conventions, and component usage.
-4. `context/code-standards.md` — coding rules, TypeScript standards, API conventions, provider integration rules, and security requirements.
-5. `context/ai-workflow-rules.md` — spec-driven development workflow, unit boundaries, planning rules, and completion requirements.
-6. `context/sprint-roadmap.md` — sprint-by-sprint implementation plan and unit breakdown.
-7. `context/progress-tracker.md` — current implementation state, completed work, blockers, and next unit.
+Read in this exact order before any implementation:
 
-## Non-Negotiable Product Rules
+1. context/project-overview.md
+2. context/architecture.md
+3. context/ui-tokens.md
+4. context/ui-rules.md
+5. context/ui-registry.md
+6. context/code-standards.md
+7. context/library-docs.md
+8. context/build-plan.md
+9. context/progress-tracker.md
 
-- Phase A is company search and paid reports only.
-- Do not build Phase B, C, D, or E until Phase A reaches at least 30 real paid transactions from real users.
-- Do not build invoice chasing, invoice upload, Xero, QuickBooks, demand letters, or late payment recovery in Phase A.
-- Companies House number is the canonical company identity. Never use company name as identity.
-- Registry Trust must never be called before Stripe payment confirmation. There must be no free-preview code path that calls Registry Trust.
-- Paid reports are frozen historical artifacts. Never overwrite a delivered report.
-- Stripe webhooks, not frontend redirects, create paid reports.
-- Every paid report must include mandatory legal disclaimer text from day one.
-- `ENABLE_FLAG_SUMMARY` must default to `false`. The Plain English Flag Summary remains hidden until Lucky enables the flag after solicitor sign-off.
-- No AI-generated legal wording or free-form report copy. Use approved templates only.
-- Admin routes under `/admin` are accessible only to the verified Clerk user whose email matches `ADMIN_EMAIL`.
+## Rules That Never Change
 
-## Engineering Conduct
+- Never use hardcoded hex values or raw Tailwind color classes
+- Update `progress-tracker.md` and `ui-registry.md` after every feature
+- Before any third party library — load its installed skill first,
+  then read `context/library-docs.md` for project-specific rules
+- If the same problem persists after one corrective prompt —
+  stop immediately and run /recover
 
-- Work on one unit at a time.
-- Keep changes small, verifiable, and aligned with the active unit.
-- Update `context/progress-tracker.md` after every meaningful implementation change.
-- If implementation changes architecture, scope, code standards, or UI rules, update the relevant context file before continuing.
-- If a requirement is unclear, add it to Open Questions in `context/progress-tracker.md` instead of guessing.
+## Available Skills
 
-<!-- END:invoiceguard-agent-rules -->
+- `/architect` — before any complex feature. Think before building.
+- `/imprint` — after any new UI component. Capture patterns.
+- `/review` — before demo or when something feels off.
+- `/recover` — when something breaks after one failed correction.
+- `/remember save` — when a feature spans multiple sessions.
+- `/remember restore` — when returning after a multi-session feature.
+- `/find-skills` - Helps identify relevant skills by domain and task when users ask "how do I do X" or "find a skill for X"
+- `/shadcn` - Manages shadcn components and projects
+- `stripe best practices` - good strip installation choices, stripe documentation and best practices

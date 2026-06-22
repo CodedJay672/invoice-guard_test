@@ -1,195 +1,213 @@
-# InvoiceGuard Project Overview
+# Project Overview
 
-## Product Summary
+## About the Project
 
-InvoiceGuard is a UK-focused company intelligence and paid report platform for SMEs, freelancers, agencies, contractors, and other businesses that want to check a company before deciding whether to work with it.
+InvoiceGuard is a UK company-intelligence platform for SMEs, freelancers, agencies, and contractors who need to check a company before deciding whether to work with it.
 
-The product originally included invoice chasing and late payment recovery. The confirmed implementation direction is now search-first. The first commercial build is Phase A: company search and paid reports only. Invoice chasing is Phase F and must not be scoped or implemented until Phase A proves commercial traction.
+The active commercial build is Phase A: search for a UK company, review a free preview, purchase a Basic, Standard, or Premium report, and receive a frozen, timestamped report assembled from public and paid sources. Guest checkout is supported and Premium includes a branded PDF.
 
-## Confirmed Phase Structure
+Invoice chasing and late-payment recovery belong to a future phase.
 
-| Phase | Name | Build Timing | Purpose |
-| --- | --- | --- | --- |
-| Phase A | Company Search and Paid Reports | Build now | Let users search a UK company, view a free preview, pay for a report, and access/download the report where allowed. |
-| Phase B | User Accounts and Dashboard | After Phase A reaches at least 30 real paid transactions | Let users save reports, view report history, add saved companies, add notes, and recheck stale reports. |
-| Phase C | Starter Watchlists and Alerts | After Phase B | Starter monthly monitoring for non-CCJ alert sources. |
-| Phase D | Pro, Business, Enterprise Watchlists | After Phase C | Higher-tier watchlists including Registry Trust CCJ monitoring and Enterprise admin setup. |
-| Phase E | Payment Signal Collection | After sufficient Premium report usage | Collect structured payment experiences from eligible Premium buyers. |
-| Phase F | Invoice Recovery and Chasing | Future separate scope | Invoice upload, Xero, QuickBooks, statutory interest, demand letters, and recovery workflows. |
+---
 
-## Phase Gate
+## The Problem It Solves
 
-Do not build Phase B, C, D, or E until Phase A has processed at least 30 real paid transactions from real users.
+Small businesses currently piece together company identity, filing history, insolvency notices, director history, registered charges, and County Court Judgements from multiple sources. InvoiceGuard presents the relevant checks as one factual record.
 
-A transaction counts toward this gate only if:
+InvoiceGuard does not issue credit scores, approve or reject companies, or provide financial or legal advice. It reports what was found, what was not found in checked sources, and what could not be retrieved.
 
-- It is a real user purchase.
-- It is not a test payment.
-- It is not refunded.
-- A report was generated and delivered.
+---
 
-If Phase A conversion is poor, improve Phase A instead of adding later features.
+## Active Routes
 
-## Phase A Goal
+```text
+/                                      -> Company search and free preview
+/api/companies/search                  -> Next.js proxy to Express
+/api/companies/[companyNumber]/free-preview
+                                       -> Next.js proxy to Express
+/reports/[reportReference]             -> Paid report delivery (planned)
+/reports/access/[token]                -> Guest report access (planned)
+/admin                                 -> Operations dashboard (planned)
+```
 
-Build and launch a working commercial flow:
+Current Express routes:
 
-1. Visitor searches a UK company.
-2. System resolves the company to a Companies House number.
-3. Visitor sees a free preview.
-4. Visitor chooses Basic, Standard, or Premium report.
-5. Visitor pays via Stripe.
-6. Stripe webhook confirms payment.
-7. System generates a paid report from fresh provider data.
-8. User views the report.
-9. Guest buyers receive a secure report access email link.
-10. Premium reports include a branded PDF.
-11. Admin can monitor report generation, provider failures, and refunds.
+```text
+GET /health
+GET /companies/search?q=
+GET /companies/:companyNumber
+GET /companies/:companyNumber/free-preview
+```
 
-## Phase A Explicit Exclusions
+---
 
-Do not build the following in Phase A:
+## Complete-System Figma Reference
 
-- Full user dashboard.
-- Saved companies.
-- Saved company notes.
-- Watchlists.
-- Monthly subscriptions.
-- Payment signal submission.
-- Invoice upload.
-- OCR.
-- Xero integration.
-- QuickBooks integration.
-- Late payment calculator.
-- Demand letter templates.
-- Company response portal.
-- SMS overdue notifications.
-- Invoice recovery/chasing.
-- AI-generated legal copy.
-- Risk scores or colour-band risk ratings.
+`https://www.figma.com/design/KgnaNquB0qRPbTrJLD2BDQ/Untitled?node-id=58-176`
 
-## Company Identity Rule
+The Figma file represents the whole future InvoiceGuard system. Phase A may reuse its brand, navigation, company-search hero, verified-source presentation, company snapshot hierarchy, one-off report pricing, CTA, report, and footer patterns.
 
-Company name is not identity.
+Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptions, recovery dashboards, and risk scores are future reference only. Phase gates override what appears in the design.
 
-Companies House registration number is the canonical company identifier across the system.
+---
 
-Every report, provider snapshot, search result, watchlist entry, saved company, payment signal, and future invoice intelligence record must use Companies House number as the stable company key.
+## Core User Flow
 
-## Free Preview
+### Search and Free Preview
 
-The free preview is shown before payment. It has two jobs:
+1. Visitor searches by registered name or Companies House number.
+2. Companies House number becomes the canonical identity.
+3. Anonymous visitors are limited to five searches per hashed IP per 24 hours.
+4. Free preview calls exactly Companies House, the configured insolvency/disqualified-officer source, and London Gazette.
+5. Registry Trust is never called before payment.
+6. The UI renders clean, adverse, or standard preview state plus Court Records prompt and report tiers.
 
-1. Show enough genuine value to build trust.
-2. Leave meaningful unanswered questions that the paid report can answer.
+### Purchase and Generation
 
-### Free Preview API Calls
+1. Visitor selects Basic, Standard, or Premium.
+2. The server creates a one-off Stripe Checkout Session.
+3. Stripe webhook signature and event idempotency are verified.
+4. The webhook—not the redirect—creates one pending report and enqueues generation.
+5. The worker fetches fresh entitled provider data, stores snapshots and statuses, and assembles frozen report data.
+6. Companies House failure enters the automatic refund path; other failures produce a visible partial report.
 
-The free preview makes exactly three external provider calls:
+### Delivery
 
-1. Companies House company profile.
-2. Insolvency/disqualified officer data accessed through the Companies House/API route.
-3. London Gazette strike-off and winding-up notices.
+- Every report shows reference, timestamp, company identity, tier, source statuses, disclaimer, and issue link.
+- Guest links are emailed, stored as hashes, and expire after 30 days.
+- Guest report data is retained for 12 months.
+- Premium includes PDF; Basic does not.
+- A later account may claim guest reports only after matching-email verification.
 
-Registry Trust must never be called on the free preview under any circumstances. CCJ data is fetched only after Stripe confirms payment for Basic or above.
+---
 
-### Free Preview Always Shows
+## Primary Actors
 
-- Company name exactly as registered at Companies House.
-- Companies House number in monospace.
-- Company status badge.
-- Incorporation date and plain-English age.
-- Registered address town and county only.
-- Number of active directors.
-- Paid report tier cards.
-- Court Records prompt card explaining Registry Trust has not yet been checked.
+### Public Visitor and Guest Buyer
 
-### Free Preview Conversion Paths
+- Searches without an account within anonymous limits.
+- Selects the correct Companies House entity before purchase.
+- Sees only free-source results before payment.
+- Can purchase with an email address and receives a secure report link.
 
-#### Adverse Free-Source Path
+### Authenticated Business User
 
-Show adverse banners when any of these are true:
+- Uses Clerk identity for owned reports.
+- May claim earlier guest reports only after the matching email is verified.
+- Account history, saved companies, and notes remain Phase B features.
 
-- Insolvency flag is true.
-- Disqualified director flag is true.
-- Gazette strike-off flag is true.
-- Gazette winding-up flag is true.
+### Admin
 
-Multiple adverse banners may be stacked.
+- Lucky is the only Phase A admin.
+- Reviews report/payment/provider state, transaction counts, and conversion.
+- Can issue full or partial refunds with a required reason.
+- Every sensitive action is server-authorized and audited.
 
-#### Clean Free-Source Path
+### External Providers
 
-Show reassurance line when all are true:
+- Companies House supplies canonical identity and core company records.
+- London Gazette supplies strike-off and winding-up notices.
+- The configured insolvency/disqualified-officer route supplies free-source flags.
+- Registry Trust supplies paid CCJ data only after payment.
+- Fair Payment Code supplies Premium-only status when implemented.
 
-- Insolvency flag is false.
-- Disqualified director flag is false.
-- Gazette strike-off flag is false.
-- Gazette winding-up flag is false.
-- Company status is active.
-
-Then show Court Records card plus clean-path curiosity cards.
+---
 
 ## Report Products
 
-| Tier | Price | Contents |
+| Product | Price | Scope |
 | --- | ---: | --- |
-| Free Preview | £0 | Company name, Companies House number, company status, incorporation date, plain-English SIC industry, partial registered address, active director count, free-source adverse banners. |
-| Basic | £7.99 | Free preview data plus CCJ count, court name, year of registration for each CCJ, director names and appointment dates, registered address history from AD01 filings. No PDF. |
-| Standard | £14.99 | Basic plus full CCJ amounts and satisfaction status, last three filing records with compliance assessment, charges including holder name/date/status. Standard may support paid PDF add-on later. |
-| Premium | £27.00 | Standard plus director disqualification checks, insolvency/admin history, related companies under same directors, previous dissolved/insolvent companies connected to directors, Fair Payment Code status, Confidence Indicator, branded PDF, timestamped reference number, Plain English Flag Summary placeholder or enabled template output. |
+| Free Preview | GBP 0 | Company identity, status, incorporation, industry, partial address, active director count, and free-source adverse flags. |
+| Basic | GBP 7.99 | Preview plus CCJ count/court/year, directors, and registered-address history. No PDF. |
+| Standard | GBP 14.99 | Basic plus CCJ amounts/satisfaction, recent filing compliance, and charges. |
+| Premium | GBP 27.00 | Standard plus deeper director/insolvency/related-company checks, Fair Payment Code, Confidence Indicator, timestamped reference, and PDF. |
 
-## Paid Report Freshness Rules
+`ENABLE_FLAG_SUMMARY` defaults to `false` everywhere until approved templates receive solicitor sign-off.
 
-- Every paid report attempts a fresh fetch from every provider included in the purchased tier.
-- Do not use cached data older than 24 hours for a paid report fetch.
-- Store fetched provider responses in `company_data_snapshots` with timestamps and provider statuses.
-- Delivered reports are frozen and are not updated after generation.
-- Rechecks create new reports; they never overwrite previous reports.
+### Free Preview Presentation
 
-## Provider Failure Rules
+Always show registered name, company number, status, incorporation date and age, registered town/county, active-director count, Court Records prompt, and paid tiers.
 
-- Companies House is foundational. If Companies House fails during paid report generation, the report cannot be generated and the user receives a full automatic Stripe refund.
-- For non-critical provider failures, generate a partial report with a clear data source status section.
-- If Registry Trust fails on Basic or Standard, generate a partial report and offer a free recheck within 7 days when the provider recovers.
-- If Registry Trust fails on Premium, allow Lucky to decide between a free recheck and a partial refund.
-- Every provider failure on a paid report sends an admin alert to `ADMIN_ALERT_EMAIL`.
+Adverse banners stack when insolvency, disqualification, Gazette strike-off, or Gazette winding-up flags are true. The clean path requires all four flags false and active company status. Provider failure must not be represented as a clean check.
 
-## Guest Purchases
+### Paid Data Freshness and Failure
 
-Guest checkout is allowed.
+- Every paid report attempts a fresh fetch for every entitled source.
+- Cached provider data older than 24 hours is not acceptable for generation.
+- Provider snapshots retain checked time, source context, tier, status, and normalized payload/failure.
+- Companies House failure prevents delivery and triggers automatic refund handling.
+- Non-critical failure produces a partial report with explicit source status.
+- Basic/Standard Registry Trust failure offers a free recheck within seven days when service recovers.
+- Premium Registry Trust failure is surfaced for Lucky's recheck/partial-refund decision.
 
-Rules:
+---
 
-- Guest users receive a secure report access link by email.
-- Guest access link is valid for 30 days.
-- After 30 days, the link expires.
-- The underlying guest report data is retained for 12 months from generation.
-- If a guest later creates an account with the same verified email, all matching guest purchased reports are linked to that account.
-- Never link reports using an unverified email address.
+## Phase A Scope
 
-## Legal and Compliance Requirements
+In scope:
 
-- InvoiceGuard is not a credit reference agency.
-- InvoiceGuard does not provide credit assessments, financial advice, or legal advice.
-- Every paid report at every tier must include the mandatory report disclaimer from day one.
-- The disclaimer is separate from the Plain English Flag Summary and is not controlled by `ENABLE_FLAG_SUMMARY`.
-- Report issue link must appear on every delivered report page, every PDF report, and later every dashboard report card.
-- Lucky handles disputes manually through email in Phase A.
-- Admin refund tool must allow Lucky to trigger full or partial Stripe refunds from the report record.
-- ICO registration must be confirmed by Lucky before production launch.
+- Company search, free preview, and anonymous rate limiting.
+- One-off report products and Stripe payment.
+- Paid-only Registry Trust boundary.
+- BullMQ report generation, provider snapshots, and partial reports.
+- Secure guest delivery, Postmark email, and Premium PDF.
+- Mandatory disclaimer, issue reporting, approved copy templates, and Fair Payment Code refresh.
+- Clerk-protected admin operations, refunds, conversion analytics, and maintenance jobs.
 
-## Plain English Flag Summary
+Out of scope:
 
-The Plain English Flag Summary uses pre-approved master templates only.
+- User dashboard, saved companies, notes, watchlists, and subscriptions.
+- Payment-signal collection.
+- Invoice upload, OCR, chasing, accounting integrations, interest calculators, demand letters, response portals, or SMS.
+- AI-generated legal/report copy, credit scores, risk scores, or colour-band risk ratings.
 
-Rules:
+---
 
-- `ENABLE_FLAG_SUMMARY` defaults to `false` in all environments, including production.
-- When false, show: `Detailed plain English analysis of this company's public record is coming very soon.`
-- When true, assemble the summary using approved templates only.
-- Lucky enables the flag only after solicitor sign-off.
-- No developer may reword, paraphrase, invent, or add legally sensitive wording without Lucky's written approval.
+## Future Phases and Gates
 
-## Future Phase Notes
+| Phase | Direction | Gate |
+| --- | --- | --- |
+| B | Accounts, report history, saved companies, notes | At least 30 real, delivered, non-refunded Phase A purchases and acceptable conversion. |
+| C | Starter watchlists and non-CCJ alerts | After Phase B. |
+| D | Higher-tier monitoring and enterprise admin | After Phase C. |
+| E | Structured payment-experience signals | After sufficient eligible Premium usage. |
+| F | Invoice recovery and chasing | Separate future scope. |
 
-Later phases include accounts, saved companies, watchlists, subscriptions, alerts, payment signals, and invoice recovery. Architecture may prepare for these, but implementation must not begin before the proper phase gate.
+If Phase A conversion is poor, improve Phase A rather than opening a later phase.
+
+### Complete Future-System Reference
+
+The Figma design preserves future product direction: dashboard, invoice ingestion, accounting-platform sync, statutory interest, demand-letter stages, response tracking, and recovery operations. These concepts may inform future architecture compatibility, but no database table, route, job, component, or dependency should be implemented early.
+
+---
+
+## Data, Privacy, and Retention
+
+- PostgreSQL is the transactional source of truth.
+- Redis holds ephemeral rate-limit and queue state, not durable report truth.
+- PDFs live in object storage; PostgreSQL stores references only.
+- Search IP identity is hashed and removed/anonymised after 90 days.
+- Guest access tokens are stored hashed and expire after 30 days.
+- Guest report data remains for 12 months.
+- Registered-user reports remain until deletion is requested, subject to payment/audit retention duties.
+- App-level deletion does not erase required Stripe or admin-audit records.
+
+---
+
+## Commercial Measurement
+
+Phase A measures searches, selected companies, checkout starts, paid/delivered reports, refund rate, revenue by tier, and search-to-purchase conversion. The later-phase gate counts only real user payments that are not tests or refunds and produced a delivered report.
+
+---
+
+## Success and Launch Criteria
+
+- Users can identify the correct company and understand checked versus unchecked sources.
+- Registry Trust is technically unreachable from free preview.
+- A payment creates exactly one report through the webhook path.
+- Paid reports use fresh entitled data and expose provider failures.
+- Guest access, admin authorization, refunds, and report immutability are secure and tested.
+- Every report and PDF contains approved compliance content.
+- Lucky provides the mandatory disclaimer and confirms ICO registration before production launch.
+- Admin alerts expose provider, webhook, generation, email, and stuck-report failures.
+- Phase A analytics can prove whether the product has commercial traction before expanding scope.

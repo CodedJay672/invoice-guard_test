@@ -1,212 +1,175 @@
-# InvoiceGuard Progress Tracker
+# Progress Tracker
 
-Update this file after every meaningful implementation change. The tracker must reflect actual implementation state, not planned or assumed progress.
+Update after every completed feature. Record actual state only.
 
-## Current Phase
-
-- Phase A - Company Search and Paid Reports
-
-## Current Goal
-
-- Build Phase A paid MVP incrementally from the verified foundation.
-
-## Current Sprint
-
-- Sprint 3 - Report Products and Payments
-
-## Current Unit
-
-- A12 - Report products and tier configuration
+---
 
 ## Current Status
 
-- Not Started
+**Product phase:** Phase A — Company Search and Paid Reports
 
-## Completed Units
+**Build-plan phase:** Phase 1 — Public Experience and Products
 
-- A0 - Product confirmation and implementation baseline
-- A1 - Monorepo and environment foundation
-- A2 - Database foundation
-- A3 - Shared validation, config, and logging foundation
-- A4 - Provider integration contracts
-- A5 - Companies House integration
-- A6 - Company search API
-- A7 - Anonymous search rate limiting and search logs
-- A8 - London Gazette integration
-- A9 - Insolvency and disqualified officers integration
-- A10 - Free preview API
-- A11 - Free preview UI
+**Last completed:** A11 — Working free-preview UI
 
-## In Progress
+**Next:** 12A — UI/Mock: Search and Report Selection
 
-- None currently.
+**Status:** Not started
 
-## Next Up
+### Current Unit Scope
 
-1. A12 - Report products and tier configuration
-2. A13 - Stripe one-off checkout
-3. A14 - Stripe webhook and idempotency
-4. A15 - Purchased report creation and pending lifecycle
+12A rebuilds the public Phase A shell from relevant Figma patterns using representative mock states. It covers production-intended components, tokens, responsive behavior, accessibility, search/preview/tier states, and physical/Figma verification. It does not add or wire report-product persistence. 12B remains blocked until 12A is recorded as `UI/Mock Verified`.
 
-## Unit Checklist
+---
 
-### Sprint 0 - Foundation and Baseline
+## Progress
 
-- [x] A0 - Product confirmation and implementation baseline
-- [x] A1 - Monorepo and environment foundation
-- [x] A2 - Database foundation
-- [x] A3 - Shared validation, config, and logging foundation
+### Completed
 
-### Sprint 1 - Company Search Foundation
+- [x] A0 Product baseline
+- [x] A1 Monorepo/environment
+- [x] A2 PostgreSQL/Drizzle foundation
+- [x] A3 Config, validation, logging, utilities, queues
+- [x] A4 Provider contracts
+- [x] A5 Companies House
+- [x] A6 Company search API
+- [x] A7 Anonymous rate limit/search logs
+- [x] A8 London Gazette
+- [x] A9 Insolvency/disqualified officers
+- [x] A10 Free-preview API
+- [x] A11 Free-preview UI
 
-- [x] A4 - Provider integration contracts
-- [x] A5 - Companies House integration
-- [x] A6 - Company search API
-- [x] A7 - Anonymous search rate limiting and search logs
+### Remaining
 
-### Sprint 2 - Free Preview
+- [ ] 12A UI/Mock: Search and Report Selection
+- [ ] 12B Logic/Data: Search and Report Products (A12)
+- [ ] 13A UI/Mock: Checkout and Payment Status
+- [ ] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
+- [ ] 14A UI/Mock: Report Generation Lifecycle
+- [ ] 14B Logic/Data: Generation Queue (A16)
+- [ ] 15A UI/Mock: Paid Source and Tier Sections
+- [ ] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
+- [ ] 16A UI/Mock: Browser Reports
+- [ ] 16B Logic/Data: Secure Report Delivery (A20)
+- [ ] 17A UI/Mock: Guest Access and Email Outcomes
+- [ ] 17B Logic/Data: Guest Tokens and Postmark (A21-A22)
+- [ ] 18A UI/Mock: Premium PDF and Compliance Blocks
+- [ ] 18B Logic/Data: PDF, Storage, and Templates (A23-A25)
+- [ ] 19A UI/Mock: Fair Payment Code States
+- [ ] 19B Logic/Data: Fair Payment Code Refresh (A26)
+- [ ] 20A UI/Mock: Admin Dashboard
+- [ ] 20B Logic/Data: Admin Authorization and Operations (A27, A29-A30)
+- [ ] 21A UI/Mock: Refund Workflow
+- [ ] 21B Logic/Data: Refunds and Audit Logs (A28)
+- [ ] 22A UI/Mock: Maintenance Visibility
+- [ ] 22B Logic/Data: Retention and Reliability Jobs (A31-A33)
+- [ ] 23A UI/Mock: Phase A UAT Candidate
+- [ ] 23B Logic/Data: Production Readiness (A34)
 
-- [x] A8 - London Gazette integration
-- [x] A9 - Insolvency and disqualified officers integration
-- [x] A10 - Free preview API
-- [x] A11 - Free preview UI
+---
 
-### Sprint 3 - Report Products and Payments
+## What Exists
 
-- [ ] A12 - Report products and tier configuration
-- [ ] A13 - Stripe one-off checkout
-- [ ] A14 - Stripe webhook and idempotency
-- [ ] A15 - Purchased report creation and pending lifecycle
+- Next.js 16 web, Express 5 API, worker, and shared workspace packages.
+- Eight-table Phase A Drizzle schema and migration.
+- Typed BullMQ foundation; processors not implemented.
+- Mock/live-shaped Companies House, London Gazette, and insolvency/disqualified-officer adapters.
+- Search/profile/free-preview API, Redis/in-memory rate limiting, and hashed-IP search logs.
+- Working company search and clean/adverse preview with tier cards.
 
-### Sprint 4 - Paid Report Generation
+---
 
-- [ ] A16 - Paid report generation queue
-- [ ] A17 - Registry Trust paid-only integration boundary
-- [ ] A18 - Paid report provider orchestration
-- [ ] A19 - Report data snapshot storage
+## Decisions
 
-### Sprint 5 - Report Delivery and Guest Access
+- Companies House number is canonical identity.
+- Phase A is search and one-off paid reports only.
+- Figma is complete-system reference; only Phase A-relevant patterns are active.
+- Every remaining feature is split into a verified UI/Mock unit and a later Logic/Data unit.
+- A Logic/Data unit cannot start until its paired UI/Mock unit is recorded as `UI/Mock Verified` with Figma and/or physical-test evidence.
+- Registry Trust runs only after webhook-confirmed payment.
+- Webhooks create reports; redirects do not.
+- PostgreSQL/Drizzle, BullMQ/Redis, Clerk, Stripe, and Postmark are selected.
+- `ENABLE_FLAG_SUMMARY=false` everywhere by default.
+- No AI-generated legal/report copy or risk scores.
 
-- [ ] A20 - Report delivery page
-- [ ] A21 - Guest report secure access links
-- [ ] A22 - Email delivery foundation
+### Architecture Snapshot
 
-### Sprint 6 - PDF, Compliance, and Templates
+```text
+Browser -> Next proxy -> Express company routes -> CompanyService
+        -> Companies House + Gazette + insolvency/disqualified officers
+        -> normalized preview payload -> clean/adverse/standard UI
 
-- [ ] A23 - Premium PDF generation
-- [ ] A24 - Mandatory disclaimer and report issue link
-- [ ] A25 - Master Copy Template engine behind feature flag
-- [ ] A26 - Fair Payment Code scraper for Premium reports
+Stripe webhook (future) -> idempotent pending report -> BullMQ worker
+                        -> entitled providers/snapshots -> frozen delivery
+```
 
-### Sprint 7 - Admin and Operations
+Free preview is architecturally isolated from Registry Trust. Ready reports are frozen artifacts. Redis is ephemeral infrastructure; PostgreSQL is durable truth.
 
-- [ ] A27 - Admin dashboard foundation
-- [ ] A28 - Admin refund tool
-- [ ] A29 - Provider failure and admin alerting
-- [ ] A30 - Phase A analytics and conversion tracking
+---
 
-### Sprint 8 - Maintenance, QA, and Launch Readiness
+## Blockers
 
-- [ ] A31 - Search log IP anonymisation job
-- [ ] A32 - Guest report expiry job
-- [ ] A33 - Stuck report detection job
-- [ ] A34 - QA, UAT, and production readiness
+- No blocker for Feature 12.
+- Production requires approved disclaimer wording and Lucky's ICO confirmation.
+- Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
 
-## Open Questions
+### Open Questions
 
-- Mandatory legal disclaimer text is not yet supplied. Production launch remains blocked until Lucky provides approved wording.
-- ICO registration is not yet confirmed. Production launch remains blocked until Lucky confirms registration.
+- Final mandatory disclaimer text and approved issue-report address.
+- Registry Trust production contract/credentials and exact failure/refund operations.
+- PDF rendering and object-storage provider selection.
+- Production hosting choices for API/worker/PostgreSQL/Redis.
 
-## Architecture Decisions
+---
 
-- Phase A is company search and paid reports only.
-- Invoice chasing is Phase F and must not be implemented in Phase A.
-- Phase B-E are gated until Phase A reaches at least 30 real paid transactions.
-- Companies House number is the canonical company identity.
-- Registry Trust is never called before Stripe payment confirmation.
-- Stripe webhooks create paid reports; frontend redirects do not.
-- PostgreSQL is the only approved core database.
-- Drizzle ORM is the selected typed ORM for this codebase.
-- BullMQ handles background jobs.
-- Postmark is the Phase A transactional email provider.
-- Provider development is mock-first; live adapters are added behind the same contracts when credentials are ready.
-- `ENABLE_FLAG_SUMMARY` defaults to false in all environments.
-- Mandatory report disclaimer appears on every paid report and PDF from day one once approved wording is supplied.
-- Admin access is allowlisted by `ADMIN_EMAIL`.
+## Known Debt
 
-## Current Blockers
+- `app/page.tsx` is a page-level Client Component with inline product components.
+- Preview UI mixes semantic variables with raw Tailwind colours.
+- Global CSS needs canonical token consolidation.
+- Current page is not yet aligned to Phase A-relevant Figma shell patterns.
+- Queue processors are not implemented.
+- Live-shaped insolvency endpoint requires production verification.
 
-- None for the current implementation unit.
+---
 
-## Last Completed Work
+## Verification Baseline
 
-- Completed A11 free preview UI.
-- Completed A10 free preview API.
-- Completed A8 London Gazette integration.
-- Completed A9 insolvency and disqualified officers integration.
-- Replaced the starter web page with company search, selectable results, clean/adverse free preview rendering, Court Records prompt, curiosity cards, and report tier cards.
-- Added Next.js same-origin proxy routes for company search and free preview API access.
-- Added InvoiceGuard brand colour custom properties to the shared UI globals.
-- Added `GET /companies/:companyNumber/free-preview` with Companies House, insolvency/disqualified officers, and London Gazette provider checks only.
-- Added free preview payload assembly for clean, adverse, and standard paths with Court Records prompt and tier cards.
-- Completed A4 provider integration contracts.
-- Completed A5 Companies House integration.
-- Completed A6 Company search API.
-- Completed A7 anonymous search rate limiting and search logs.
-- Added mock-first and live-shaped London Gazette clients with normalized strike-off and winding-up flags.
-- Added mock-first and live-shaped insolvency/disqualified officers clients with normalized insolvency and director disqualification flags.
-- Added mock-first and live Companies House clients behind shared provider contracts.
-- Added Companies House config defaults, normalized search/profile/officer-count responses, and filing/charges fetch foundations.
-- Added `GET /companies/search?q=` and `GET /companies/:companyNumber` routes with validated inputs and safe provider errors.
-- Added Redis-backed anonymous search limiting with in-memory local/test fallback and hashed IP search logging.
+Repository typecheck/lint/test/format, integration normalization tests, API route tests, web checks, and local search/preview smokes previously passed after A11. Run fresh checks after changes; historical results are not substitutes.
 
-## Tests / Checks Run
+### Coverage Tracking
 
-- `npm.cmd run typecheck` - passed.
-- `npm.cmd run lint` - passed.
-- `$env:DATABASE_URL='postgres://user:pass@localhost:5432/invoiceguard'; npm.cmd run pg:generate` - generated `packages/db/drizzle/0000_loving_stephen_strange.sql`.
-- `node --import tsx -e "const mod = await import('./apps/api/src/app.ts'); mod.createApiApp(); console.log('api app created')"` - passed.
-- `node --import tsx apps/worker/src/index.ts` - passed.
-- `npm.cmd run typecheck` after A4 - passed.
-- `npm.cmd run format` after A4 - passed.
-- `npm.cmd run typecheck -w @workspace/integrations` after A5 - passed.
-- `npm.cmd run lint -w @workspace/integrations` after A5 - passed.
-- `npm.cmd run test -w @workspace/integrations` after A5 - passed.
-- `npm.cmd run typecheck -w api` after A6 - passed.
-- `npm.cmd run lint -w api` after A6 - passed.
-- `npm.cmd run test -w api` after A6 - passed.
-- `npm.cmd run typecheck -w api` after A7 - passed.
-- `npm.cmd run lint -w api` after A7 - passed.
-- `npm.cmd run test -w api` after A7 - passed.
-- `npm.cmd run typecheck` after Sprint 1 - passed.
-- `npm.cmd run lint` after Sprint 1 - passed.
-- `npm.cmd run test` after Sprint 1 - passed.
-- `npm.cmd run format` after Sprint 1 - passed.
-- `npm.cmd run typecheck -w @workspace/integrations` after A8/A9 - passed.
-- `npm.cmd run test -w @workspace/integrations` after A8/A9 - passed.
-- `npm.cmd run typecheck -w api` after A10 - passed.
-- `npm.cmd run test -w api` after A10 - passed.
-- `npm.cmd run typecheck -w web` after A11 - passed.
-- `npm.cmd run lint -w web` after A11 - passed.
-- `npm.cmd run typecheck` after Sprint 2 - passed.
-- `npm.cmd run lint` after Sprint 2 - passed.
-- `npm.cmd run test` after Sprint 2 - passed.
-- `npm.cmd run format` after Sprint 2 - passed.
-- Local smoke: `http://localhost:4000/health` returned ok.
-- Local smoke: `http://localhost:3000` returned 200 and contained `InvoiceGuard`.
-- Local smoke: `http://localhost:3000/api/companies/search?q=acme` returned ACME search results.
-- Local smoke: `http://localhost:3000/api/companies/12345678/free-preview` returned clean-path preview data.
-- Local smoke: `http://localhost:3000/api/companies/87654321/free-preview` returned adverse-path preview data.
+| System | Current state |
+| --- | --- |
+| Companies House normalization | Covered |
+| Gazette normalization | Covered |
+| Insolvency/disqualification normalization | Covered |
+| Search/free-preview API | Covered |
+| Registry Trust free-preview isolation | Covered by current dependency tests; preserve |
+| Stripe/webhook/report lifecycle | Not implemented |
+| Worker generation/partial/refund | Not implemented |
+| Guest/email/PDF/admin/maintenance | Not implemented |
+
+### Environment Variables in Scope
+
+Active configuration includes `APP_URL`, `API_PORT`, `DATABASE_URL`, `REDIS_URL`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Secrets remain server-only.
+
+---
 
 ## Session Notes
 
-- Use `context/sprint-roadmap.md` as the source of truth for implementation order.
-- Use this tracker to choose the next implementation unit.
-- A5 was implemented mock-first so company search can be verified without live Companies House credentials.
-- A6 introduced injectable API dependencies so route tests can run without a live PostgreSQL instance.
-- A7 uses Redis when `REDIS_URL` is configured and an in-memory limiter only for local/test operation.
-- Sprint 1 is complete; company identity resolution is now available through API routes and remains Companies House number-led.
-- Sprint 2 provider integrations are mock-first and expose deterministic clean/adverse fixtures for free preview verification.
-- Free preview API tests prove the route calls only the three approved provider clients and does not include Registry Trust.
-- Browser plugin verification was attempted, but no in-app browser backend was available in this session.
-- Sprint 2 is complete; next implementation should start with A12 report products and tier configuration.
+- Restored the canonical nine-file InvoiceGuard context system after an accidental template revert.
+- Use `build-plan.md` for order.
+- Preserve A0-A11 behavior during Feature 12 refactor.
+- Start with 12A only; do not seed or wire report products until its verification gate passes.
+- Update this tracker and `ui-registry.md` after every feature.
+- V1 context is reference material for depth; the canonical nine files remain the only active source of truth.
+
+---
+
+## Maintenance Rules
+
+- Move status only when implementation and checks prove it.
+- Record new decisions, blockers, open questions, checks, and debt immediately.
+- Do not mark future work complete because contracts/placeholders exist.
+- Keep this file operational; durable product/architecture detail belongs in the corresponding context file.
