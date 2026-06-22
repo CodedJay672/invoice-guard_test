@@ -8,10 +8,10 @@
   },
   "types": "./src/index.ts",
   "scripts": {
-    "build": "echo \"types build not configured yet\"",
+    "build": "tsc --noEmit",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"types tests not configured yet\"",
+    "test": "npm run typecheck",
     "typecheck": "tsc --noEmit"
   }
 }

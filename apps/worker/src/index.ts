@@ -1,8 +1,9 @@
-import { loadAppConfig } from "@workspace/config";
+import { assertWorkerProductionConfig, loadAppConfig } from "@workspace/config";
 import { createLogger } from "@workspace/logger";
 import { QUEUE_NAMES } from "@workspace/queues";
 
 const config = loadAppConfig();
+assertWorkerProductionConfig(config);
 const logger = createLogger({
   name: "invoiceguard-worker",
   environment: config.environment,

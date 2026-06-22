@@ -5,7 +5,7 @@
 | Layer | Tool | State |
 | --- | --- | --- |
 | Monorepo | npm workspaces + Turborepo | Implemented |
-| Web | Next.js 16.2.2 App Router + React 19 | Implemented |
+| Web | Next.js 16.2.6 App Router + React 19 | Implemented |
 | API | Node.js + Express 5 | Partially implemented |
 | Worker | Node.js + BullMQ | Queue contracts implemented |
 | Language | TypeScript 5.9 strict | Implemented |

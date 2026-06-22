@@ -1,15 +1,12 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
-const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:4000";
+import { proxyApiGet } from "@/lib/api-proxy";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ companyNumber: string }> },
-) {
+): Promise<Response> {
   const { companyNumber } = await context.params;
-  const response = await fetch(
-    `${apiBaseUrl}/companies/${encodeURIComponent(companyNumber)}/free-preview`,
-  );
 
-  return NextResponse.json((await response.json()) as unknown, { status: response.status });
+  return proxyApiGet(request, `/companies/${encodeURIComponent(companyNumber)}/free-preview`);
 }

@@ -10,15 +10,15 @@ Update after every completed feature. Record actual state only.
 
 **Build-plan phase:** Phase 1 — Public Experience and Products
 
-**Last completed:** A11 — Working free-preview UI
+**Last completed:** 12B — Logic/Data: Search and Report Products (A12)
 
-**Next:** 12A — UI/Mock: Search and Report Selection
+**Next:** 13A — UI/Mock: Checkout and Payment Status
 
-**Status:** Not started
+**Status:** Feature 12 complete; 12A recorded as `UI/Mock Verified`
 
 ### Current Unit Scope
 
-12A rebuilds the public Phase A shell from relevant Figma patterns using representative mock states. It covers production-intended components, tokens, responsive behavior, accessibility, search/preview/tier states, and physical/Figma verification. It does not add or wire report-product persistence. 12B remains blocked until 12A is recorded as `UI/Mock Verified`.
+13A designs checkout and payment states with deterministic fixtures only. Stripe and report creation remain blocked until the 13A physical-verification gate is recorded.
 
 ---
 
@@ -38,11 +38,11 @@ Update after every completed feature. Record actual state only.
 - [x] A9 Insolvency/disqualified officers
 - [x] A10 Free-preview API
 - [x] A11 Free-preview UI
+- [x] 12A UI/Mock: Search and Report Selection — `UI/Mock Verified` 2026-06-22
+- [x] 12B Logic/Data: Search and Report Products (A12)
 
 ### Remaining
 
-- [ ] 12A UI/Mock: Search and Report Selection
-- [ ] 12B Logic/Data: Search and Report Products (A12)
 - [ ] 13A UI/Mock: Checkout and Payment Status
 - [ ] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
 - [ ] 14A UI/Mock: Report Generation Lifecycle
@@ -71,11 +71,12 @@ Update after every completed feature. Record actual state only.
 ## What Exists
 
 - Next.js 16 web, Express 5 API, worker, and shared workspace packages.
-- Eight-table Phase A Drizzle schema and migration.
+- Eight-table Phase A Drizzle schema and forward-only context-compliance migration.
 - Typed BullMQ foundation; processors not implemented.
 - Mock/live-shaped Companies House, London Gazette, and insolvency/disqualified-officer adapters.
-- Search/profile/free-preview API, Redis/in-memory rate limiting, and hashed-IP search logs.
-- Working company search and clean/adverse preview with tier cards.
+- Search/profile/free-preview API, atomic Redis/in-memory rate limiting, signed proxy identity, and HMAC-hashed search logs.
+- Server-authoritative one-off report products and working clean/adverse/standard/source-failure preview UI.
+- Development-only deterministic fixtures for all Feature 12 states.
 
 ---
 
@@ -97,7 +98,7 @@ Update after every completed feature. Record actual state only.
 ```text
 Browser -> Next proxy -> Express company routes -> CompanyService
         -> Companies House + Gazette + insolvency/disqualified officers
-        -> normalized preview payload -> clean/adverse/standard UI
+        -> normalized preview payload -> clean/adverse/standard/source-failure UI
 
 Stripe webhook (future) -> idempotent pending report -> BullMQ worker
                         -> entitled providers/snapshots -> frozen delivery
@@ -109,7 +110,7 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 
 ## Blockers
 
-- No blocker for Feature 12.
+- No blocker for Feature 13A.
 - Production requires approved disclaimer wording and Lucky's ICO confirmation.
 - Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
 
@@ -124,10 +125,6 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 
 ## Known Debt
 
-- `app/page.tsx` is a page-level Client Component with inline product components.
-- Preview UI mixes semantic variables with raw Tailwind colours.
-- Global CSS needs canonical token consolidation.
-- Current page is not yet aligned to Phase A-relevant Figma shell patterns.
 - Queue processors are not implemented.
 - Live-shaped insolvency endpoint requires production verification.
 
@@ -135,7 +132,9 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 
 ## Verification Baseline
 
-Repository typecheck/lint/test/format, integration normalization tests, API route tests, web checks, and local search/preview smokes previously passed after A11. Run fresh checks after changes; historical results are not substitutes.
+Feature 12 physical verification passed on 2026-06-22 for desktop clean/adverse/source-failure states, exact 390px rate-limit layout, focus order, and live/alert semantics.
+
+Final uncached gates passed on 2026-06-22: formatting, typecheck (12 tasks), lint (14 tasks), tests (11 workspace tasks; 33 executable assertions), and production build (12 tasks). The migration guard smoke tests passed without applying changes to a live database. Production `npm audit` reports no high-severity findings; two moderate PostCSS advisories remain inside pinned Next.js 16.2.6, and npm offers only an invalid breaking downgrade.
 
 ### Coverage Tracking
 
@@ -152,7 +151,7 @@ Repository typecheck/lint/test/format, integration normalization tests, API rout
 
 ### Environment Variables in Scope
 
-Active configuration includes `APP_URL`, `API_PORT`, `DATABASE_URL`, `REDIS_URL`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Secrets remain server-only.
+Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Secrets remain server-only.
 
 ---
 
@@ -161,7 +160,7 @@ Active configuration includes `APP_URL`, `API_PORT`, `DATABASE_URL`, `REDIS_URL`
 - Restored the canonical nine-file InvoiceGuard context system after an accidental template revert.
 - Use `build-plan.md` for order.
 - Preserve A0-A11 behavior during Feature 12 refactor.
-- Start with 12A only; do not seed or wire report products until its verification gate passes.
+- Feature 12A passed its physical gate before report products were wired in 12B.
 - Update this tracker and `ui-registry.md` after every feature.
 - V1 context is reference material for depth; the canonical nine files remain the only active source of truth.
 

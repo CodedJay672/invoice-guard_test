@@ -28,7 +28,7 @@ Never rely on general training knowledge alone for library APIs — they change 
 
 ---
 
-## Next.js 16.2.2 and React 19.2
+## Next.js 16.2.6 and React 19.2
 
 - App Router in `apps/web`.
 - Server Components by default; small Client Components for interaction.

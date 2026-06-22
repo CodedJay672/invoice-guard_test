@@ -8,7 +8,7 @@
     "dev": "tsx src/index.ts",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"worker tests not configured yet\"",
+    "test": "npm run typecheck",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

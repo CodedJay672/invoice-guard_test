@@ -1,4 +1,4 @@
-import { loadAppConfig, type AppConfig } from "@workspace/config";
+import { assertApiProductionConfig, loadAppConfig, type AppConfig } from "@workspace/config";
 import { createDatabase } from "@workspace/db";
 import {
   createCompaniesHouseClient,
@@ -18,13 +18,20 @@ import {
   InMemorySearchLogRepository,
 } from "./companies/repository.js";
 import { CompanyService } from "./companies/service.js";
+import { createRequestIdentityResolver, type RequestIdentityResolver } from "./request-context.js";
+import {
+  DrizzleReportProductRepository,
+  InMemoryReportProductRepository,
+} from "./report-products/repository.js";
 
 export interface ApiDependencies {
   companyService: CompanyService;
   anonymousSearchRateLimiter: InMemoryAnonymousSearchRateLimiter | RedisAnonymousSearchRateLimiter;
+  requestIdentityResolver: RequestIdentityResolver;
 }
 
 export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiDependencies {
+  assertApiProductionConfig(config);
   const companiesHouseClient = createCompaniesHouseClient({
     mode: config.companiesHouseProviderMode,
     baseUrl: config.companiesHouseBaseUrl,
@@ -52,8 +59,13 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
         insolvencyDisqualifiedOfficersClient,
         companyRepository: new DrizzleCompanyRepository(db),
         searchLogRepository: new DrizzleSearchLogRepository(db),
+        reportProductRepository: new DrizzleReportProductRepository(db),
       }),
       anonymousSearchRateLimiter: createAnonymousSearchRateLimiter(config),
+      requestIdentityResolver: createRequestIdentityResolver({
+        webApiSharedSecret: config.webApiSharedSecret,
+        searchIpHashSecret: config.searchIpHashSecret,
+      }),
     };
   }
 
@@ -64,8 +76,13 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
       insolvencyDisqualifiedOfficersClient,
       companyRepository: new InMemoryCompanyRepository(),
       searchLogRepository: new InMemorySearchLogRepository(),
+      reportProductRepository: new InMemoryReportProductRepository(),
     }),
     anonymousSearchRateLimiter: createAnonymousSearchRateLimiter(config),
+    requestIdentityResolver: createRequestIdentityResolver({
+      webApiSharedSecret: config.webApiSharedSecret,
+      searchIpHashSecret: config.searchIpHashSecret,
+    }),
   };
 }
 

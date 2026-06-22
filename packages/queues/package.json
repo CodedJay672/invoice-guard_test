@@ -8,10 +8,10 @@
   },
   "types": "./src/index.ts",
   "scripts": {
-    "build": "echo \"queues build not configured yet\"",
+    "build": "tsc --noEmit",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"queues tests not configured yet\"",
+    "test": "npm run typecheck",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

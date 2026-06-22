@@ -2,7 +2,7 @@ import { companiesHouseNumberSchema, companySearchQuerySchema } from "@workspace
 import type { Express, NextFunction, Request, Response } from "express";
 
 import { sendApiError } from "../http.js";
-import { getRequestIdentity } from "../request-context.js";
+import type { RequestIdentityResolver } from "../request-context.js";
 
 import type { AnonymousSearchRateLimiter } from "./rate-limit.js";
 import { CompanyProviderError, CompanyService } from "./service.js";
@@ -10,6 +10,7 @@ import { CompanyProviderError, CompanyService } from "./service.js";
 export interface CompanyRouteDependencies {
   companyService: CompanyService;
   anonymousSearchRateLimiter: AnonymousSearchRateLimiter;
+  requestIdentityResolver: RequestIdentityResolver;
 }
 
 export function registerCompanyRoutes(app: Express, dependencies: CompanyRouteDependencies): void {
@@ -20,14 +21,14 @@ export function registerCompanyRoutes(app: Express, dependencies: CompanyRouteDe
   app.get(
     "/companies/:companyNumber/free-preview",
     (request: Request, response: Response, next: NextFunction) => {
-      void handleFreePreview(request, response, dependencies.companyService).catch(next);
+      void handleFreePreview(request, response, dependencies).catch(next);
     },
   );
 
   app.get(
     "/companies/:companyNumber",
     (request: Request, response: Response, next: NextFunction) => {
-      void handleCompanyProfile(request, response, dependencies.companyService).catch(next);
+      void handleCompanyProfile(request, response, dependencies).catch(next);
     },
   );
 }
@@ -44,7 +45,7 @@ async function handleCompanySearch(
     return;
   }
 
-  const identity = getRequestIdentity(request);
+  const identity = dependencies.requestIdentityResolver(request);
 
   if (!identity.clerkUserId && identity.ipHash) {
     const rateLimitResult = await dependencies.anonymousSearchRateLimiter.check(identity.ipHash);
@@ -85,7 +86,7 @@ async function handleCompanySearch(
 async function handleFreePreview(
   request: Request,
   response: Response,
-  companyService: CompanyService,
+  dependencies: CompanyRouteDependencies,
 ): Promise<void> {
   const parsedCompanyNumber = companiesHouseNumberSchema.safeParse(request.params["companyNumber"]);
 
@@ -100,7 +101,16 @@ async function handleFreePreview(
   }
 
   try {
-    const preview = await companyService.getFreePreview(parsedCompanyNumber.data);
+    const preview = await dependencies.companyService.getFreePreview(parsedCompanyNumber.data);
+    const identity = dependencies.requestIdentityResolver(request);
+
+    await dependencies.companyService.recordSearch({
+      clerkUserId: identity.clerkUserId,
+      ipHash: identity.ipHash,
+      query: parsedCompanyNumber.data,
+      matchedCompaniesCount: 1,
+      selectedCompaniesHouseNumber: preview.company.companiesHouseNumber,
+    });
 
     response.json({
       data: {
@@ -115,7 +125,7 @@ async function handleFreePreview(
 async function handleCompanyProfile(
   request: Request,
   response: Response,
-  companyService: CompanyService,
+  dependencies: CompanyRouteDependencies,
 ): Promise<void> {
   const parsedCompanyNumber = companiesHouseNumberSchema.safeParse(request.params["companyNumber"]);
 
@@ -130,10 +140,10 @@ async function handleCompanyProfile(
   }
 
   try {
-    const company = await companyService.getCompanyProfile(parsedCompanyNumber.data);
-    const identity = getRequestIdentity(request);
+    const company = await dependencies.companyService.getCompanyProfile(parsedCompanyNumber.data);
+    const identity = dependencies.requestIdentityResolver(request);
 
-    await companyService.recordSearch({
+    await dependencies.companyService.recordSearch({
       clerkUserId: identity.clerkUserId,
       ipHash: identity.ipHash,
       query: parsedCompanyNumber.data,

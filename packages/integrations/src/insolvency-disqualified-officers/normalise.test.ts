@@ -33,3 +33,9 @@ void test("insolvency and disqualified officers normalisation returns structured
     "integration_invalid_response",
   );
 });
+
+void test("insolvency normalisation rejects an evidence-free object", () => {
+  const result = normaliseInsolvencyDisqualifiedOfficersResponse("12345678", {});
+
+  assert.equal(result.status, "failed");
+});

@@ -17,69 +17,84 @@ Living record of InvoiceGuard patterns. Match an existing pattern before inventi
 
 ## Current Search and Preview
 
-All product components currently live in `apps/web/app/page.tsx`. Extract them when the page is next revised; do not add more inline product components.
+Feature 12 is the canonical public-search implementation. The page remains a Server Component;
+interactive state belongs to the smallest practical client leaf.
 
 ### Search Page Shell
 
-- Implemented.
-- Layout: `mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8`.
-- Tier rail: `space-y-4 lg:sticky lg:top-6 lg:self-start`.
+- Path: `apps/web/components/company-search/PublicSearchShell.tsx`.
+- Purpose: public header, Figma-derived navy hero, approved-source trust strip, and factual footer.
+- Layout: `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8`; hero uses `bg-brand-navy text-content-inverse`.
+- Responsive: trust items stack below `sm`; header copy may wrap while the wordmark remains intact.
+- Accessibility: source strip is a labelled region; decorative icons are hidden.
 
 ### Search Control and Result Card
 
-- Implemented; token cleanup required.
-- Card: `rounded-lg border border-line bg-surface p-5 shadow-sm`.
-- Input: semantic Input pattern from `ui-tokens.md`.
-- Result: `rounded-lg border border-line bg-surface p-4 text-left shadow-sm transition hover:border-brand-teal`.
+- Path: `apps/web/components/company-search/CompanySearchExperience.tsx`.
+- Uses shared `Card`, `Input`, `Button`, `Alert`, `Badge`, and `Skeleton` primitives.
+- States: idle, typing, loading, results, empty, invalid, rate-limited, and provider failure.
+- Result: `min-h-11 rounded-lg border border-line bg-surface p-4 text-left shadow-sm transition hover:border-brand-teal focus-visible:ring-2 focus-visible:ring-focus`.
+- Responsive: input/button stack below `sm`; all cards use `min-w-0` to prevent intrinsic-width overflow.
+- Accessibility: explicit label, native form submit, `aria-invalid`, polite loading status, alert semantics, and DOM-order keyboard navigation.
 
 ### FreePreview and Fact
 
-- Implemented with clean, adverse, and standard API-driven variants.
-- Header: `rounded-lg border border-line bg-surface p-5 shadow-sm`.
-- Facts: `rounded-md border border-line p-3`.
+- Path: `apps/web/components/company-search/CompanySearchExperience.tsx`.
+- States: loading, error, clean, adverse, standard, and source failure.
+- Facts: `rounded-md border border-line bg-surface p-3` in a one-to-three-column grid.
+- Source failures remain visible with a caution status and never render clean reassurance.
+- Adverse findings remain visible when another source fails.
 
 ### CourtRecordsCard
 
-- Implemented and always visible.
-- `rounded-lg bg-brand-navy p-5 text-content-inverse shadow-sm`.
-- Label/CTA use brand teal.
+- Uses shared `Card tone="navy"` and is always visible after a preview.
+- Label uses brand teal; content uses inverse semantic text tokens.
 - Never implies court records have already been checked.
 
 ### CuriosityCard
 
-- Implemented for clean preview only; token cleanup required.
-- Standard: `rounded-lg border border-line bg-surface p-4 shadow-sm`.
-- Full-clearance: `rounded-lg border border-positive border-l-4 bg-positive-surface p-4 text-positive-content`.
+- Implemented for clean preview only with `Card` default/positive tones.
+- Full-clearance spans the preview column at `md` and uses positive semantic tokens.
 
 ### TierCard
 
-- Implemented for Basic, Standard, Premium.
-- `rounded-lg border border-line bg-surface p-4 shadow-sm`.
-- CTA uses the Navy action pattern.
-- Shows exact price, entitlements, and PDF availability.
+- Path: `apps/web/components/company-search/CompanySearchExperience.tsx`.
+- Server-authoritative Basic, Standard, and Premium products; fixtures mirror persisted defaults.
+- Report rail: `flex min-w-0 flex-col gap-4 lg:sticky lg:top-6 lg:self-start`.
+- CTA uses the authoritative navy action pattern and clearly communicates its disabled phase.
+- Shows exact price, entitlements, and PDF availability; never introduces subscriptions.
 
 ### StatusBadge and Source Banner
 
-- Implemented; token cleanup required.
-- Active uses positive tokens; other registered states use caution tokens.
-- Adverse banner uses critical tokens; clean banner uses positive tokens.
+- Active/success uses positive tokens; registered/source-failure states use caution tokens.
+- Adverse banners use critical tokens; clean reassurance uses positive tokens.
 - Colours communicate factual state, not risk judgement.
+
+### Verified State Matrix
+
+| State | Owner | Verified presentation |
+| --- | --- | --- |
+| Search idle/typing/loading/results/empty | `CompanySearchExperience` | stable form, deterministic fixture, clear result count/status |
+| Invalid/rate-limited/provider error | `SearchFeedback` | user-safe alert copy with retry/correction guidance |
+| Preview loading/error | `CompanySearchExperience` | preserved search context and durable status |
+| Preview clean/adverse/standard/source failure | `FreePreview` | explicit text and icons; never inferred from colour |
+| Paid CTA unavailable/ready mock | `TierCard` | disabled reason or keyboard-operable mock action |
+| Provider failure | `SourceStatusList` | failed source shown; no clean conclusion |
+
+### Feature 12 Verification
+
+- 2026-06-22: desktop clean, adverse, and source-failure states inspected in Edge.
+- 2026-06-22: exact 390px viewport measured with no horizontal overflow; rate-limit state inspected.
+- 2026-06-22: keyboard order verified as search input, search button, then Basic/Standard/Premium actions.
+- 2026-06-22: Figma node `58:176` compared at pattern level: navy hero, trust strip, one-off pricing, CTA hierarchy, and footer rhythm retained; risk-score/subscription/recovery concepts excluded.
+- Fixture query support is development/test-only; production ignores `fixture`.
 
 ---
 
 ## Known Drift
 
-`apps/web/app/page.tsx` is a page-level Client Component with inline product components and raw slate/red/green/amber/white utilities. Feature 12 must extract components and replace raw colours with canonical tokens without changing behavior.
-
-### Current State Matrix
-
-| State | Current owner | Required presentation |
-| --- | --- | --- |
-| Search idle/loading/error/rate-limited | Search page | stable input, clear status, retry guidance |
-| Preview loading/error | Search page | preserved company context where possible |
-| Preview clean/adverse/standard | `FreePreview` | API-driven, never inferred from colour |
-| Paid CTA unavailable | tier/Court cards | disabled reason until checkout exists |
-| Provider failure | source banner/status | failure shown, never converted to clean |
+- No known token, dark-mode, raw-colour, or page-level Client Component drift in Feature 12.
+- Checkout actions intentionally remain unavailable until Feature 13.
 
 ---
 

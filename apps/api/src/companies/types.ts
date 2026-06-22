@@ -5,8 +5,9 @@ import type {
   InsolvencyDisqualifiedOfficersClient,
   LondonGazetteClient,
   ProviderName,
-  ProviderStatus,
 } from "@workspace/integrations";
+
+import type { ReportProductRepository } from "../report-products/repository.js";
 
 export interface CompanyAddressPayload {
   locality: string | undefined;
@@ -41,7 +42,7 @@ export interface CompanySearchResponsePayload {
   matches: CompanySearchMatchPayload[];
 }
 
-export type FreePreviewPath = "adverse" | "clean" | "standard";
+export type FreePreviewPath = "adverse" | "clean" | "source_failed" | "standard";
 
 export type FreePreviewAdverseFlag =
   | "insolvency"
@@ -49,17 +50,24 @@ export type FreePreviewAdverseFlag =
   | "gazette_strikeoff"
   | "gazette_windingup";
 
-export interface FreePreviewSourceStatus {
-  provider: ProviderName;
-  status: ProviderStatus;
-  checkedAt: string;
-}
+export type FreePreviewSourceStatus =
+  | {
+      provider: ProviderName;
+      status: "success";
+      checkedAt: string;
+    }
+  | {
+      provider: ProviderName;
+      status: "failed";
+      checkedAt: string;
+      message: "Data could not be retrieved";
+    };
 
 export interface FreePreviewFlagsPayload {
-  insolvencyFlag: boolean;
-  disqualifiedDirectorsFlag: boolean;
-  gazetteStrikeoffFlag: boolean;
-  gazetteWindingupFlag: boolean;
+  insolvencyFlag: boolean | null;
+  disqualifiedDirectorsFlag: boolean | null;
+  gazetteStrikeoffFlag: boolean | null;
+  gazetteWindingupFlag: boolean | null;
 }
 
 export interface FreePreviewBannerPayload {
@@ -131,6 +139,7 @@ export interface CompanyServiceDependencies {
   insolvencyDisqualifiedOfficersClient: InsolvencyDisqualifiedOfficersClient;
   companyRepository: CompanyRepository;
   searchLogRepository: SearchLogRepository;
+  reportProductRepository: ReportProductRepository;
 }
 
 export function toSearchMatchPayload(

@@ -31,6 +31,7 @@ export function createApiApp(
   registerCompanyRoutes(app, {
     companyService: dependencies.companyService,
     anonymousSearchRateLimiter: dependencies.anonymousSearchRateLimiter,
+    requestIdentityResolver: dependencies.requestIdentityResolver,
   });
 
   app.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {

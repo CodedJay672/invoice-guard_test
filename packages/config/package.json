@@ -4,20 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./web": "./src/web.ts"
   },
   "types": "./src/index.ts",
   "scripts": {
-    "build": "echo \"config build not configured yet\"",
+    "build": "tsc --noEmit",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"config tests not configured yet\"",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/node": "^25.9.1",
     "@workspace/eslint-config": "*",
     "@workspace/typescript-config": "*"
   }

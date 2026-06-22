@@ -4,13 +4,23 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["API_BASE_URL"],
+      "env": [
+        "API_BASE_URL",
+        "API_PROXY_TIMEOUT_MS",
+        "WEB_API_SHARED_SECRET",
+        "TRUSTED_CLIENT_IP_HEADER"
+      ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "env": ["API_BASE_URL"]
+      "env": [
+        "API_BASE_URL",
+        "API_PROXY_TIMEOUT_MS",
+        "WEB_API_SHARED_SECRET",
+        "TRUSTED_CLIENT_IP_HEADER"
+      ]
     },
     "test": {
       "dependsOn": ["^test"]

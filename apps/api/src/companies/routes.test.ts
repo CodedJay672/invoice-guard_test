@@ -5,6 +5,7 @@ import test from "node:test";
 
 import {
   createProviderSuccess,
+  createProviderFailure,
   MockCompaniesHouseClient,
   MockInsolvencyDisqualifiedOfficersClient,
   MockLondonGazetteClient,
@@ -22,14 +23,33 @@ import {
   type ProviderMode,
   type ProviderResult,
 } from "@workspace/integrations";
+import { createSignedClientIp, proxyIdentityHeaders } from "@workspace/utils";
 import express from "express";
 
 import { createApiApp } from "../app.js";
+import { createRequestIdentityResolver } from "../request-context.js";
+import { InMemoryReportProductRepository } from "../report-products/repository.js";
 
-import { InMemoryAnonymousSearchRateLimiter } from "./rate-limit.js";
+import {
+  InMemoryAnonymousSearchRateLimiter,
+  RedisAnonymousSearchRateLimiter,
+  type RedisRateLimitClient,
+} from "./rate-limit.js";
 import { InMemoryCompanyRepository, InMemorySearchLogRepository } from "./repository.js";
 import { registerCompanyRoutes } from "./routes.js";
 import { CompanyService } from "./service.js";
+
+const testHashSecret = "invoiceguard-test-search-hash-secret-123456";
+const testProxySecret = "invoiceguard-test-proxy-shared-secret-123456";
+
+function createTestIdentityResolver(
+  webApiSharedSecret?: string,
+): ReturnType<typeof createRequestIdentityResolver> {
+  return createRequestIdentityResolver({
+    webApiSharedSecret,
+    searchIpHashSecret: testHashSecret,
+  });
+}
 
 void test("GET /companies/search returns normalized company matches", async () => {
   const { baseUrl, close } = await startTestServer();
@@ -135,6 +155,81 @@ void test("GET /companies/:companyNumber/free-preview returns adverse banners", 
   await close();
 });
 
+void test("free preview never represents a failed source as clean", async () => {
+  const companyService = new CompanyService({
+    companiesHouseClient: new MockCompaniesHouseClient(),
+    londonGazetteClient: new FailedLondonGazetteClient(),
+    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
+    companyRepository: new InMemoryCompanyRepository(),
+    searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
+  });
+  const app = createApiApp({
+    companyService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+    requestIdentityResolver: createTestIdentityResolver(),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const response = await fetch(`${baseUrl}/companies/12345678/free-preview`);
+  const body = (await response.json()) as {
+    data: {
+      preview: {
+        previewPath: string;
+        cleanReassurance?: string;
+        freeSourceFlags: { gazetteStrikeoffFlag: boolean | null };
+        sourceStatuses: Array<{ provider: string; status: string; message?: string }>;
+      };
+    };
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.preview.previewPath, "source_failed");
+  assert.equal(body.data.preview.cleanReassurance, undefined);
+  assert.equal(body.data.preview.freeSourceFlags.gazetteStrikeoffFlag, null);
+  assert.deepEqual(
+    body.data.preview.sourceStatuses.find((source) => source.provider === "london_gazette"),
+    {
+      provider: "london_gazette",
+      status: "failed",
+      checkedAt: "2026-01-01T00:00:00.000Z",
+      message: "Data could not be retrieved",
+    },
+  );
+
+  await close();
+});
+
+void test("adverse findings remain visible when another source fails", async () => {
+  const companyService = new CompanyService({
+    companiesHouseClient: new MockCompaniesHouseClient(),
+    londonGazetteClient: new FailedLondonGazetteClient(),
+    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
+    companyRepository: new InMemoryCompanyRepository(),
+    searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
+  });
+  const app = createApiApp({
+    companyService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+    requestIdentityResolver: createTestIdentityResolver(),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const response = await fetch(`${baseUrl}/companies/87654321/free-preview`);
+  const body = (await response.json()) as {
+    data: { preview: { previewPath: string; adverseBanners: Array<{ flag: string }> } };
+  };
+
+  assert.equal(body.data.preview.previewPath, "adverse");
+  assert.equal(
+    body.data.preview.adverseBanners.some((banner) => banner.flag === "insolvency"),
+    true,
+  );
+
+  await close();
+});
+
 void test("GET /companies/:companyNumber/free-preview validates company number", async () => {
   const { baseUrl, close } = await startTestServer();
 
@@ -168,10 +263,12 @@ void test("free preview clean path is only used for active companies", async () 
     insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository,
+    reportProductRepository: new InMemoryReportProductRepository(),
   });
   const app = createApiApp({
     companyService,
     anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+    requestIdentityResolver: createTestIdentityResolver(),
   });
   const { baseUrl, close } = await listen(app);
 
@@ -194,10 +291,12 @@ void test("free preview calls only the three approved provider clients", async (
     insolvencyDisqualifiedOfficersClient,
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
   });
   const app = createApiApp({
     companyService,
     anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+    requestIdentityResolver: createTestIdentityResolver(),
   });
   const { baseUrl, close } = await listen(app);
 
@@ -241,6 +340,19 @@ void test("GET /companies/search blocks the 6th anonymous search in a 24 hour wi
   await close();
 });
 
+void test("Redis rate limiting performs increment and expiry in one atomic operation", async () => {
+  const redis = new FakeRedisRateLimitClient();
+  const limiter = new RedisAnonymousSearchRateLimiter(redis, 5, 86_400);
+
+  const result = await limiter.check("hashed-ip");
+
+  assert.equal(result.allowed, true);
+  assert.equal(result.remaining, 4);
+  assert.equal(redis.calls.length, 1);
+  assert.match(redis.calls[0]?.script ?? "", /INCR/);
+  assert.match(redis.calls[0]?.script ?? "", /EXPIRE/);
+});
+
 void test("GET /companies/search bypasses anonymous rate limits for trusted auth context", async () => {
   const searchLogRepository = new InMemorySearchLogRepository();
   const companyService = new CompanyService({
@@ -249,6 +361,7 @@ void test("GET /companies/search bypasses anonymous rate limits for trusted auth
     insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository,
+    reportProductRepository: new InMemoryReportProductRepository(),
   });
   const app = express();
 
@@ -260,6 +373,7 @@ void test("GET /companies/search bypasses anonymous rate limits for trusted auth
   registerCompanyRoutes(app, {
     companyService,
     anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(1),
+    requestIdentityResolver: createTestIdentityResolver(),
   });
 
   const { baseUrl, close } = await listen(app);
@@ -274,7 +388,65 @@ void test("GET /companies/search bypasses anonymous rate limits for trusted auth
   await close();
 });
 
-void test("search logs store a hashed IP and selected company number", async () => {
+void test("forged forwarding headers cannot bypass anonymous rate limits", async () => {
+  const companyService = new CompanyService({
+    companiesHouseClient: new MockCompaniesHouseClient(),
+    londonGazetteClient: new MockLondonGazetteClient(),
+    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
+    companyRepository: new InMemoryCompanyRepository(),
+    searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
+  });
+  const app = createApiApp({
+    companyService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(1),
+    requestIdentityResolver: createTestIdentityResolver(testProxySecret),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const firstResponse = await fetch(`${baseUrl}/companies/search?q=acme`, {
+    headers: { "x-forwarded-for": "203.0.113.10" },
+  });
+  const secondResponse = await fetch(`${baseUrl}/companies/search?q=acme`, {
+    headers: { "x-forwarded-for": "203.0.113.11" },
+  });
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(secondResponse.status, 429);
+
+  await close();
+});
+
+void test("valid signed proxy identities receive independent anonymous limits", async () => {
+  const companyService = new CompanyService({
+    companiesHouseClient: new MockCompaniesHouseClient(),
+    londonGazetteClient: new MockLondonGazetteClient(),
+    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
+    companyRepository: new InMemoryCompanyRepository(),
+    searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
+  });
+  const app = createApiApp({
+    companyService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(1),
+    requestIdentityResolver: createTestIdentityResolver(testProxySecret),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const firstResponse = await fetch(`${baseUrl}/companies/search?q=acme`, {
+    headers: toProxyHeaders(createSignedClientIp("203.0.113.10", testProxySecret)),
+  });
+  const secondResponse = await fetch(`${baseUrl}/companies/search?q=acme`, {
+    headers: toProxyHeaders(createSignedClientIp("203.0.113.11", testProxySecret)),
+  });
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(secondResponse.status, 200);
+
+  await close();
+});
+
+void test("free preview selections store a hashed IP and selected company number", async () => {
   const searchLogRepository = new InMemorySearchLogRepository();
   const { baseUrl, close } = await startTestServer(searchLogRepository);
 
@@ -283,7 +455,7 @@ void test("search logs store a hashed IP and selected company number", async () 
       "x-forwarded-for": "203.0.113.10",
     },
   });
-  await fetch(`${baseUrl}/companies/12345678`, {
+  await fetch(`${baseUrl}/companies/12345678/free-preview`, {
     headers: {
       "x-forwarded-for": "203.0.113.10",
     },
@@ -291,7 +463,7 @@ void test("search logs store a hashed IP and selected company number", async () 
 
   assert.equal(searchLogRepository.entries.length, 2);
   assert.notEqual(searchLogRepository.entries[0]?.ipHash, "203.0.113.10");
-  assert.equal(searchLogRepository.entries[0]?.ipHash?.length, 32);
+  assert.equal(searchLogRepository.entries[0]?.ipHash?.length, 64);
   assert.equal(searchLogRepository.entries[1]?.selectedCompaniesHouseNumber, "12345678");
 
   await close();
@@ -306,11 +478,13 @@ async function startTestServer(
     insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository,
+    reportProductRepository: new InMemoryReportProductRepository(),
   });
 
   const app = createApiApp({
     companyService,
     anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+    requestIdentityResolver: createTestIdentityResolver(),
   });
 
   return listen(app);
@@ -421,6 +595,36 @@ class CountingLondonGazetteClient implements LondonGazetteClient {
   }
 }
 
+class FailedLondonGazetteClient implements LondonGazetteClient {
+  readonly mode: ProviderMode = "mock";
+
+  readonly provider = "london_gazette" as const;
+
+  checkCompanyNotices(): Promise<ProviderResult<LondonGazetteFreePreviewFlags>> {
+    return Promise.resolve(
+      createProviderFailure(
+        this.provider,
+        {
+          code: "integration_timeout",
+          message: "London Gazette request timed out.",
+          retryable: true,
+        },
+        "2026-01-01T00:00:00.000Z",
+      ),
+    );
+  }
+}
+
+class FakeRedisRateLimitClient implements RedisRateLimitClient {
+  readonly calls: Array<{ script: string; numberOfKeys: number; args: string[] }> = [];
+
+  eval(script: string, numberOfKeys: number, ...args: string[]): Promise<unknown> {
+    this.calls.push({ script, numberOfKeys, args });
+
+    return Promise.resolve([1, 86_400]);
+  }
+}
+
 class CountingInsolvencyDisqualifiedOfficersClient implements InsolvencyDisqualifiedOfficersClient {
   readonly mode: ProviderMode = "mock";
 
@@ -469,5 +673,17 @@ async function listen(app: { listen: (port: number) => unknown }): Promise<{
           resolve();
         });
       }),
+  };
+}
+
+function toProxyHeaders(identity: {
+  clientIp: string;
+  signature: string;
+  timestamp: string;
+}): Record<string, string> {
+  return {
+    [proxyIdentityHeaders.clientIp]: identity.clientIp,
+    [proxyIdentityHeaders.signature]: identity.signature,
+    [proxyIdentityHeaders.timestamp]: identity.timestamp,
   };
 }

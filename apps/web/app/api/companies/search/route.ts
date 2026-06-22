@@ -1,14 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
-const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:4000";
+import { proxyApiGet } from "@/lib/api-proxy";
 
-export async function GET(request: NextRequest) {
+export function GET(request: NextRequest): Promise<Response> {
   const query = request.nextUrl.searchParams.get("q") ?? "";
-  const response = await fetch(`${apiBaseUrl}/companies/search?q=${encodeURIComponent(query)}`, {
-    headers: {
-      "x-forwarded-for": request.headers.get("x-forwarded-for") ?? "",
-    },
-  });
 
-  return NextResponse.json((await response.json()) as unknown, { status: response.status });
+  return proxyApiGet(request, `/companies/search?q=${encodeURIComponent(query)}`);
 }

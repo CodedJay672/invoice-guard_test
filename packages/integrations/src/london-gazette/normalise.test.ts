@@ -31,3 +31,9 @@ void test("London Gazette normalisation returns structured provider failure", ()
     "integration_invalid_response",
   );
 });
+
+void test("London Gazette normalisation rejects an evidence-free object", () => {
+  const result = normaliseLondonGazetteResponse("12345678", {});
+
+  assert.equal(result.status, "failed");
+});

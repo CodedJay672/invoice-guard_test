@@ -22,6 +22,7 @@ export const purchasedReportStatusEnum = pgEnum("purchased_report_status", [
   "pending",
   "generating",
   "ready",
+  "partial",
   "failed",
   "refund_required",
   "refunded",
@@ -32,7 +33,6 @@ export const providerStatusEnum = pgEnum("provider_status", ["success", "failed"
 export const snapshotSourceContextEnum = pgEnum("snapshot_source_context", [
   "free_preview",
   "paid_report",
-  "watchlist",
 ]);
 
 export const companies = pgTable(
@@ -200,7 +200,7 @@ export const providerUsageLogs = pgTable(
     operation: varchar("operation", { length: 120 }).notNull(),
     companiesHouseNumber: varchar("companies_house_number", { length: 16 }),
     reportId: uuid("report_id"),
-    subscriptionTier: varchar("subscription_tier", { length: 80 }),
+    reportTier: reportTierEnum("report_tier"),
     estimatedCostPence: integer("estimated_cost_pence"),
     status: providerStatusEnum("status").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

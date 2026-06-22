@@ -26,7 +26,7 @@ The AI agent on this project operates as a senior engineer. This means:
 
 ---
 
-## Next.js 16.2.2 and React 19
+## Next.js 16.2.6 and React 19
 
 - Read the relevant guide in `node_modules/next/dist/docs/` before Next work.
 - App Router only.
@@ -73,7 +73,8 @@ export function ComponentName({ jobId, matchScore }: Props) {
 }
 ```
 
-- Never use default exports for components — always named exports
+- Never use default exports for components. Next.js special files that require a default export
+  (`page.tsx`, `layout.tsx`, `loading.tsx`, and `error.tsx`) are the only exception.
 - Props type defined directly above the component — not in a separate types file unless shared
 - No inline styles — all styling via Tailwind classes using CSS variables from ui-tokens.md
 

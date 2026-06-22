@@ -17,11 +17,17 @@ const noticeSchema = z.object({
   url: z.string().optional(),
 });
 
-const gazetteResponseSchema = z.object({
-  notices: z.array(noticeSchema).optional(),
-  entries: z.array(noticeSchema).optional(),
-  results: z.array(noticeSchema).optional(),
-});
+const gazetteResponseSchema = z
+  .object({
+    notices: z.array(noticeSchema).optional(),
+    entries: z.array(noticeSchema).optional(),
+    results: z.array(noticeSchema).optional(),
+  })
+  .refine(
+    (value) =>
+      value.notices !== undefined || value.entries !== undefined || value.results !== undefined,
+    "London Gazette response did not include a notice collection.",
+  );
 
 export function normaliseLondonGazetteResponse(
   companyNumber: string,

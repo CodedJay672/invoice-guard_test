@@ -1,4 +1,4 @@
-import type { ProviderFailed } from "@workspace/integrations";
+import type { ProviderFailed, ProviderResult } from "@workspace/integrations";
 
 import type {
   CompanyPayload,
@@ -8,7 +8,7 @@ import type {
   FreePreviewBannerPayload,
   FreePreviewCuriosityCardPayload,
   FreePreviewPayload,
-  FreePreviewTierCardPayload,
+  FreePreviewSourceStatus,
 } from "./types.js";
 import { toSearchMatchPayload } from "./types.js";
 
@@ -60,30 +60,49 @@ export class CompanyService {
     }
 
     const company = await this.dependencies.companyRepository.upsertCompany(companyResult.data);
+    const reportProducts = await this.dependencies.reportProductRepository.listActive();
     const freeSourceFlags = {
       insolvencyFlag:
-        insolvencyResult.status === "success" ? insolvencyResult.data.insolvencyFlag : false,
+        insolvencyResult.status === "success" ? insolvencyResult.data.insolvencyFlag : null,
       disqualifiedDirectorsFlag:
         insolvencyResult.status === "success"
           ? insolvencyResult.data.disqualifiedDirectorsFlag
-          : false,
+          : null,
       gazetteStrikeoffFlag:
         londonGazetteResult.status === "success"
           ? londonGazetteResult.data.gazetteStrikeoffFlag
-          : false,
+          : null,
       gazetteWindingupFlag:
         londonGazetteResult.status === "success"
           ? londonGazetteResult.data.gazetteWindingupFlag
-          : false,
+          : null,
     };
     const adverseBanners = buildAdverseBanners(freeSourceFlags);
+    const sourceStatuses = [
+      toFreePreviewSourceStatus(companyResult),
+      toFreePreviewSourceStatus(insolvencyResult),
+      toFreePreviewSourceStatus(londonGazetteResult),
+    ];
+    const hasSourceFailure = sourceStatuses.some((source) => source.status === "failed");
+    const allFreeSourceFlagsAreFalse = Object.values(freeSourceFlags).every(
+      (flag) => flag === false,
+    );
     const isClean =
-      adverseBanners.length === 0 && company.companyStatus.trim().toLowerCase() === "active";
+      !hasSourceFailure &&
+      allFreeSourceFlagsAreFalse &&
+      company.companyStatus.trim().toLowerCase() === "active";
 
     return {
       company,
       companyAge: describeCompanyAge(company.incorporationDate),
-      previewPath: adverseBanners.length > 0 ? "adverse" : isClean ? "clean" : "standard",
+      previewPath:
+        adverseBanners.length > 0
+          ? "adverse"
+          : hasSourceFailure
+            ? "source_failed"
+            : isClean
+              ? "clean"
+              : "standard",
       freeSourceFlags,
       adverseBanners,
       cleanReassurance: isClean
@@ -98,24 +117,15 @@ export class CompanyService {
         smallText: "Included in all paid reports. Basic from £7.99.",
       },
       curiosityCards: isClean ? buildCuriosityCards(company.activeDirectorCount) : [],
-      tierCards: buildTierCards(),
-      sourceStatuses: [
-        {
-          provider: companyResult.provider,
-          status: companyResult.status,
-          checkedAt: companyResult.checkedAt,
-        },
-        {
-          provider: insolvencyResult.provider,
-          status: insolvencyResult.status,
-          checkedAt: insolvencyResult.checkedAt,
-        },
-        {
-          provider: londonGazetteResult.provider,
-          status: londonGazetteResult.status,
-          checkedAt: londonGazetteResult.checkedAt,
-        },
-      ],
+      tierCards: reportProducts.map((product) => ({
+        tier: product.tier,
+        name: product.name,
+        price: formatPrice(product.pricePence),
+        includesPdf: product.includesPdf,
+        includedItems: product.includedItems,
+        cta: `Unlock ${product.name} Report`,
+      })),
+      sourceStatuses,
     };
   }
 
@@ -131,10 +141,10 @@ export class CompanyService {
 }
 
 function buildAdverseBanners(flags: {
-  insolvencyFlag: boolean;
-  disqualifiedDirectorsFlag: boolean;
-  gazetteStrikeoffFlag: boolean;
-  gazetteWindingupFlag: boolean;
+  insolvencyFlag: boolean | null;
+  disqualifiedDirectorsFlag: boolean | null;
+  gazetteStrikeoffFlag: boolean | null;
+  gazetteWindingupFlag: boolean | null;
 }): FreePreviewBannerPayload[] {
   const banners: FreePreviewBannerPayload[] = [];
   const copy: Record<FreePreviewAdverseFlag, string> = {
@@ -165,6 +175,23 @@ function buildAdverseBanners(flags: {
   }
 
   return banners;
+}
+
+function toFreePreviewSourceStatus(result: ProviderResult<unknown>): FreePreviewSourceStatus {
+  if (result.status === "failed") {
+    return {
+      provider: result.provider,
+      status: "failed",
+      checkedAt: result.checkedAt,
+      message: "Data could not be retrieved",
+    };
+  }
+
+  return {
+    provider: result.provider,
+    status: "success",
+    checkedAt: result.checkedAt,
+  };
 }
 
 function buildCuriosityCards(
@@ -206,45 +233,11 @@ function buildCuriosityCards(
   ];
 }
 
-function buildTierCards(): FreePreviewTierCardPayload[] {
-  return [
-    {
-      tier: "basic" as const,
-      name: "Basic",
-      price: "£7.99",
-      includesPdf: false,
-      includedItems: [
-        "Court records check",
-        "Director names and appointment dates",
-        "Registered address history",
-      ],
-      cta: "Unlock Basic Report",
-    },
-    {
-      tier: "standard" as const,
-      name: "Standard",
-      price: "£14.99",
-      includesPdf: false,
-      includedItems: [
-        "Everything in Basic",
-        "CCJ amounts and satisfaction status",
-        "Recent filings and registered charges",
-      ],
-      cta: "Unlock Standard Report",
-    },
-    {
-      tier: "premium" as const,
-      name: "Premium",
-      price: "£27.00",
-      includesPdf: true,
-      includedItems: [
-        "Everything in Standard",
-        "Director and insolvency depth checks",
-        "Branded PDF and timestamped reference",
-      ],
-      cta: "Unlock Premium Report",
-    },
-  ];
+function formatPrice(pricePence: number): string {
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+  }).format(pricePence / 100);
 }
 
 function describeCompanyAge(incorporationDate: string | undefined): string | undefined {

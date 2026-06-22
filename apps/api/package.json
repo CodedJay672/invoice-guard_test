@@ -16,6 +16,7 @@
     "@workspace/db": "*",
     "@workspace/integrations": "*",
     "@workspace/logger": "*",
+    "@workspace/utils": "*",
     "@workspace/validation": "*",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",

@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./companies": "./src/companies.ts"
   },
   "scripts": {
-    "build": "echo \"validation build not configured yet\"",
+    "build": "tsc --noEmit",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"validation tests not configured yet\"",
+    "test": "npm run typecheck",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

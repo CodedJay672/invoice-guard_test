@@ -16,13 +16,23 @@ const officerSchema = z.object({
   disqualifiedUntil: z.string().optional(),
 });
 
-const responseSchema = z.object({
-  insolvencyFlag: z.boolean().optional(),
-  hasInsolvency: z.boolean().optional(),
-  disqualifiedDirectorsFlag: z.boolean().optional(),
-  hasDisqualifiedDirectors: z.boolean().optional(),
-  disqualifiedOfficers: z.array(officerSchema).optional(),
-});
+const responseSchema = z
+  .object({
+    insolvencyFlag: z.boolean().optional(),
+    hasInsolvency: z.boolean().optional(),
+    disqualifiedDirectorsFlag: z.boolean().optional(),
+    hasDisqualifiedDirectors: z.boolean().optional(),
+    disqualifiedOfficers: z.array(officerSchema).optional(),
+  })
+  .refine(
+    (value) =>
+      value.insolvencyFlag !== undefined ||
+      value.hasInsolvency !== undefined ||
+      value.disqualifiedDirectorsFlag !== undefined ||
+      value.hasDisqualifiedDirectors !== undefined ||
+      value.disqualifiedOfficers !== undefined,
+    "Insolvency response did not include evidence fields.",
+  );
 
 export function normaliseInsolvencyDisqualifiedOfficersResponse(
   companyNumber: string,

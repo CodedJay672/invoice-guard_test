@@ -9,14 +9,17 @@
   },
   "types": "./src/index.ts",
   "scripts": {
-    "build": "echo \"db build not configured yet\"",
+    "build": "tsc --noEmit",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "echo \"db tests not configured yet\"",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
   }
 }

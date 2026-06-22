@@ -9,6 +9,8 @@ const appConfigSchema = z.object({
   ADMIN_EMAIL: z.string().email().optional(),
   DATABASE_URL: z.string().min(1).optional(),
   REDIS_URL: z.string().min(1).optional(),
+  WEB_API_SHARED_SECRET: z.string().min(32).optional(),
+  SEARCH_IP_HASH_SECRET: z.string().min(32).optional(),
   CLERK_SECRET_KEY: z.string().min(1).optional(),
   CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
@@ -45,6 +47,8 @@ export interface AppConfig {
   adminAlertEmail: string | undefined;
   databaseUrl: string | undefined;
   redisUrl: string | undefined;
+  webApiSharedSecret: string | undefined;
+  searchIpHashSecret: string | undefined;
   clerkSecretKey: string | undefined;
   clerkPublishableKey: string | undefined;
   stripeSecretKey: string | undefined;
@@ -74,6 +78,8 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     adminAlertEmail: parsed.ADMIN_ALERT_EMAIL,
     databaseUrl: parsed.DATABASE_URL,
     redisUrl: parsed.REDIS_URL,
+    webApiSharedSecret: parsed.WEB_API_SHARED_SECRET,
+    searchIpHashSecret: parsed.SEARCH_IP_HASH_SECRET,
     clerkSecretKey: parsed.CLERK_SECRET_KEY,
     clerkPublishableKey: parsed.CLERK_PUBLISHABLE_KEY,
     stripeSecretKey: parsed.STRIPE_SECRET_KEY,
@@ -92,6 +98,42 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     insolvencyDisqualifiedOfficersTimeoutMs: parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_TIMEOUT_MS,
     enableFlagSummary: readBooleanFlag(parsed.ENABLE_FLAG_SUMMARY, false),
   };
+}
+
+export function assertApiProductionConfig(config: AppConfig): void {
+  if (config.environment !== "production") {
+    return;
+  }
+
+  const missing = [
+    ["DATABASE_URL", config.databaseUrl],
+    ["REDIS_URL", config.redisUrl],
+    ["WEB_API_SHARED_SECRET", config.webApiSharedSecret],
+    ["SEARCH_IP_HASH_SECRET", config.searchIpHashSecret],
+  ]
+    .filter((entry) => !entry[1])
+    .map((entry) => entry[0]);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing production API configuration: ${missing.join(", ")}.`);
+  }
+}
+
+export function assertWorkerProductionConfig(config: AppConfig): void {
+  if (config.environment !== "production") {
+    return;
+  }
+
+  const missing = [
+    ["DATABASE_URL", config.databaseUrl],
+    ["REDIS_URL", config.redisUrl],
+  ]
+    .filter((entry) => !entry[1])
+    .map((entry) => entry[0]);
+
+  if (missing.length > 0) {
+    throw new Error(`Missing production worker configuration: ${missing.join(", ")}.`);
+  }
 }
 
 export function requireConfigValue(value: string | undefined, name: string): string {
