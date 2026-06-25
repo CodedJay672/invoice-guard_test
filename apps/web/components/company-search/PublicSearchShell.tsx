@@ -1,4 +1,4 @@
-import { Building2, CheckCircle2, Database, FileSearch } from "lucide-react";
+import { CheckCircle2, Database, FileSearch } from "lucide-react";
 
 type PublicSearchShellProps = {
   children: React.ReactNode;
@@ -6,19 +6,7 @@ type PublicSearchShellProps = {
 
 export function PublicSearchShell({ children }: PublicSearchShellProps) {
   return (
-    <main className="min-h-svh bg-page text-content">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex shrink-0 items-center gap-2 font-semibold text-brand-navy">
-            <Building2 aria-hidden="true" className="size-5 text-brand-teal-hover" />
-            <span>InvoiceGuard</span>
-          </div>
-          <p className="text-right text-xs font-medium text-content-muted sm:text-sm">
-            One-off reports from £7.99
-          </p>
-        </div>
-      </header>
-
+    <>
       <section className="bg-brand-navy text-content-inverse">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
           <p className="text-xs font-semibold tracking-wider text-brand-teal uppercase">
@@ -50,7 +38,7 @@ export function PublicSearchShell({ children }: PublicSearchShellProps) {
           <p>It does not provide credit, financial, or legal advice.</p>
         </div>
       </footer>
-    </main>
+    </>
   );
 }
 

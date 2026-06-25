@@ -82,3 +82,21 @@
     @apply bg-page text-content;
   }
 }
+
+@layer utilities {
+  .page-title-pill {
+    @apply flex w-max items-center gap-2 rounded-full bg-brand-teal/10 px-3.5 py-1.75 text-brand-teal uppercase;
+  }
+}
+
+@utility flex-between {
+  display: flex;
+  justify-content: "space-between";
+  align-items: "center";
+}
+
+@utility flex-center {
+  display: flex;
+  justify-content: "center";
+  align-items: "center";
+}
