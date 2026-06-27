@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -48,15 +48,23 @@ import {
 
 type CompanySearchExperienceProps = {
   fixtureName?: SearchFixtureName | undefined;
+  initialCompanyNumber?: string | undefined;
+  initialQuery?: string | undefined;
 };
 
-export function CompanySearchExperience({ fixtureName }: CompanySearchExperienceProps) {
+export function CompanySearchExperience({
+  fixtureName,
+  initialCompanyNumber,
+  initialQuery,
+}: CompanySearchExperienceProps) {
   const initialState = getSearchFixtureState(fixtureName);
-  const [query, setQuery] = useState(initialState.query);
+  const [query, setQuery] = useState(initialQuery ?? initialState.query);
   const [matches, setMatches] = useState(initialState.matches);
   const [preview, setPreview] = useState(initialState.preview);
   const [searchStatus, setSearchStatus] = useState<SearchStatus>(initialState.searchStatus);
-  const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(initialState.previewStatus);
+  const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(
+    initialCompanyNumber && !fixtureName ? "loading" : initialState.previewStatus,
+  );
   const [message, setMessage] = useState(initialState.message);
   const [tierMessage, setTierMessage] = useState<string>();
 
@@ -108,41 +116,31 @@ export function CompanySearchExperience({ fixtureName }: CompanySearchExperience
     }
   }
 
-  async function loadPreview(companyNumber: string): Promise<void> {
-    setPreviewStatus("loading");
-    setMessage(undefined);
-
-    try {
-      const response = await fetch(
-        `/api/companies/${encodeURIComponent(companyNumber)}/free-preview`,
-      );
-      const body = (await response.json()) as unknown;
-
-      if (!response.ok) {
-        const error = apiErrorResponseSchema.safeParse(body);
-
-        setPreviewStatus("error");
-        setMessage(
-          error.success
-            ? error.data.error.message
-            : "Free preview could not be retrieved right now.",
-        );
-        return;
-      }
-
-      const parsed = freePreviewApiResponseSchema.safeParse(body);
-
-      if (!parsed.success) {
-        throw new Error("Free preview returned an invalid response.");
-      }
-
-      setPreview(parsed.data.data.preview);
-      setPreviewStatus("ready");
-    } catch {
+  const applyPreviewResult = useCallback((result: PreviewRequestResult): void => {
+    if (result.status === "failed") {
       setPreviewStatus("error");
-      setMessage("Free preview could not be retrieved right now.");
+      setMessage(result.message);
+      return;
     }
-  }
+
+    setPreview(result.preview);
+    setPreviewStatus("ready");
+  }, []);
+
+  const loadPreview = useCallback(
+    async (companyNumber: string): Promise<void> => {
+      setPreviewStatus("loading");
+      setMessage(undefined);
+      applyPreviewResult(await requestFreePreview(companyNumber));
+    },
+    [applyPreviewResult],
+  );
+
+  useEffect(() => {
+    if (initialCompanyNumber && !fixtureName) {
+      void requestFreePreview(initialCompanyNumber).then(applyPreviewResult);
+    }
+  }, [applyPreviewResult, fixtureName, initialCompanyNumber]);
 
   const tierCards = preview?.tierCards ?? fallbackTierCards;
 
@@ -676,4 +674,36 @@ function providerLabel(provider: FreePreviewPayload["sourceStatuses"][number]["p
   } as const;
 
   return labels[provider];
+}
+
+type PreviewRequestResult =
+  | { status: "success"; preview: FreePreviewPayload }
+  | { status: "failed"; message: string };
+
+async function requestFreePreview(companyNumber: string): Promise<PreviewRequestResult> {
+  try {
+    const response = await fetch(
+      `/api/companies/${encodeURIComponent(companyNumber)}/free-preview`,
+    );
+    const body = (await response.json()) as unknown;
+
+    if (!response.ok) {
+      const error = apiErrorResponseSchema.safeParse(body);
+
+      return {
+        status: "failed",
+        message: error.success
+          ? error.data.error.message
+          : "Free preview could not be retrieved right now.",
+      };
+    }
+
+    const parsed = freePreviewApiResponseSchema.safeParse(body);
+
+    return parsed.success
+      ? { status: "success", preview: parsed.data.data.preview }
+      : { status: "failed", message: "Free preview could not be retrieved right now." };
+  } catch {
+    return { status: "failed", message: "Free preview could not be retrieved right now." };
+  }
 }

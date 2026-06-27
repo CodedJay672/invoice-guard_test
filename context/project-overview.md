@@ -21,7 +21,8 @@ InvoiceGuard does not issue credit scores, approve or reject companies, or provi
 ## Active Routes
 
 ```text
-/                                      -> Company search and free preview
+/                                      -> Phase A landing page with company autocomplete
+/search?companyNumber=&q=              -> Company search, selected-company preview, and report tiers
 /api/companies/search                  -> Next.js proxy to Express
 /api/companies/[companyNumber]/free-preview
                                        -> Next.js proxy to Express
@@ -55,8 +56,8 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 ### Search and Free Preview
 
-1. Visitor searches by registered name or Companies House number.
-2. Companies House number becomes the canonical identity.
+1. Visitor searches by registered name or Companies House number from the landing page or search page.
+2. Landing-page suggestions require selection of a Companies House entity; its company number becomes the canonical identity passed to `/search`.
 3. Anonymous visitors are limited to five searches per hashed IP per 24 hours.
 4. Free preview calls exactly Companies House, the configured insolvency/disqualified-officer source, and London Gazette.
 5. Registry Trust is never called before payment.

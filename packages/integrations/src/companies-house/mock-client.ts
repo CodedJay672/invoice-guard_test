@@ -12,6 +12,8 @@ import type {
   CompaniesHouseCompanyProfile,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
+  CompaniesHouseInsolvencyFoundation,
+  CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
   CompaniesHouseSearchResult,
 } from "./types.js";
@@ -104,6 +106,17 @@ export class MockCompaniesHouseClient implements CompaniesHouseClient {
     );
   }
 
+  getRegisteredOfficeAddress(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseRegisteredOfficeAddress>> {
+    return Promise.resolve(
+      createProviderSuccess(
+        this.provider,
+        findMockCompany(input.companyNumber).registeredOfficeAddress,
+      ),
+    );
+  }
+
   getFilingHistory(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseFilingHistoryFoundation>> {
@@ -122,6 +135,18 @@ export class MockCompaniesHouseClient implements CompaniesHouseClient {
       createProviderSuccess(this.provider, {
         companiesHouseNumber: input.companyNumber,
         charges: [],
+      }),
+    );
+  }
+
+  getInsolvency(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseInsolvencyFoundation>> {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: input.companyNumber,
+        cases: [],
+        status: "none",
       }),
     );
   }

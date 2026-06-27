@@ -1,14 +1,12 @@
-import Topbar from '@/components/topbar'
-import React from 'react'
+import type { ReactNode } from "react";
 
-function LandingpageLayout({ children }: { children: React.ReactNode }) {
+import Topbar from "@/components/topbar";
+
+export default function LandingPageLayout({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-svh bg-page text-content relative">
+    <div className="min-h-svh bg-page text-content">
       <Topbar />
-      {children}
-    </main>
-
-  )
+      <main>{children}</main>
+    </div>
+  );
 }
-
-export default LandingpageLayout

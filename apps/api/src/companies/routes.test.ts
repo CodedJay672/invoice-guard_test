@@ -12,6 +12,8 @@ import {
   type CompaniesHouseClient,
   type CompaniesHouseCompanyNumberInput,
   type CompaniesHouseCompanyProfile,
+  type CompaniesHouseInsolvencyFoundation,
+  type CompaniesHouseRegisteredOfficeAddress,
   type CompaniesHouseSearchInput,
   type CompaniesHouseSearchResult,
   type InsolvencyDisqualifiedOfficersClient,
@@ -522,6 +524,12 @@ class SingleCompanyCompaniesHouseClient implements CompaniesHouseClient {
     );
   }
 
+  getRegisteredOfficeAddress(): Promise<ProviderResult<CompaniesHouseRegisteredOfficeAddress>> {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, this.company.registeredOfficeAddress),
+    );
+  }
+
   getFilingHistory(): Promise<
     ProviderResult<{ companiesHouseNumber: string; filings: unknown[] }>
   > {
@@ -538,6 +546,16 @@ class SingleCompanyCompaniesHouseClient implements CompaniesHouseClient {
       createProviderSuccess(this.provider, {
         companiesHouseNumber: this.company.companiesHouseNumber,
         charges: [],
+      }),
+    );
+  }
+
+  getInsolvency(): Promise<ProviderResult<CompaniesHouseInsolvencyFoundation>> {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: this.company.companiesHouseNumber,
+        cases: [],
+        status: "none",
       }),
     );
   }

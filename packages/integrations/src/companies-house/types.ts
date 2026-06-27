@@ -22,6 +22,12 @@ export interface CompaniesHouseRegisteredOfficeAddress {
   country: string | undefined;
 }
 
+export interface CompaniesHouseInsolvencyFoundation {
+  companiesHouseNumber: string;
+  cases: unknown[];
+  status: string | undefined;
+}
+
 export interface CompaniesHouseCompanySummary {
   companiesHouseNumber: string;
   companyName: string;
@@ -62,6 +68,9 @@ export interface CompaniesHouseClient {
   getCompanyProfile(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseCompanyProfile>>;
+  getRegisteredOfficeAddress(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseRegisteredOfficeAddress>>;
   getActiveOfficerCount(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseOfficerCount>>;
@@ -71,4 +80,7 @@ export interface CompaniesHouseClient {
   getCharges(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseChargesFoundation>>;
+  getInsolvency(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseInsolvencyFoundation>>;
 }

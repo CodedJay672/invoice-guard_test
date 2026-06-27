@@ -16,6 +16,8 @@ Update after every completed feature. Record actual state only.
 
 **Status:** Feature 12 complete; 12A recorded as `UI/Mock Verified`
 
+**Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
+
 ### Current Unit Scope
 
 13A designs checkout and payment states with deterministic fixtures only. Stripe and report creation remain blocked until the 13A physical-verification gate is recorded.
@@ -76,6 +78,8 @@ Update after every completed feature. Record actual state only.
 - Mock/live-shaped Companies House, London Gazette, and insolvency/disqualified-officer adapters.
 - Search/profile/free-preview API, atomic Redis/in-memory rate limiting, signed proxy identity, and HMAC-hashed search logs.
 - Server-authoritative one-off report products and working clean/adverse/standard/source-failure preview UI.
+- Phase A landing page with debounced Companies House suggestions and canonical company selection into `/search`.
+- Live Companies House adapter support for alphabetical search, registered-office-address, profile, officers, filing history, charges, and insolvency endpoints.
 - Development-only deterministic fixtures for all Feature 12 states.
 
 ---
@@ -113,6 +117,7 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 - No blocker for Feature 13A.
 - Production requires approved disclaimer wording and Lucky's ICO confirmation.
 - Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
+- Landing/autocomplete physical browser QA remains pending because the in-app browser bridge was unavailable on 2026-06-27.
 
 ### Open Questions
 
@@ -135,6 +140,8 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 Feature 12 physical verification passed on 2026-06-22 for desktop clean/adverse/source-failure states, exact 390px rate-limit layout, focus order, and live/alert semantics.
 
 Final uncached gates passed on 2026-06-22: formatting, typecheck (12 tasks), lint (14 tasks), tests (11 workspace tasks; 33 executable assertions), and production build (12 tasks). The migration guard smoke tests passed without applying changes to a live database. Production `npm audit` reports no high-severity findings; two moderate PostCSS advisories remain inside pinned Next.js 16.2.6, and npm offers only an invalid breaking downgrade.
+
+2026-06-27 landing/search refinement checks: repository formatting, typecheck (12 tasks), lint (14 tasks), and tests (11 workspace tasks; 34 executable assertions) passed. The web production build passed with `/` static and `/search` dynamic. Browser verification could not run because the browser execution bridge rejected initialization before opening the local app.
 
 ### Coverage Tracking
 
@@ -161,6 +168,8 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
 - Use `build-plan.md` for order.
 - Preserve A0-A11 behavior during Feature 12 refactor.
 - Feature 12A passed its physical gate before report products were wired in 12B.
+- The Phase A landing page now owns first-entry company discovery; the original full search/free-preview experience lives at `/search`.
+- Landing suggestions carry the selected Companies House number to `/search`; display-name query text is contextual only and never canonical identity.
 - Update this tracker and `ui-registry.md` after every feature.
 - V1 context is reference material for depth; the canonical nine files remain the only active source of truth.
 

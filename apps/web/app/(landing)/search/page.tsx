@@ -5,19 +5,34 @@ import { isSearchFixtureName, type SearchFixtureName } from "@/components/compan
 import { PublicSearchShell } from "@/components/company-search/PublicSearchShell";
 
 type PageProps = {
-  searchParams: Promise<{ fixture?: string | string[] }>;
+  searchParams: Promise<{
+    companyNumber?: string | string[];
+    fixture?: string | string[];
+    q?: string | string[];
+  }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
   const config = loadWebProxyConfig();
-  const requestedFixture = (await searchParams).fixture;
+  const params = await searchParams;
+  const requestedFixture = params.fixture;
   const fixtureName = resolveFixtureName(requestedFixture, config.environment);
+  const companyNumber = singleValue(params.companyNumber);
+  const query = singleValue(params.q);
 
   return (
     <PublicSearchShell>
-      <CompanySearchExperience fixtureName={fixtureName} />
+      <CompanySearchExperience
+        fixtureName={fixtureName}
+        initialCompanyNumber={companyNumber}
+        initialQuery={query}
+      />
     </PublicSearchShell>
   );
+}
+
+function singleValue(value: string | string[] | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }
 
 function resolveFixtureName(

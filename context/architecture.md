@@ -26,7 +26,7 @@
 apps/
   web/          # Next pages, UI, thin same-origin API proxies
     /           # landing page with search bar in hero section
-    /search/[slug] # search result page with report and tier selection
+    /search       # selected-company preview and report-tier selection (`companyNumber` query)
   api/          # Express routes, services, repositories, composition
   worker/       # BullMQ processors and schedulers
 packages/
@@ -80,6 +80,12 @@ InvoiceGuard is a modular monolith split into deployable web, API, and worker ru
 ```text
 Browser -> Next proxy -> Express route -> validation/rate limit
         -> CompanyService -> provider adapters -> repository -> typed response
+```
+
+```text
+Landing autocomplete -> Next search proxy -> Companies House matches
+                     -> select canonical company number
+                     -> /search?companyNumber=... -> free-preview proxy
 ```
 
 ```text

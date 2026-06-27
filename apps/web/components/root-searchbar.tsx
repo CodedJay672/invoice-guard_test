@@ -1,39 +1,197 @@
 "use client";
 
-import { useSearchHook } from '@/hooks/use-search-hook';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Search } from 'lucide-react';
-import React, { useState } from 'react'
+import { useRouter } from "next/navigation";
+import { useEffect, useId, useState, type FormEvent } from "react";
+import { Building2, CircleAlert, Search } from "lucide-react";
 
+import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import {
+  apiErrorResponseSchema,
+  companySearchApiResponseSchema,
+  type CompanySearchMatchPayload,
+} from "@workspace/validation/companies";
 
-export function RootSearchBarSkeleton() {
-  return (
-    <div className='w-full h-15 rounded-3xl border border-line' />
-  )
-}
+type SearchState = "idle" | "loading" | "results" | "empty" | "error";
 
-function RootSearchBar() {
-  const { search } = useSearchHook();
-  const [searchTerm, setSearchTerm] = useState<string>("");
+export function RootSearchBar() {
+  const router = useRouter();
+  const listboxId = useId();
+  const [query, setQuery] = useState("");
+  const [matches, setMatches] = useState<CompanySearchMatchPayload[]>([]);
+  const [state, setState] = useState<SearchState>("idle");
+  const [message, setMessage] = useState<string>();
 
-  const handleSearch = (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  useEffect(() => {
+    const trimmedQuery = query.trim();
 
-    if (!searchTerm) return;
-    search(searchTerm);
+    if (trimmedQuery.length < 2) {
+      return;
+    }
+
+    const abortController = new AbortController();
+    const timeout = window.setTimeout(() => {
+      void searchCompanies(trimmedQuery, abortController.signal);
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeout);
+      abortController.abort();
+    };
+  }, [query]);
+
+  async function searchCompanies(searchQuery: string, signal?: AbortSignal): Promise<void> {
+    setState("loading");
+    setMessage(undefined);
+
+    try {
+      const response = await fetch(
+        `/api/companies/search?q=${encodeURIComponent(searchQuery)}`,
+        signal ? { signal } : undefined,
+      );
+      const body = (await response.json()) as unknown;
+
+      if (!response.ok) {
+        const error = apiErrorResponseSchema.safeParse(body);
+        setMatches([]);
+        setState("error");
+        setMessage(
+          error.success
+            ? error.data.error.message
+            : "Company data could not be retrieved right now.",
+        );
+        return;
+      }
+
+      const parsed = companySearchApiResponseSchema.safeParse(body);
+
+      if (!parsed.success) {
+        throw new Error("Company search returned an invalid response.");
+      }
+
+      setMatches(parsed.data.data.matches);
+      setState(parsed.data.data.matches.length > 0 ? "results" : "empty");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+
+      setMatches([]);
+      setState("error");
+      setMessage("Company data could not be retrieved right now.");
+    }
   }
 
-  return (
-    <form onSubmit={handleSearch} className='w-full h-15 rounded-3xl border border-line overflow-hidden relative flex justify-between items-center'>
-      <Search className='size-4 sm:size-6 text-content-muted absolute left-2.5' />
-      <Input aria-label='search query' placeholder='Search by company name...' value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className='w-full h-full border-none pl-10 pr-14 sm:pr-28 placeholder:truncate' />
-      <Button variant="ghost" className='bg-brand-teal hover:bg-brand-teal/80 text-content-inverse absolute right-2 cursor-pointer'>
-        <Search className='text-content-inverse text-xs md:text-sm' />
-        <span className='hidden sm:flex'>Search</span>
-      </Button>
-    </form>
-  )
-}
+  function submitSearch(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
 
-export default RootSearchBar
+    if (query.trim().length >= 2) {
+      void searchCompanies(query.trim());
+    }
+  }
+
+  function selectCompany(company: CompanySearchMatchPayload): void {
+    const params = new URLSearchParams({
+      companyNumber: company.companiesHouseNumber,
+      q: company.companyName,
+    });
+
+    router.push(`/search?${params.toString()}`);
+  }
+
+  const showDropdown = state !== "idle";
+
+  return (
+    <div className="relative max-w-2xl">
+      <form className="flex flex-col gap-3 sm:flex-row" onSubmit={submitSearch}>
+        <div className="relative min-w-0 flex-1">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-content-muted"
+          />
+          <Input
+            aria-autocomplete="list"
+            aria-controls={showDropdown ? listboxId : undefined}
+            aria-expanded={showDropdown}
+            aria-label="Search by registered company name or Companies House number"
+            autoComplete="off"
+            className="h-12 bg-surface pr-4 pl-10 text-content"
+            onChange={(event) => {
+              const nextQuery = event.target.value;
+              setQuery(nextQuery);
+
+              if (nextQuery.trim().length < 2) {
+                setMatches([]);
+                setState("idle");
+                setMessage(undefined);
+              }
+            }}
+            placeholder="Company name or number"
+            role="combobox"
+            value={query}
+          />
+        </div>
+        <Button type="submit" size="lg" disabled={query.trim().length < 2 || state === "loading"}>
+          <Search data-icon="inline-start" />
+          {state === "loading" ? "Searching" : "Search"}
+        </Button>
+      </form>
+
+      {showDropdown ? (
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label="Company suggestions"
+          className="absolute top-full right-0 left-0 z-10 mt-2 overflow-hidden rounded-lg border border-line bg-surface text-content shadow-sm"
+        >
+          {state === "loading" ? (
+            <div className="flex flex-col gap-3 p-4" role="status">
+              <span className="text-sm text-content-muted">Searching Companies House…</span>
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : null}
+
+          {state === "empty" ? (
+            <p className="p-4 text-sm text-content-muted">No matching companies found.</p>
+          ) : null}
+
+          {state === "error" ? (
+            <Alert variant="caution" className="rounded-none border-0">
+              <CircleAlert aria-hidden="true" />
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          {state === "results" ? (
+            <ul className="max-h-80 overflow-y-auto">
+              {matches.map((company) => (
+                <li key={company.companiesHouseNumber} role="option" aria-selected="false">
+                  <button
+                    type="button"
+                    className="flex min-h-11 w-full items-start gap-3 border-b border-line p-4 text-left last:border-b-0 hover:bg-surface-subtle focus-visible:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none focus-visible:ring-inset"
+                    onClick={() => selectCompany(company)}
+                  >
+                    <Building2
+                      aria-hidden="true"
+                      className="mt-0.5 size-4 shrink-0 text-brand-teal"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-brand-navy">
+                        {company.companyName}
+                      </span>
+                      <span className="mt-1 block font-mono text-xs text-content-muted">
+                        {company.companiesHouseNumber} · {company.companyStatus}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}

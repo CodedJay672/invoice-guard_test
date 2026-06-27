@@ -96,6 +96,13 @@ Depends on: **12A — UI/Mock Verified**.
 - Validate trusted entitlements and PDF flags server-side.
 - Preserve tests proving free preview cannot call Registry Trust.
 
+#### Landing/Search Refinement
+
+- `/` is the Phase A landing page and keeps all interactive behavior in the autocomplete client leaf.
+- Landing autocomplete uses the existing same-origin company-search proxy and requires selection of a canonical Companies House entity.
+- Selection navigates to `/search` with the company number and display query; `/search` loads that company preview directly while retaining its standalone search controls.
+- Landing copy remains limited to Phase A company intelligence and one-off reports. Recovery, subscriptions, accounting sync, watchlists, and risk scores remain excluded.
+
 ---
 
 ## Phase 2 — Checkout and Payment Confirmation

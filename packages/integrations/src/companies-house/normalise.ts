@@ -6,6 +6,8 @@ import type {
   CompaniesHouseCompanySummary,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
+  CompaniesHouseInsolvencyFoundation,
+  CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchResult,
 } from "./types.js";
 
@@ -19,6 +21,7 @@ interface RawCompaniesHouseAddress {
 
 interface RawCompaniesHouseSearchItem {
   company_number?: unknown;
+  company_name?: unknown;
   title?: unknown;
   company_status?: unknown;
   company_type?: unknown;
@@ -43,6 +46,11 @@ interface RawCompaniesHouseOfficerResponse {
 
 interface RawCompaniesHouseListResponse {
   items?: unknown;
+}
+
+interface RawCompaniesHouseInsolvencyResponse {
+  cases?: unknown;
+  status?: unknown;
 }
 
 function asString(value: unknown): string | undefined {
@@ -77,7 +85,7 @@ function normaliseSearchItem(
   item: RawCompaniesHouseSearchItem,
 ): CompaniesHouseCompanySummary | null {
   const companiesHouseNumber = asString(item.company_number);
-  const companyName = asString(item.title);
+  const companyName = asString(item.company_name) ?? asString(item.title);
   const companyStatus = asString(item.company_status);
 
   if (!companiesHouseNumber || !companyName || !companyStatus) {
@@ -93,6 +101,35 @@ function normaliseSearchItem(
     registeredOfficeAddress: normaliseAddress(item.address),
     sicCodes: [],
   };
+}
+
+export function normaliseCompaniesHouseRegisteredOfficeAddressResponse(
+  payload: unknown,
+): ProviderResult<CompaniesHouseRegisteredOfficeAddress> {
+  const address = normaliseAddress(payload as RawCompaniesHouseAddress);
+
+  if (!address.locality && !address.region && !address.country) {
+    return createProviderFailure(provider, {
+      code: "integration_invalid_response",
+      message: "Companies House registered office response did not include a usable address.",
+      retryable: false,
+    });
+  }
+
+  return createProviderSuccess(provider, address);
+}
+
+export function normaliseCompaniesHouseInsolvencyResponse(
+  companyNumber: string,
+  payload: unknown,
+): ProviderResult<CompaniesHouseInsolvencyFoundation> {
+  const response = payload as RawCompaniesHouseInsolvencyResponse;
+
+  return createProviderSuccess(provider, {
+    companiesHouseNumber: companyNumber,
+    cases: Array.isArray(response.cases) ? response.cases : [],
+    status: asString(response.status),
+  });
 }
 
 function normaliseProfile(

@@ -30,6 +30,22 @@ void test("normalises valid Companies House search responses", () => {
   assert.equal(result.data.matches[0]?.companyName, "ACME SUPPLIES LIMITED");
 });
 
+void test("normalises alphabetical Companies House search responses", () => {
+  const result = normaliseCompaniesHouseSearchResponse({
+    items: [
+      {
+        company_number: "12345678",
+        company_name: "ACME SUPPLIES LIMITED",
+        company_status: "active",
+        company_type: "ltd",
+      },
+    ],
+  });
+
+  assert.equal(result.status, "success");
+  assert.equal(result.data.matches[0]?.companyName, "ACME SUPPLIES LIMITED");
+});
+
 void test("returns provider failure for malformed Companies House search responses", () => {
   const result = normaliseCompaniesHouseSearchResponse({ items: "not-an-array" });
 

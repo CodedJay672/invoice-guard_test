@@ -3,8 +3,10 @@ import { createProviderFailure, type ProviderMode, type ProviderResult } from ".
 import {
   normaliseCompaniesHouseChargesResponse,
   normaliseCompaniesHouseFilingHistoryResponse,
+  normaliseCompaniesHouseInsolvencyResponse,
   normaliseCompaniesHouseOfficerCountResponse,
   normaliseCompaniesHouseProfileResponse,
+  normaliseCompaniesHouseRegisteredOfficeAddressResponse,
   normaliseCompaniesHouseSearchResponse,
 } from "./normalise.js";
 import type {
@@ -15,6 +17,8 @@ import type {
   CompaniesHouseCompanyProfile,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
+  CompaniesHouseInsolvencyFoundation,
+  CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
   CompaniesHouseSearchResult,
 } from "./types.js";
@@ -32,7 +36,7 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
     input: CompaniesHouseSearchInput,
   ): Promise<ProviderResult<CompaniesHouseSearchResult>> {
     const payload = await this.request(
-      `/search/companies?q=${encodeURIComponent(input.query)}&items_per_page=${input.itemsPerPage ?? 10}`,
+      `/alphabetical-search/companies?q=${encodeURIComponent(input.query)}`,
     );
 
     if (payload.status === "failed") {
@@ -45,19 +49,47 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
   async getCompanyProfile(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseCompanyProfile>> {
-    const [profilePayload, officerCount] = await Promise.all([
+    const [profilePayload, officerCount, registeredOfficeAddress] = await Promise.all([
       this.request(`/company/${encodeURIComponent(input.companyNumber)}`),
       this.getActiveOfficerCount(input),
+      this.getRegisteredOfficeAddress(input),
     ]);
 
     if (profilePayload.status === "failed") {
       return profilePayload;
     }
 
-    return normaliseCompaniesHouseProfileResponse(
+    const profile = normaliseCompaniesHouseProfileResponse(
       profilePayload.data,
       officerCount.status === "success" ? officerCount.data.activeDirectorCount : undefined,
     );
+
+    if (profile.status === "failed") {
+      return profile;
+    }
+
+    return {
+      ...profile,
+      data: {
+        ...profile.data,
+        registeredOfficeAddress:
+          registeredOfficeAddress.status === "success"
+            ? registeredOfficeAddress.data
+            : profile.data.registeredOfficeAddress,
+      },
+    };
+  }
+
+  async getRegisteredOfficeAddress(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseRegisteredOfficeAddress>> {
+    const payload = await this.request(
+      `/company/${encodeURIComponent(input.companyNumber)}/registered-office-address`,
+    );
+
+    return payload.status === "failed"
+      ? payload
+      : normaliseCompaniesHouseRegisteredOfficeAddressResponse(payload.data);
   }
 
   async getActiveOfficerCount(
@@ -100,6 +132,18 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
     }
 
     return normaliseCompaniesHouseChargesResponse(input.companyNumber, payload.data);
+  }
+
+  async getInsolvency(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseInsolvencyFoundation>> {
+    const payload = await this.request(
+      `/company/${encodeURIComponent(input.companyNumber)}/insolvency`,
+    );
+
+    return payload.status === "failed"
+      ? payload
+      : normaliseCompaniesHouseInsolvencyResponse(input.companyNumber, payload.data);
   }
 
   private async request(path: string): Promise<ProviderResult<unknown>> {

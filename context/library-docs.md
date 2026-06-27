@@ -131,6 +131,383 @@ Jobs use centralized names and payload maps. Workers validate IDs, load current 
 
 Live configuration includes base URL, API key, and explicit timeout. Normalize search/profile/officers/filings/charges before domain use. A paid-report Companies House failure is foundational and cannot be downgraded to a partial success.
 
+### companies house API endpoints.
+
+The companies house api poducmentation is at `https://developer-specs.company-information.service.gov.uk/companies-house-public-data-api/reference`;
+
+
+
+companies house endpoints:
+
+| endopoint | description | response |
+| :--- | :--- | :--- |
+| GET /alphabetical-search/companies?q={company-name}` | Search alphabetically by company name | companyListsResponse |
+| GET /company/{companyNumber}/registered-office-address | registered office address | RegisteredOfficeAddress |
+| GET /company/{companyNumber} | search by canonical company number | CompanyProfile |
+| GET /company/{company_number}/officers | List of all company officers. can take items_per_role; register_type  with values like "drectors", "secretary" etc; and register_view: boolean | OfficersList |
+| GET /company/{company_number}/filing-history | Company's filing history | Filing History |
+| GET /company/{company_number}/insolvency | company insolvency resource | CompanyInsolvency |
+
+
+### return types
+```ts
+
+const companyListsResponse = {
+    "items": [
+        {
+            "company_name": "string",
+            "company_number": "string",
+            "company_status": "string",
+            "company_type": "string",
+            "kind": "string",
+            "links": {
+                "company_profile": "string"
+            },
+            "ordered_alpha_key_with_id": "string"
+        }
+    ],
+    "kind": "string",
+    "top_hit": {
+        "company_name": "string",
+        "company_number": "string",
+        "company_status": "string",
+        "company_type": "string",
+        "kind": "string",
+        "links": {
+            "company_profile": "string"
+        },
+        "ordered_alpha_key_with_id": "string"
+    }
+} as const
+
+const RegisteredOfficeAddress = {
+    "accept_appropriate_office_address_statement": "boolean",
+    "address_line_1": "string",
+    "address_line_2": "string",
+    "country": "string",
+    "etag": "string",
+    "kind": "string",
+    "links": {
+        "self": "uri"
+    },
+    "locality": "string",
+    "postal_code": "string",
+    "premises": "string",
+    "region": "string"
+} as const;
+
+const CompanyProfile = {
+    "accounts": {
+        "accounting_reference_date": {
+            "day": "integer",
+            "month": "integer"
+        },
+        "last_accounts": {
+            "made_up_to": "date",
+            "period_end_on": "date",
+            "period_start_on": "date",
+            "type": {}
+        },
+        "next_accounts": {
+            "due_on": "date",
+            "overdue": "boolean",
+            "period_end_on": "date",
+            "period_start_on": "date"
+        },
+        "next_due": "date",
+        "next_made_up_to": "date",
+        "overdue": "boolean"
+    },
+    "annual_return": {
+        "last_made_up_to": "date",
+        "next_due": "date",
+        "next_made_up_to": "date",
+        "overdue": "boolean"
+    },
+    "branch_company_details": {
+        "business_activity": "string",
+        "parent_company_name": "string",
+        "parent_company_number": "string"
+    },
+    "can_file": "boolean",
+    "company_name": "string",
+    "company_number": "string",
+    "company_status": "string",
+    "company_status_detail": "string",
+    "confirmation_statement": {
+        "last_made_up_to": "date",
+        "next_due": "date",
+        "next_made_up_to": "date",
+        "overdue": "boolean"
+    },
+    "corporate_annotation": [
+        {
+            "created_on": "date",
+            "description": "string",
+            "type": "string"
+        }
+    ],
+    "date_of_cessation": "date",
+    "date_of_creation": "date",
+    "etag": "string",
+    "external_registration_number": "string",
+    "foreign_company_details": {
+        "accounting_requirement": {
+            "foreign_account_type": "string",
+            "terms_of_account_publication": "string"
+        },
+        "accounts": {
+            "account_period_from:": {
+                "day": "integer",
+                "month": "integer"
+            },
+            "account_period_to": {
+                "day": "integer",
+                "month": "integer"
+            },
+            "must_file_within": {
+                "months": "integer"
+            }
+        },
+        "business_activity": "string",
+        "company_type": "string",
+        "governed_by": "string",
+        "is_a_credit_finance_institution": "boolean",
+        "originating_registry": {
+            "country": "string",
+            "name": "string"
+        },
+        "registration_number": "string"
+    },
+    "has_been_liquidated": "boolean",
+    "has_charges": "boolean",
+    "has_insolvency_history": "boolean",
+    "is_community_interest_company": "boolean",
+    "jurisdiction": "string",
+    "last_full_members_list_date": "date",
+    "links": {
+        "charges": "string",
+        "exemptions": "string",
+        "filing_history": "string",
+        "insolvency": "string",
+        "officers": "string",
+        "overseas": "string",
+        "persons_with_significant_control": "string",
+        "persons_with_significant_control_statements": "string",
+        "registers": "string",
+        "self": "string",
+        "uk-establishments": "string"
+    },
+    "partial_data_available": "string",
+    "previous_company_names": [
+        {
+            "ceased_on": "date",
+            "effective_from": "date",
+            "name": "string"
+        }
+    ],
+    "registered_office_address": {
+        "address_line_1": "string",
+        "address_line_2": "string",
+        "care_of": "string",
+        "country": "string",
+        "locality": "string",
+        "po_box": "string",
+        "postal_code": "string",
+        "premises": "string",
+        "region": "string"
+    },
+    "registered_office_is_in_dispute": "boolean",
+    "service_address": {
+        "address_line_1": "string",
+        "address_line_2": "string",
+        "care_of": "string",
+        "country": "string",
+        "locality": "string",
+        "po_box": "string",
+        "postal_code": "string",
+        "region": "string"
+    },
+    "sic_codes": [
+        "string"
+    ],
+    "subtype": "string",
+    "super_secure_managing_officer_count": "integer",
+    "type": "string",
+    "undeliverable_registered_office_address": "boolean"
+}
+
+const OfficerList = {
+    "active_count": "integer",
+    "etag": "string",
+    "items": [
+        {
+            "address": {
+                "address_line_1": "string",
+                "address_line_2": "string",
+                "care_of": "string",
+                "country": "string",
+                "locality": "string",
+                "po_box": "string",
+                "postal_code": "string",
+                "premises": "string",
+                "region": "string"
+            },
+            "appointed_before": "string",
+            "appointed_on": "date",
+            "contact_details": {
+                "contact_name": "string"
+            },
+            "country_of_residence": "string",
+            "date_of_birth": {
+                "month": "integer",
+                "year": "integer"
+            },
+            "etag": "string",
+            "former_names": [
+                {
+                    "forenames": "string",
+                    "surname": "string"
+                }
+            ],
+            "identification": {
+                "identification_type": "string",
+                "legal_authority": "string",
+                "legal_form": "string",
+                "place_registered": "string",
+                "registration_number": "string"
+            },
+            "identity_verification_details": {
+                "anti_money_laundering_supervisory_bodies": [
+                    "string"
+                ],
+                "appointment_verification_end_on": "date",
+                "appointment_verification_start_on": "date",
+                "appointment_verification_statement_due_on": "date",
+                "authorised_corporate_service_provider_name": "string",
+                "identity_verified_on": "date",
+                "preferred_name": "string"
+            },
+            "is_pre_1992_appointment": "boolean",
+            "links": {
+                "officer": {
+                    "appointments": "string"
+                },
+                "self": "string"
+            },
+            "name": "string",
+            "nationality": "string",
+            "occupation": "string",
+            "officer_role": "string",
+            "person_number": "string",
+            "principal_office_address": {
+                "address_line_1": "string",
+                "address_line_2": "string",
+                "care_of": "string",
+                "country": "string",
+                "locality": "string",
+                "po_box": "string",
+                "postal_code": "string",
+                "premises": "string",
+                "region": "string"
+            },
+            "resigned_on": "date",
+            "responsibilities": "string"
+        }
+    ],
+    "items_per_page": "integer",
+    "kind": "string",
+    "links": {
+        "self": "string"
+    },
+    "resigned_count": "integer",
+    "start_index": "integer",
+    "total_results": "integer"
+} as const
+
+const FilingHistory = {
+    "annotations": [
+        {
+            "annotation": "string",
+            "date": "date",
+            "description": "string"
+        }
+    ],
+    "associated_filings": [
+        {
+            "date": "date",
+            "description": "string",
+            "type": "string"
+        }
+    ],
+    "barcode": "string",
+    "category": "string",
+    "date": "date",
+    "description": "string",
+    "links": {
+        "document_metadata": "string",
+        "self": "string"
+    },
+    "pages": "integer",
+    "paper_filed": "boolean",
+    "resolutions": [
+        {
+            "category": "string",
+            "description": "string",
+            "document_id": "string",
+            "receive_date": "date",
+            "subcategory": "string",
+            "type": "string"
+        }
+    ],
+    "subcategory": "string",
+    "transaction_id": "string",
+    "type": "string"
+} as const;
+
+const CompanyInsolvency = {
+    "cases": [
+        {
+            "dates": [
+                {
+                    "date": "date",
+                    "type": "string"
+                }
+            ],
+            "links": {
+                "charge": "string"
+            },
+            "notes": [
+                "string"
+            ],
+            "number": "string",
+            "practitioners": [
+                {
+                    "address": [
+                        {
+                            "address_line_1": "string",
+                            "address_line_2": "string",
+                            "country": "string",
+                            "locality": "string",
+                            "postal_code": "string",
+                            "region": "string"
+                        }
+                    ],
+                    "appointed_on": "date",
+                    "ceased_to_act_on": "date",
+                    "name": "string",
+                    "role": "string"
+                }
+            ],
+            "type": "string"
+        }
+    ],
+    "etag": "string",
+    "status": "string"
+}
+
+```
+
 ## London Gazette
 
 - Normalize strike-off and winding-up flags.

@@ -20,6 +20,30 @@ Living record of InvoiceGuard patterns. Match an existing pattern before inventi
 Feature 12 is the canonical public-search implementation. The page remains a Server Component;
 interactive state belongs to the smallest practical client leaf.
 
+### Phase A Landing Shell
+
+- Path: `apps/web/app/(landing)/page.tsx`, `apps/web/components/topbar.tsx`, and `apps/web/components/footer.tsx`.
+- Last updated: 2026-06-27.
+- Purpose: introduce the report product, establish free-source boundaries, and lead directly into canonical company selection.
+- Background: hero uses `bg-brand-navy text-content-inverse`; informational sections alternate `bg-surface` and `bg-page` without gradients.
+- Structure: `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8`; content uses responsive grids without fixed content widths.
+- Cards: shared `Card` composition with `rounded-lg border border-line bg-surface shadow-sm`.
+- Text: headings use `text-brand-navy` or inherited inverse content; supporting copy uses `text-content-muted` or `text-content-inverse/70`.
+- Scope: no recovery, subscription, accounting-sync, watchlist, testimonial, or risk-score claims.
+- Accessibility: one `main` landmark, labelled primary navigation, semantic section headings, and 44px navigation targets.
+
+### Landing Company Autocomplete
+
+- Path: `apps/web/components/root-searchbar.tsx`.
+- Last updated: 2026-06-27.
+- Purpose: debounce company-name/number input, render Companies House suggestions, and navigate only after an exact entity is selected.
+- Input: shared `Input` with `h-12 bg-surface text-content`, visible semantic focus treatment, and combobox/listbox relationships.
+- Results: `rounded-lg border border-line bg-surface shadow-sm`; rows use `min-h-11`, `border-line`, `hover:bg-surface-subtle`, and `focus-visible:ring-focus`.
+- States: idle, loading skeleton/status, results, empty, and durable caution error.
+- Selection contract: `/search?companyNumber=<canonical-number>&q=<registered-name>`.
+- Responsive: form stacks below `sm`; dropdown remains constrained to the search control width.
+- Accessibility: explicit accessible name, `aria-autocomplete`, `aria-controls`, `aria-expanded`, labelled listbox, and keyboard-focusable native result buttons.
+
 ### Search Page Shell
 
 - Path: `apps/web/components/company-search/PublicSearchShell.tsx`.
@@ -93,8 +117,9 @@ interactive state belongs to the smallest practical client leaf.
 
 ## Known Drift
 
-- No known token, dark-mode, raw-colour, or page-level Client Component drift in Feature 12.
+- No known token, dark-mode, raw-colour, gradient, fixed-content-width, or page-level Client Component drift in the landing/search experience.
 - Checkout actions intentionally remain unavailable until Feature 13.
+- Physical landing/autocomplete browser verification remains pending because the browser execution bridge was unavailable on 2026-06-27.
 
 ---
 
