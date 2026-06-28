@@ -13,6 +13,7 @@ import {
   ShieldAlert,
   Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { Badge } from "@workspace/ui/components/badge";
@@ -57,6 +58,7 @@ export function CompanySearchExperience({
   initialCompanyNumber,
   initialQuery,
 }: CompanySearchExperienceProps) {
+  const router = useRouter();
   const initialState = getSearchFixtureState(fixtureName);
   const [query, setQuery] = useState(initialQuery ?? initialState.query);
   const [matches, setMatches] = useState(initialState.matches);
@@ -66,7 +68,6 @@ export function CompanySearchExperience({
     initialCompanyNumber && !fixtureName ? "loading" : initialState.previewStatus,
   );
   const [message, setMessage] = useState(initialState.message);
-  const [tierMessage, setTierMessage] = useState<string>();
 
   async function searchCompanies(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -183,15 +184,22 @@ export function CompanySearchExperience({
           <TierCard
             key={tier.tier}
             tier={tier}
-            ready={initialState.tierCtasReady}
-            onSelect={() => setTierMessage(`${tier.name} checkout mock selected.`)}
+            ready={Boolean(preview) || initialState.tierCtasReady}
+            onSelect={() => {
+              if (!preview) return;
+              const params = new URLSearchParams({
+                companyNumber: preview.company.companiesHouseNumber,
+                tier: tier.tier,
+                q: preview.company.companyName,
+              });
+              router.push(`/checkout?${params.toString()}`);
+            }}
           />
         ))}
         <p aria-live="polite" className="text-sm text-content-muted">
-          {tierMessage ??
-            (initialState.tierCtasReady
-              ? "Mock checkout actions are ready for physical verification."
-              : "Checkout becomes available in the payment phase.")}
+          {preview
+            ? "Choose a one-off report to review the checkout summary."
+            : "Select a company before choosing a report."}
         </p>
       </aside>
     </div>

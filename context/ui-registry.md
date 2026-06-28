@@ -85,7 +85,8 @@ interactive state belongs to the smallest practical client leaf.
 - Path: `apps/web/components/company-search/CompanySearchExperience.tsx`.
 - Server-authoritative Basic, Standard, and Premium products; fixtures mirror persisted defaults.
 - Report rail: `flex min-w-0 flex-col gap-4 lg:sticky lg:top-6 lg:self-start`.
-- CTA uses the authoritative navy action pattern and clearly communicates its disabled phase.
+- CTA uses the authoritative navy action pattern, remains disabled until a company preview exists,
+  then navigates with canonical company number, tier, and display-only company name.
 - Shows exact price, entitlements, and PDF availability; never introduces subscriptions.
 
 ### StatusBadge and Source Banner
@@ -115,10 +116,60 @@ interactive state belongs to the smallest practical client leaf.
 
 ---
 
+## Checkout and Payment Status
+
+Feature 13A establishes the Phase A one-off checkout and browser-return presentation. Pages remain
+Server Components; form validation and bounded status checks live in small client leaves.
+
+### Checkout Summary
+
+- Path: `apps/web/components/checkout/CheckoutShell.tsx`.
+- Layout: `mx-auto grid max-w-5xl gap-6 px-4 py-8 sm:px-6
+  lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
+- Summary rail moves below the form in DOM/mobile order and becomes sticky at `lg`.
+- Company name wraps without becoming identity; the monospace Companies House number remains the
+  canonical identifier.
+- Product presentation uses shared Card and Badge primitives with exact one-off price, entitlement
+  list, and explicit PDF/browser-report status.
+- No subscription, risk score, or unverified payment language appears.
+
+### Checkout Form
+
+- Path: `apps/web/components/checkout/CheckoutForm.tsx`.
+- Guest is the default state; the authenticated fixture renders a verified read-only email.
+- Email errors use `aria-invalid`, a linked description, and an alert role while preserving input.
+- Redirecting disables the field and primary action and uses visible text plus a spinner.
+- The caution Alert states that a browser return never confirms payment.
+- No email or other personal data is placed in checkout/status URLs.
+
+### Payment Status Panel
+
+- Path: `apps/web/components/checkout/PaymentStatusPanel.tsx`.
+- Canonical states: confirming, paid/report-pending, delayed confirmation, cancelled, failed, and
+  duplicate refresh.
+- State is always communicated through heading, badge text, icon, and Alert copy rather than colour
+  alone.
+- Confirmation is bounded to three two-second mock checks; delayed confirmation exposes a safe,
+  idempotent `Check again` action.
+- Cancelled and failed states preserve the company/tier return link. Paid and duplicate-refresh
+  states never expose a second purchase action.
+- Fixture query support is development/test-only; production ignores `fixture`.
+
+### Feature 13A Verification
+
+- Repository formatting, typecheck, lint, unit tests, and production build pass.
+- Selection parsing, tier rejection, guest email normalization, production fixture guards, and
+  privacy-safe checkout URLs have executable tests.
+- Physical desktop/mobile/focus/navigation verification remains pending because the in-app browser
+  bridge rejected initialization before opening localhost on 2026-06-28.
+
+---
+
 ## Known Drift
 
 - No known token, dark-mode, raw-colour, gradient, fixed-content-width, or page-level Client Component drift in the landing/search experience.
-- Checkout actions intentionally remain unavailable until Feature 13.
+- Checkout and payment-status UI are implemented but are not yet `UI/Mock Verified` because the
+  physical browser gate remains unavailable.
 - Physical landing/autocomplete browser verification remains pending because the browser execution bridge was unavailable on 2026-06-27.
 
 ---

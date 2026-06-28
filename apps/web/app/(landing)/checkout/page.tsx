@@ -1,0 +1,112 @@
+import { loadWebProxyConfig } from "@workspace/config/web";
+import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
+import Link from "next/link";
+
+import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { CheckoutShell } from "@/components/checkout/CheckoutShell";
+import {
+  reportProductFixtures,
+  resolveCheckoutFixtureName,
+  resolveCheckoutSelection,
+} from "@/components/checkout/fixtures";
+
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function Page({ searchParams }: PageProps) {
+  const config = loadWebProxyConfig();
+  const params = await searchParams;
+  const fixtureName = resolveCheckoutFixtureName(singleValue(params.fixture), config.environment);
+  const selection = resolveCheckoutSelection({
+    companyNumber: singleValue(params.companyNumber),
+    tier: fixtureName === "invalid-product" ? "invalid" : singleValue(params.tier),
+    q: singleValue(params.q),
+  });
+
+  if (!selection) return <InvalidCheckout />;
+
+  const product = reportProductFixtures[selection.tier];
+  if (fixtureName === "inactive-product" || !product.active) {
+    return <UnavailableProduct />;
+  }
+
+  const statusParams = new URLSearchParams({
+    companyNumber: selection.companyNumber,
+    tier: selection.tier,
+  });
+  if (selection.q) statusParams.set("q", selection.q);
+
+  return (
+    <CheckoutShell product={product} selection={selection}>
+      <CheckoutForm
+        fixtureName={fixtureName}
+        statusHref={`/checkout/status?${statusParams.toString()}`}
+      />
+    </CheckoutShell>
+  );
+}
+
+function InvalidCheckout() {
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h1 className="text-2xl text-brand-navy">Checkout selection unavailable</h1>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="critical">
+            <AlertTitle>Choose a valid report</AlertTitle>
+            <AlertDescription>
+              The company number or report tier is missing or invalid.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+        <CardFooter>
+          <Button asChild variant="authoritative">
+            <Link href="/search">Return to company search</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}
+
+function UnavailableProduct() {
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 lg:px-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <h1 className="text-2xl text-brand-navy">Report temporarily unavailable</h1>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="caution">
+            <AlertTitle>This product is not active</AlertTitle>
+            <AlertDescription>No payment can be started for this report tier.</AlertDescription>
+          </Alert>
+        </CardContent>
+        <CardFooter>
+          <Button asChild variant="outline">
+            <Link href="/search">Compare report options</Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}
+
+function singleValue(value: string | string[] | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}

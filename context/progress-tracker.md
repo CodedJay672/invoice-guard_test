@@ -12,15 +12,15 @@ Update after every completed feature. Record actual state only.
 
 **Last completed:** 12B — Logic/Data: Search and Report Products (A12)
 
-**Next:** 13A — UI/Mock: Checkout and Payment Status
+**Next:** Complete physical verification for 13A — UI/Mock: Checkout and Payment Status
 
-**Status:** Feature 12 complete; 12A recorded as `UI/Mock Verified`
+**Status:** Feature 13A implemented; physical `UI/Mock Verified` gate pending
 
 **Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
 
 ### Current Unit Scope
 
-13A designs checkout and payment states with deterministic fixtures only. Stripe and report creation remain blocked until the 13A physical-verification gate is recorded.
+13A checkout and payment states are implemented with deterministic fixtures only. Stripe and report creation remain blocked until the 13A physical-verification gate is recorded.
 
 ---
 
@@ -45,7 +45,7 @@ Update after every completed feature. Record actual state only.
 
 ### Remaining
 
-- [ ] 13A UI/Mock: Checkout and Payment Status
+- [ ] 13A UI/Mock: Checkout and Payment Status — implemented 2026-06-28; physical verification pending
 - [ ] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
 - [ ] 14A UI/Mock: Report Generation Lifecycle
 - [ ] 14B Logic/Data: Generation Queue (A16)
@@ -81,6 +81,8 @@ Update after every completed feature. Record actual state only.
 - Phase A landing page with debounced Companies House suggestions and canonical company selection into `/search`.
 - Live Companies House adapter support for alphabetical search, registered-office-address, profile, officers, filing history, charges, and insolvency endpoints.
 - Development-only deterministic fixtures for all Feature 12 states.
+- Two-route checkout/status UI with guest and authenticated fixtures, strict selection/email
+  validation, bounded confirmation checks, cancellation retry, and duplicate-refresh messaging.
 
 ---
 
@@ -114,7 +116,8 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 
 ## Blockers
 
-- No blocker for Feature 13A.
+- Physical Feature 13A browser verification is blocked because the in-app browser bridge rejected
+  initialization before opening localhost on 2026-06-28.
 - Production requires approved disclaimer wording and Lucky's ICO confirmation.
 - Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
 - Landing/autocomplete physical browser QA remains pending because the in-app browser bridge was unavailable on 2026-06-27.
@@ -142,6 +145,12 @@ Feature 12 physical verification passed on 2026-06-22 for desktop clean/adverse/
 Final uncached gates passed on 2026-06-22: formatting, typecheck (12 tasks), lint (14 tasks), tests (11 workspace tasks; 33 executable assertions), and production build (12 tasks). The migration guard smoke tests passed without applying changes to a live database. Production `npm audit` reports no high-severity findings; two moderate PostCSS advisories remain inside pinned Next.js 16.2.6, and npm offers only an invalid breaking downgrade.
 
 2026-06-27 landing/search refinement checks: repository formatting, typecheck (12 tasks), lint (14 tasks), and tests (11 workspace tasks; 34 executable assertions) passed. The web production build passed with `/` static and `/search` dynamic. Browser verification could not run because the browser execution bridge rejected initialization before opening the local app.
+
+2026-06-28 Feature 13A automated checks: repository formatting, typecheck (12 tasks), lint (14 tasks),
+and tests (12 workspace tasks; 40 executable assertions) passed. The web production build passed with
+dynamic `/checkout` and `/checkout/status` routes. Production audit reports two moderate PostCSS
+advisories inside pinned Next.js; the offered remediation is a breaking downgrade. Physical checkout
+verification could not run because the browser bridge rejected initialization before opening localhost.
 
 ### Coverage Tracking
 

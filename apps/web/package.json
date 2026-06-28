@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --check .",
+    "test": "node --import tsx --test \"components/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

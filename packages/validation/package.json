@@ -5,16 +5,20 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./checkout": "./src/checkout.ts",
     "./companies": "./src/companies.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "npm run typecheck",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0"
   }
 }
