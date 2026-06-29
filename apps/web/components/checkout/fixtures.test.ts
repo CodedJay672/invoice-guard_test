@@ -3,10 +3,24 @@ import test from "node:test";
 
 import {
   buildCheckoutHref,
+  resolveCheckoutBuyerFixture,
   resolveCheckoutFixtureName,
   resolveCheckoutSelection,
   resolvePaymentStatusFixtureName,
 } from "./fixtures.js";
+
+void test("checkout buyer fixtures preserve guest editing and verified account identity", () => {
+  assert.deepEqual(resolveCheckoutBuyerFixture(undefined), {
+    mode: "guest",
+    initialEmail: "",
+    emailReadOnly: false,
+  });
+  assert.deepEqual(resolveCheckoutBuyerFixture("authenticated-ready"), {
+    mode: "authenticated",
+    initialEmail: "verified.buyer@example.com",
+    emailReadOnly: true,
+  });
+});
 
 void test("checkout fixture controls are disabled in production", () => {
   assert.equal(resolveCheckoutFixtureName("authenticated-ready", "production"), undefined);

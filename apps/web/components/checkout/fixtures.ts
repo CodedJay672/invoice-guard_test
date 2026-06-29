@@ -26,6 +26,10 @@ export const paymentStatusFixtureNames = [
 
 export type PaymentStatusFixtureName = (typeof paymentStatusFixtureNames)[number];
 
+export type CheckoutBuyerFixture =
+  | { mode: "guest"; initialEmail: string; emailReadOnly: false }
+  | { mode: "authenticated"; initialEmail: string; emailReadOnly: true };
+
 export interface ReportProductFixture {
   tier: ReportTier;
   name: string;
@@ -73,6 +77,23 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
     active: true,
   },
 };
+
+export function resolveCheckoutBuyerFixture(
+  fixtureName: CheckoutFixtureName | undefined,
+): CheckoutBuyerFixture {
+  if (fixtureName === "authenticated-ready") {
+    return {
+      mode: "authenticated",
+      initialEmail: "verified.buyer@example.com",
+      emailReadOnly: true,
+    };
+  }
+  return {
+    mode: "guest",
+    initialEmail: fixtureName === "validation-error" ? "invalid" : "",
+    emailReadOnly: false,
+  };
+}
 
 export function resolveCheckoutSelection(input: {
   companyNumber: string | undefined;

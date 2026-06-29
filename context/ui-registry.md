@@ -214,3 +214,73 @@ Replace the hero risk score/overdue metrics with factual company identity and so
 - Admin table, refund dialog, and audit timeline.
 
 Each future registry entry must include path, purpose, variants/states, exact canonical classes, accessibility behavior, responsive behavior, and known exceptions. A new pattern is not canonical merely because it appears once.
+
+---
+
+## Authentication and Buyer Identity
+
+Feature AUTH-A establishes development/test-only authentication presentation before Clerk wiring.
+Production renders the mock auth routes as not found and omits mock account navigation.
+
+### Authentication Card
+
+File: `apps/web/components/auth/AuthPanel.tsx`
+Last updated: 2026-06-29
+
+| Property | Class/pattern |
+| --- | --- |
+| Background | shared `Card` / `bg-surface` |
+| Border | shared `Card` / `border-line` |
+| Border radius | shared `Card` / `rounded-lg` |
+| Text — primary | `text-brand-navy`, `text-content` |
+| Text — secondary | `text-content-muted` |
+| Spacing | card sections with `gap-4` or `gap-5`; public wrapper `px-4 py-10 sm:px-6 lg:px-8` |
+| Interactive states | shared Button/Input focus rings using `focus` token |
+| Shadow | shared Card subtle elevation |
+| Accent usage | semantic Badge and Alert variants; authoritative navy action |
+
+**Pattern notes:** Sign-in, sign-up, callback/loading, error, signed-in, signing-out, and
+unverified-email states share one stable card structure. Loading and state changes include visible
+text and `aria-live`; accounts remain optional and guest checkout stays explicit.
+
+### Public Account Control
+
+File: `apps/web/components/auth/AccountControl.tsx`
+Last updated: 2026-06-29
+
+| Property | Class/pattern |
+| --- | --- |
+| Background | `bg-surface` through outline Button and menu panel |
+| Border | `border-line` |
+| Border radius | `rounded-md` trigger; `rounded-lg` menu |
+| Text — primary | `text-content` |
+| Text — secondary | `text-content-muted` |
+| Spacing | `p-2` menu, `px-2 py-2` metadata, minimum 44px controls |
+| Hover state | shared outline/ghost Button variants |
+| Shadow | `shadow-sm` on menu panel |
+| Accent usage | none; account navigation remains restrained |
+
+**Pattern notes:** Signed-out navigation shows one quiet Sign in action. Signed-in navigation shows
+the verified email and a sign-out-only menu—no dashboard links. Escape restores trigger focus and
+outside pointer interaction closes the menu.
+
+### Report Access State
+
+File: `apps/web/components/auth/ReportAccessState.tsx`
+Last updated: 2026-06-29
+
+| Property | Class/pattern |
+| --- | --- |
+| Background | shared Card plus semantic Alert surface |
+| Border | shared Card and semantic Alert border |
+| Border radius | shared `rounded-lg` Card/Alert |
+| Text — primary | shared Card/Alert semantic content |
+| Text — secondary | `text-content-muted` |
+| Spacing | shared Card sections; header `gap-4` |
+| Hover state | none |
+| Shadow | shared Card subtle elevation |
+| Accent usage | positive owner, neutral guest, caution verification, critical non-owner |
+
+**Pattern notes:** Status is always repeated through badge, heading, icon, and explanatory text.
+This component presents deterministic access outcomes only; AUTH-B/16B must perform authorization
+server-side before returning report data.

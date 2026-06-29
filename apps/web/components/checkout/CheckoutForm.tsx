@@ -18,7 +18,7 @@ import { guestEmailSchema } from "@workspace/validation/checkout";
 
 import { startCheckout } from "@/actions/checkout";
 
-import type { CheckoutFixtureName } from "./fixtures";
+import { resolveCheckoutBuyerFixture, type CheckoutFixtureName } from "./fixtures";
 
 type CheckoutFormProps = {
   fixtureName?: CheckoutFixtureName | undefined;
@@ -35,14 +35,9 @@ export function CheckoutForm({
   statusHref,
   cancelled,
 }: CheckoutFormProps) {
-  const isAuthenticated = fixtureName === "authenticated-ready";
-  const [email, setEmail] = useState(
-    isAuthenticated
-      ? "verified.buyer@example.com"
-      : fixtureName === "validation-error"
-        ? "invalid"
-        : "",
-  );
+  const buyer = resolveCheckoutBuyerFixture(fixtureName);
+  const isAuthenticated = buyer.mode === "authenticated";
+  const [email, setEmail] = useState(buyer.initialEmail);
   const [error, setError] = useState(
     fixtureName === "validation-error" ? "Enter a valid email address." : undefined,
   );
@@ -119,7 +114,7 @@ export function CheckoutForm({
                 type="email"
                 autoComplete="email"
                 value={email}
-                readOnly={isAuthenticated}
+                readOnly={buyer.emailReadOnly}
                 disabled={isRedirecting}
                 aria-invalid={Boolean(error)}
                 aria-describedby={error ? "checkout-email-error" : "checkout-email-help"}

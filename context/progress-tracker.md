@@ -8,21 +8,21 @@ Update after every completed feature. Record actual state only.
 
 **Product phase:** Phase A — Company Search and Paid Reports
 
-**Build-plan phase:** Phase 3 — Paid Generation
+**Build-plan phase:** Phase 2A — Clerk Authentication and Ownership
 
-**Last completed:** 13B — Logic/Data: Stripe Checkout, Webhook, and Pending Report
+**Last completed:** AUTH-A — UI/Mock: Authentication and Buyer Identity
 
-**Next:** 14A — UI/Mock: Report Generation Lifecycle
+**Next:** AUTH-B — Logic/Data: Clerk Authentication Foundation
 
-**Status:** 13A and 13B complete; generation-lifecycle UI is next
+**Status:** AUTH-A is `UI/Mock Verified`; Clerk wiring and ownership foundation are next
 
 **Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
 
 ### Current Unit Scope
 
-13B provides guest Stripe Checkout, signed/idempotent webhook processing, immutable paid values,
-exactly-one pending-report convergence, and deterministic generation-job enqueueing. Report processing
-itself remains in 14B.
+AUTH-A provides production-gated authentication previews, safe internal return paths, restrained
+account navigation, verified-email buyer presentation, and owner/non-owner/guest access fixtures.
+Clerk sessions, trusted identity propagation, and server authorization remain in AUTH-B.
 
 ---
 
@@ -49,6 +49,8 @@ itself remains in 14B.
 
 - [x] 13A UI/Mock: Checkout and Payment Status — `UI/Mock Verified` 2026-06-28 under automated gate policy
 - [x] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
+- [x] AUTH-A UI/Mock: Authentication and Buyer Identity — `UI/Mock Verified` 2026-06-29
+- [ ] AUTH-B Logic/Data: Clerk Authentication Foundation
 - [ ] 14A UI/Mock: Report Generation Lifecycle
 - [ ] 14B Logic/Data: Generation Queue (A16)
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
@@ -88,6 +90,11 @@ itself remains in 14B.
 - Guest-first Stripe-hosted Checkout with trusted server pricing, dynamic payment-method support,
   raw-body signature verification, durable event/session idempotency, paid amount/currency snapshots,
   and deterministic report-generation job IDs.
+- Development/test-only auth previews for sign-in, sign-up, callback, error, signed-in, sign-out,
+  unverified-email, owner, non-owner, and guest states; production omits mock auth navigation and
+  returns not found for preview routes.
+- Safe return-path parsing limited to current Phase A routes, plus reusable account and report-access
+  presentation components for AUTH-B and 16A/16B.
 
 ---
 
@@ -104,6 +111,8 @@ itself remains in 14B.
 - PostgreSQL/Drizzle, BullMQ/Redis, Clerk, Stripe, and Postmark are selected.
 - `ENABLE_FLAG_SUMMARY=false` everywhere by default.
 - No AI-generated legal/report copy or risk scores.
+- AUTH-A and AUTH-B are hard prerequisites for 14A; the earlier tracker ordering was stale.
+- Phase A account navigation contains sign-in/sign-out only and does not open a dashboard.
 
 ### Architecture Snapshot
 
@@ -170,6 +179,15 @@ webhook signature acceptance/rejection, and five shared checkout-validation
 assertions. Focused API and Next.js production builds passed; Next emitted dynamic checkout, status,
 and same-origin status-proxy routes. The aggregate Turbo build exceeded the command timeout after its
 workspace compilation stage, while the focused API and web builds completed successfully.
+
+2026-06-29 AUTH-A checks: focused web typecheck and lint passed; all nine web assertions passed,
+including every auth fixture, production fixture/preview guards, safe Phase A return paths,
+open-redirect rejection, guest/editable and authenticated/read-only checkout identity, and existing
+checkout privacy/production guards. Source-only Prettier checks
+passed. The web production build compiled successfully and generated production-gated `/sign-in`,
+`/sign-up`, and `/auth/preview` routes whose server components call `notFound()` in production.
+The broad web formatting script remains noisy because it scans existing `.next` artifacts; no
+generated files were changed. User manual browser QA remains non-blocking.
 
 ### Coverage Tracking
 
