@@ -31,6 +31,11 @@ export function ClerkAuthScreen({ mode, fixture, returnTo }: ClerkAuthScreenProp
       path="/sign-in"
       routing="path"
       fallbackRedirectUrl={safeReturnTo}
+      appearance={{
+        elements: {
+          formButtonPrimary: "text-blue-50"
+        }
+      }}
       signUpUrl="/sign-up"
     />
   ) : (

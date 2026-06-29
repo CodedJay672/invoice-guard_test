@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import React, { useState } from "react";
 import { ArrowRight, LoaderCircle, Mail } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
@@ -51,7 +51,7 @@ export function CheckoutForm({
   );
   const [isRedirecting, setIsRedirecting] = useState(fixtureName === "redirecting");
 
-  async function submitCheckout(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function submitCheckout(event: React.SubmitEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (isUnverified) {
       setError("Verify your account email or sign out to continue as a guest.");
@@ -158,14 +158,6 @@ export function CheckoutForm({
               </p>
             )}
           </div>
-
-          <Alert variant="caution">
-            <AlertTitle>Payment is not confirmed by the return page</AlertTitle>
-            <AlertDescription>
-              In the live flow, InvoiceGuard waits for Stripe&apos;s signed webhook before creating
-              a report.
-            </AlertDescription>
-          </Alert>
 
           <Button
             type="submit"

@@ -40,7 +40,7 @@ export function CheckoutShell({ selection, product, children }: CheckoutShellPro
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             <div className="min-w-0 rounded-md border border-line bg-surface-subtle p-4">
-              <p className="font-semibold break-words text-brand-navy">
+              <p className="font-semibold wrap-break-word text-brand-navy">
                 {selection.q ?? "Selected UK company"}
               </p>
               <p className="mt-1 font-mono text-sm text-content-muted">{selection.companyNumber}</p>
@@ -65,7 +65,7 @@ export function CheckoutShell({ selection, product, children }: CheckoutShellPro
             </ul>
             <p className="flex gap-2 text-xs text-content-muted">
               <LockKeyhole aria-hidden="true" className="size-4 shrink-0" />
-              Payment confirmation will come from Stripe in the next implementation phase.
+              Payment confirmation will come from Stripe.
             </p>
           </CardContent>
         </Card>
