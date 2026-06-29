@@ -20,6 +20,7 @@ export class StripeSdkGateway implements StripeGateway {
     companyNumber: string;
     companyName: string;
     email: string;
+    clerkUserId?: string | undefined;
     pricePence: number;
     currency: string;
     tier: "basic" | "standard" | "premium";
@@ -43,7 +44,11 @@ export class StripeSdkGateway implements StripeGateway {
             },
           },
         ],
-        metadata: { companyNumber: input.companyNumber, tier: input.tier },
+        metadata: {
+          companyNumber: input.companyNumber,
+          tier: input.tier,
+          ...(input.clerkUserId ? { clerkUserId: input.clerkUserId } : {}),
+        },
         success_url: `${input.appUrl}/checkout/status?sessionId={CHECKOUT_SESSION_ID}`,
         cancel_url: `${input.appUrl}/checkout?${cancelParams.toString()}&cancelled=1`,
       },

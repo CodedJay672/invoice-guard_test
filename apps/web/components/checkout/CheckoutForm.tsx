@@ -20,8 +20,14 @@ import { startCheckout } from "@/actions/checkout";
 
 import { resolveCheckoutBuyerFixture, type CheckoutFixtureName } from "./fixtures";
 
+export type CheckoutBuyer =
+  | { mode: "guest"; initialEmail: string; emailReadOnly: false }
+  | { mode: "authenticated"; initialEmail: string; emailReadOnly: true }
+  | { mode: "unverified"; initialEmail: ""; emailReadOnly: true };
+
 type CheckoutFormProps = {
   fixtureName?: CheckoutFixtureName | undefined;
+  buyer: CheckoutBuyer;
   companyNumber: string;
   tier: "basic" | "standard" | "premium";
   statusHref: string;
@@ -30,13 +36,15 @@ type CheckoutFormProps = {
 
 export function CheckoutForm({
   fixtureName,
+  buyer: liveBuyer,
   companyNumber,
   tier,
   statusHref,
   cancelled,
 }: CheckoutFormProps) {
-  const buyer = resolveCheckoutBuyerFixture(fixtureName);
+  const buyer = fixtureName ? resolveCheckoutBuyerFixture(fixtureName) : liveBuyer;
   const isAuthenticated = buyer.mode === "authenticated";
+  const isUnverified = buyer.mode === "unverified";
   const [email, setEmail] = useState(buyer.initialEmail);
   const [error, setError] = useState(
     fixtureName === "validation-error" ? "Enter a valid email address." : undefined,
@@ -45,6 +53,10 @@ export function CheckoutForm({
 
   async function submitCheckout(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+    if (isUnverified) {
+      setError("Verify your account email or sign out to continue as a guest.");
+      return;
+    }
     const result = guestEmailSchema.safeParse(email);
 
     if (!result.success) {
@@ -99,6 +111,14 @@ export function CheckoutForm({
               </AlertDescription>
             </Alert>
           ) : null}
+          {isUnverified ? (
+            <Alert variant="caution">
+              <AlertTitle>Verify your email before account checkout</AlertTitle>
+              <AlertDescription>
+                Complete Clerk email verification, or sign out and continue with guest checkout.
+              </AlertDescription>
+            </Alert>
+          ) : null}
           <div className="flex flex-col gap-2" data-invalid={error ? true : undefined}>
             <label className="text-sm font-medium text-content" htmlFor="checkout-email">
               Report delivery email
@@ -116,6 +136,7 @@ export function CheckoutForm({
                 value={email}
                 readOnly={buyer.emailReadOnly}
                 disabled={isRedirecting}
+                aria-disabled={isUnverified}
                 aria-invalid={Boolean(error)}
                 aria-describedby={error ? "checkout-email-error" : "checkout-email-help"}
                 className="pl-9"
@@ -151,6 +172,7 @@ export function CheckoutForm({
             size="lg"
             variant="authoritative"
             disabled={isRedirecting}
+            aria-disabled={isUnverified}
             className="h-11 w-full justify-between"
           >
             {isRedirecting ? (

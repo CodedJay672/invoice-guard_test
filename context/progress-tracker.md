@@ -14,15 +14,16 @@ Update after every completed feature. Record actual state only.
 
 **Next:** AUTH-B — Logic/Data: Clerk Authentication Foundation
 
-**Status:** AUTH-A is `UI/Mock Verified`; Clerk wiring and ownership foundation are next
+**Status:** AUTH-B implementation and automated verification pass; host Clerk doctor/live smoke remain pending
 
 **Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
 
 ### Current Unit Scope
 
-AUTH-A provides production-gated authentication previews, safe internal return paths, restrained
-account navigation, verified-email buyer presentation, and owner/non-owner/guest access fixtures.
-Clerk sessions, trusted identity propagation, and server authorization remain in AUTH-B.
+AUTH-B now provides Clerk v7 middleware/provider/routes, verified-primary-email identity, signed
+web-to-API principals, signed-in checkout ownership, and reusable owner/admin helpers. The existing
+local `.env` still needs its publishable-key variable renamed and host Clerk CLI/live smoke verification
+must pass before the unit is marked complete.
 
 ---
 
@@ -50,7 +51,7 @@ Clerk sessions, trusted identity propagation, and server authorization remain in
 - [x] 13A UI/Mock: Checkout and Payment Status — `UI/Mock Verified` 2026-06-28 under automated gate policy
 - [x] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
 - [x] AUTH-A UI/Mock: Authentication and Buyer Identity — `UI/Mock Verified` 2026-06-29
-- [ ] AUTH-B Logic/Data: Clerk Authentication Foundation
+- [ ] AUTH-B Logic/Data: Clerk Authentication Foundation — implementation/automated checks pass; host verification pending
 - [ ] 14A UI/Mock: Report Generation Lifecycle
 - [ ] 14B Logic/Data: Generation Queue (A16)
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
@@ -95,6 +96,8 @@ Clerk sessions, trusted identity propagation, and server authorization remain in
   returns not found for preview routes.
 - Safe return-path parsing limited to current Phase A routes, plus reusable account and report-access
   presentation components for AUTH-B and 16A/16B.
+- Clerk v7 embedded sign-in/sign-up routes, public middleware context, session-aware account controls,
+  verified-email checkout enforcement, HMAC-signed internal principals, and webhook-owned reports.
 
 ---
 
@@ -134,6 +137,8 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 - Production requires approved disclaimer wording and Lucky's ICO confirmation.
 - Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
 - Landing/autocomplete physical browser QA remains pending because the in-app browser bridge was unavailable on 2026-06-27.
+- `clerk doctor --json` could not start through the Windows/npm package runner and timed out without
+  Clerk output; rerun from a normal host terminal after renaming the local publishable-key variable.
 
 ### Open Questions
 
@@ -188,6 +193,15 @@ passed. The web production build compiled successfully and generated production-
 `/sign-up`, and `/auth/preview` routes whose server components call `notFound()` in production.
 The broad web formatting script remains noisy because it scans existing `.next` artifacts; no
 generated files were changed. User manual browser QA remains non-blocking.
+
+2026-06-29 AUTH-B implementation checks: installed `@clerk/nextjs` 7.5.9 and `@clerk/ui` 1.23.0;
+focused web, API, and utils TypeScript checks passed. Repository tests passed 12 workspace tasks,
+including 25 API assertions plus new signed-principal and authenticated-checkout ownership coverage.
+Repository lint passed 13 unaffected workspaces and focused web lint passed after cleanup. The web
+production build passed with dynamic Clerk sign-in/sign-up routes and the Next.js proxy. The build
+used a process-only alias for the existing legacy local publishable-key name; `.env` was not modified.
+`clerk doctor --json` timed out inside `npx` before emitting output, so live sign-in/sign-out/checkout
+smoke verification remains outstanding and AUTH-B is not yet marked complete.
 
 ### Coverage Tracking
 

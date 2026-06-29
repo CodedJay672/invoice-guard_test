@@ -7,6 +7,7 @@ declare module "express" {
 
   export interface Request {
     clerkUserId?: string;
+    verifiedEmail?: string;
     ip?: string;
     query: Record<string, unknown>;
     params: Record<string, string | undefined>;

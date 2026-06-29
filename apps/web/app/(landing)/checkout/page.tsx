@@ -14,9 +14,11 @@ import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { CheckoutShell } from "@/components/checkout/CheckoutShell";
 import {
   reportProductFixtures,
+  resolveCheckoutBuyerFixture,
   resolveCheckoutFixtureName,
   resolveCheckoutSelection,
 } from "@/components/checkout/fixtures";
+import { resolveAuthIdentity } from "@/lib/auth/identity";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -39,6 +41,19 @@ export default async function Page({ searchParams }: PageProps) {
     return <UnavailableProduct />;
   }
 
+  const identity = await resolveAuthIdentity();
+  const buyer = fixtureName
+    ? resolveCheckoutBuyerFixture(fixtureName)
+    : identity.state === "verified"
+      ? {
+          mode: "authenticated" as const,
+          initialEmail: identity.email,
+          emailReadOnly: true as const,
+        }
+      : identity.state === "unverified"
+        ? { mode: "unverified" as const, initialEmail: "" as const, emailReadOnly: true as const }
+        : { mode: "guest" as const, initialEmail: "", emailReadOnly: false as const };
+
   const statusParams = new URLSearchParams({
     companyNumber: selection.companyNumber,
     tier: selection.tier,
@@ -49,6 +64,7 @@ export default async function Page({ searchParams }: PageProps) {
     <CheckoutShell product={product} selection={selection}>
       <CheckoutForm
         fixtureName={fixtureName}
+        buyer={buyer}
         companyNumber={selection.companyNumber}
         tier={selection.tier}
         statusHref={`/checkout/status?${statusParams.toString()}`}

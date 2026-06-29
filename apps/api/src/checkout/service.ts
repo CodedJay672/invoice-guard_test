@@ -8,7 +8,7 @@ import type {
   CheckoutRepository,
   CheckoutSessionResult,
   CheckoutStatusResult,
-  CreateCheckoutSessionInput,
+  AuthenticatedCreateCheckoutSessionInput,
   ReportGenerationQueue,
   StripeGateway,
 } from "./types.js";
@@ -26,7 +26,9 @@ export interface CheckoutServiceDependencies {
 export class CheckoutService {
   constructor(private readonly dependencies: CheckoutServiceDependencies) {}
 
-  async createSession(input: CreateCheckoutSessionInput): Promise<CheckoutSessionResult> {
+  async createSession(
+    input: AuthenticatedCreateCheckoutSessionInput,
+  ): Promise<CheckoutSessionResult> {
     const product = await this.dependencies.reportProductRepository.findActiveByTier(input.tier);
     if (!product) throw new CheckoutValidationError("This report product is not available.");
 
@@ -38,6 +40,7 @@ export class CheckoutService {
         companyNumber: company.companiesHouseNumber,
         companyName: company.companyName,
         email: input.email,
+        clerkUserId: input.clerkUserId,
         pricePence: product.pricePence,
         currency: "GBP",
         tier: product.tier,
@@ -99,6 +102,7 @@ export class CheckoutService {
     const tierResult = reportTierSchema.safeParse(metadata["tier"]);
     const emailResult = guestEmailSchema.safeParse(session.customer_details?.email);
     const companyNumber = metadata["companyNumber"];
+    const clerkUserId = parseClerkUserId(metadata["clerkUserId"]);
     const amountPaidPence = session.amount_total;
     const currency = session.currency?.toUpperCase();
 
@@ -134,6 +138,7 @@ export class CheckoutService {
       companyName: company.companyName,
       tier: product.tier,
       email: emailResult.data,
+      clerkUserId,
       amountPaidPence,
       currency,
       eventPayload: {
@@ -148,6 +153,14 @@ export class CheckoutService {
       await this.dependencies.checkoutRepository.markEventProcessed(event.id);
     }
   }
+}
+
+function parseClerkUserId(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (!/^user_[A-Za-z0-9_-]{1,123}$/.test(value)) {
+    throw new CheckoutValidationError("Paid Checkout Session owner metadata is invalid.");
+  }
+  return value;
 }
 
 function isCheckoutEvent(type: string): boolean {

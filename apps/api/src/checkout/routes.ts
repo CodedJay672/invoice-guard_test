@@ -3,6 +3,7 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import Stripe from "stripe";
 
 import { sendApiError } from "../http.js";
+import type { RequestIdentityResolver } from "../request-context.js";
 import { CheckoutService } from "./service.js";
 import { CheckoutUnavailableError, CheckoutValidationError } from "./types.js";
 
@@ -16,9 +17,15 @@ export function registerStripeWebhookRoute(app: Express, checkoutService: Checko
   );
 }
 
-export function registerCheckoutRoutes(app: Express, checkoutService: CheckoutService): void {
+export function registerCheckoutRoutes(
+  app: Express,
+  checkoutService: CheckoutService,
+  requestIdentityResolver: RequestIdentityResolver,
+): void {
   app.post("/checkout/sessions", (request: Request, response: Response, next: NextFunction) => {
-    void handleCreateSession(request, response, checkoutService).catch(next);
+    void handleCreateSession(request, response, checkoutService, requestIdentityResolver).catch(
+      next,
+    );
   });
   app.get(
     "/checkout/sessions/:sessionId/status",
@@ -32,6 +39,7 @@ async function handleCreateSession(
   request: Request,
   response: Response,
   service: CheckoutService,
+  requestIdentityResolver: RequestIdentityResolver,
 ): Promise<void> {
   const input = createCheckoutSessionSchema.safeParse(request.body);
   if (!input.success) {
@@ -44,7 +52,14 @@ async function handleCreateSession(
     return;
   }
   try {
-    response.status(201).json({ data: await service.createSession(input.data) });
+    const identity = requestIdentityResolver(request);
+    if (identity.clerkUserId && identity.verifiedEmail !== input.data.email) {
+      sendApiError(response, 400, "invalid_checkout_identity", "Checkout identity is invalid.");
+      return;
+    }
+    response.status(201).json({
+      data: await service.createSession({ ...input.data, clerkUserId: identity.clerkUserId }),
+    });
   } catch (error) {
     handleCheckoutError(error, response);
   }

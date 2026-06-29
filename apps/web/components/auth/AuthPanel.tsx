@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle2, CircleAlert, LoaderCircle, LogOut, Mail } from "lucide-react";
 import Link from "next/link";
 
@@ -114,9 +114,13 @@ export function AuthPanel({ initialState, returnTo, fixtureName }: AuthPanelProp
             <ArrowRight data-icon="inline-end" />
           </Link>
         </Button>
-        <Button type="button" variant="outline" onClick={() => {
-          if (!fixtureName) setState("signing-out")
-        }}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => {
+            if (!fixtureName) setState("signing-out");
+          }}
+        >
           <LogOut data-icon="inline-start" />
           Sign out
         </Button>

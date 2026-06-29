@@ -1,13 +1,12 @@
 import { Building2 } from "lucide-react";
 import Link from "next/link";
 
-import { loadWebProxyConfig } from "@workspace/config/web";
-
 import { AccountControl } from "@/components/auth/AccountControl";
 import { authHref } from "@/components/auth/fixtures";
+import { resolveAuthIdentity } from "@/lib/auth/identity";
 
-export default function Topbar() {
-  const authPreviewEnabled = loadWebProxyConfig().environment !== "production";
+export default async function Topbar() {
+  const identity = await resolveAuthIdentity();
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-surface">
@@ -26,9 +25,13 @@ export default function Topbar() {
           >
             Company search
           </Link>
-          {authPreviewEnabled ? (
+          {identity.state === "signed-out" ? (
             <AccountControl state="signed-out" signInHref={authHref("/sign-in", "/search")} />
-          ) : null}
+          ) : identity.state === "verified" ? (
+            <AccountControl state="signed-in" email={identity.email} verified />
+          ) : (
+            <AccountControl state="signed-in" verified={false} />
+          )}
         </nav>
       </div>
     </header>

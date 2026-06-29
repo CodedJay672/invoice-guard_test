@@ -284,3 +284,25 @@ Last updated: 2026-06-29
 **Pattern notes:** Status is always repeated through badge, heading, icon, and explanatory text.
 This component presents deterministic access outcomes only; AUTH-B/16B must perform authorization
 server-side before returning report data.
+
+### Live Clerk Authentication Surface
+
+File: `apps/web/components/auth/ClerkAuthScreen.tsx`
+Last updated: 2026-06-29
+
+| Property | Class/pattern |
+| --- | --- |
+| Background | Clerk shadcn theme bound to `surface`/`page` semantic variables |
+| Border | Clerk shadcn theme bound to `line` |
+| Border radius | `0.625rem`, matching the canonical medium radius |
+| Text — primary | Clerk foreground bound to `content` |
+| Text — secondary | Clerk muted foreground bound to `content-muted` |
+| Spacing | public wrapper `max-w-lg px-4 py-10 sm:px-6 lg:px-8` |
+| Interactive states | Clerk ring bound to `focus`; primary action bound to `brand-navy` |
+| Shadow | Clerk shadcn default subtle elevation |
+| Accent usage | semantic InvoiceGuard variables only; no raw Tailwind colours |
+
+**Pattern notes:** Production `/sign-in` and `/sign-up` use Clerk's embedded, path-routed components.
+AUTH-A fixtures remain development/test-only and reuse `AuthPanel`. Safe Phase A return paths remain
+the only caller-controlled fallback destinations. The public account control now uses the same
+registered outline/menu pattern with Clerk-backed sign-out and a distinct unverified-email label.

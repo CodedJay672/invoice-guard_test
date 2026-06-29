@@ -58,7 +58,8 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
           .insert(schema.purchasedReports)
           .values({
             reportReference: createReportReference(),
-            guestEmail: input.email,
+            clerkUserId: input.clerkUserId,
+            guestEmail: input.clerkUserId ? null : input.email,
             companiesHouseNumber: input.companyNumber,
             companyName: input.companyName,
             reportTier: input.tier,

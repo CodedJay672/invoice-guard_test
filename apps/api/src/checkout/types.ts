@@ -20,6 +20,7 @@ export interface StripeGateway {
     companyNumber: string;
     companyName: string;
     email: string;
+    clerkUserId?: string | undefined;
     pricePence: number;
     currency: string;
     tier: ReportTier;
@@ -41,6 +42,7 @@ export interface PaidReportEventInput {
   companyName: string;
   tier: ReportTier;
   email: string;
+  clerkUserId: string | undefined;
   amountPaidPence: number;
   currency: string;
   eventPayload: Record<string, unknown>;
@@ -69,4 +71,6 @@ export interface CheckoutStatusResult {
 export class CheckoutUnavailableError extends Error {}
 export class CheckoutValidationError extends Error {}
 
-export type { CreateCheckoutSessionInput };
+export type AuthenticatedCreateCheckoutSessionInput = CreateCheckoutSessionInput & {
+  clerkUserId?: string | undefined;
+};

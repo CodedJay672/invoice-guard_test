@@ -67,9 +67,14 @@ class FakeStripeGateway implements StripeGateway {
   status: Stripe.Checkout.Session.Status | null = "open";
   paymentStatus: Stripe.Checkout.Session.PaymentStatus = "unpaid";
   createdPrice: number | undefined;
+  createdClerkUserId: string | undefined;
 
-  createSession(input: { pricePence: number }): Promise<CheckoutSessionResult> {
+  createSession(input: {
+    pricePence: number;
+    clerkUserId?: string | undefined;
+  }): Promise<CheckoutSessionResult> {
     this.createdPrice = input.pricePence;
+    this.createdClerkUserId = input.clerkUserId;
     return Promise.resolve({ sessionId: "cs_test_one", url: "https://checkout.stripe.test/one" });
   }
   retrieveSession(): Promise<CheckoutSessionState> {
@@ -122,6 +127,18 @@ void test("checkout creation uses the trusted active product price", async () =>
   assert.equal(harness.stripeGateway.createdPrice, 799);
 });
 
+void test("verified checkout ownership is carried into Stripe by the service", async () => {
+  const harness = createHarness();
+  await harness.service.createSession({
+    companyNumber: "12345678",
+    tier: "basic",
+    email: "owner@example.com",
+    attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
+    clerkUserId: "user_owner_123",
+  });
+  assert.equal(harness.stripeGateway.createdClerkUserId, "user_owner_123");
+});
+
 void test("unpaid completion is recorded without creating or queueing a report", async () => {
   const harness = createHarness();
   await harness.service.processEvent(checkoutEvent("checkout.session.completed", "unpaid"));
@@ -136,6 +153,14 @@ void test("paid completion creates one pending report job and marks the event pr
   assert.equal(harness.repository.prepared.length, 1);
   assert.deepEqual(harness.enqueued, ["report-1"]);
   assert.deepEqual(harness.repository.processedEvents, ["evt_one"]);
+});
+
+void test("paid completion preserves server-created Clerk ownership metadata", async () => {
+  const harness = createHarness();
+  await harness.service.processEvent(
+    checkoutEvent("checkout.session.completed", "paid", "user_owner_123"),
+  );
+  assert.equal(harness.repository.prepared[0]?.clerkUserId, "user_owner_123");
 });
 
 void test("processed replay does not enqueue a duplicate generation job", async () => {
@@ -161,6 +186,7 @@ function checkoutEvent(
     | "checkout.session.async_payment_succeeded"
     | "checkout.session.async_payment_failed",
   paymentStatus: Stripe.Checkout.Session.PaymentStatus,
+  clerkUserId?: string,
 ): Stripe.Event {
   return {
     id: "evt_one",
@@ -176,7 +202,11 @@ function checkoutEvent(
         amount_total: 799,
         currency: "gbp",
         customer_details: { email: "buyer@example.com" },
-        metadata: { companyNumber: "12345678", tier: "basic" },
+        metadata: {
+          companyNumber: "12345678",
+          tier: "basic",
+          ...(clerkUserId ? { clerkUserId } : {}),
+        },
         payment_intent: "pi_one",
       } as unknown as Stripe.Checkout.Session,
     },

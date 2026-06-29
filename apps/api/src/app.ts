@@ -38,7 +38,7 @@ export function createApiApp(
     requestIdentityResolver: dependencies.requestIdentityResolver,
   });
   if (dependencies.checkoutService) {
-    registerCheckoutRoutes(app, dependencies.checkoutService);
+    registerCheckoutRoutes(app, dependencies.checkoutService, dependencies.requestIdentityResolver);
   }
 
   app.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {
