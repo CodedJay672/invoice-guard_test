@@ -22,5 +22,29 @@ export const checkoutSelectionSchema = z.object({
   q: z.string().trim().min(1).max(160).optional(),
 });
 
+export const createCheckoutSessionSchema = checkoutSelectionSchema
+  .pick({ companyNumber: true, tier: true })
+  .extend({
+    email: guestEmailSchema,
+    attemptId: z.string().uuid("Checkout attempt ID must be a UUID."),
+  });
+
+export const checkoutSessionIdSchema = z
+  .string()
+  .trim()
+  .min(8)
+  .max(128)
+  .regex(/^cs_(?:test_|live_)?[A-Za-z0-9_]+$/, "Invalid Checkout Session ID.");
+
+export const checkoutStatusSchema = z.enum([
+  "confirming",
+  "paid_pending",
+  "delayed",
+  "cancelled",
+  "failed",
+]);
+
 export type CheckoutSelection = z.infer<typeof checkoutSelectionSchema>;
 export type ReportTier = z.infer<typeof reportTierSchema>;
+export type CreateCheckoutSessionInput = z.infer<typeof createCheckoutSessionSchema>;
+export type CheckoutStatus = z.infer<typeof checkoutStatusSchema>;

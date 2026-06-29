@@ -49,7 +49,10 @@ export default async function Page({ searchParams }: PageProps) {
     <CheckoutShell product={product} selection={selection}>
       <CheckoutForm
         fixtureName={fixtureName}
+        companyNumber={selection.companyNumber}
+        tier={selection.tier}
         statusHref={`/checkout/status?${statusParams.toString()}`}
+        cancelled={singleValue(params.cancelled) === "1"}
       />
     </CheckoutShell>
   );

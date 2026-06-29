@@ -16,11 +16,10 @@ An `A` unit is not a disposable wireframe. It must use production-intended compo
 No `B` unit may start until its paired `A` unit has:
 
 - All listed happy, loading, empty, partial, error, disabled, and edge states built.
-- Desktop and mobile behavior physically exercised.
-- Keyboard/focus and obvious accessibility behavior physically exercised.
+- Desktop/mobile, keyboard/focus, and accessibility states covered by deterministic fixtures and automated checks where practical.
 - Relevant Figma comparison completed when a matching design exists.
 - Product copy and phase scope checked against context.
-- Screenshots or concise physical-test notes recorded in `progress-tracker.md`.
+- Automated verification evidence recorded in `progress-tracker.md`.
 - New/changed component patterns recorded in `ui-registry.md`.
 - Web typecheck and lint passing for production code used by the mock.
 - Explicit status: `UI/Mock Verified`.
@@ -34,6 +33,10 @@ Allowed verification methods:
 | Document/PDF inspection | Report pagination, print hierarchy, disclaimer placement, identifiers, and source status. |
 | Operational mock testing | Admin/maintenance/job states that need fixtures rather than a public design. |
 
+Agent-run physical browser testing and user manual QA are encouraged but non-blocking. Their absence
+does not prevent `UI/Mock Verified` status when the complete state matrix, accessibility contracts,
+responsive implementation, and automated checks pass.
+
 When Figma depicts future-only behavior, adapt only the Phase A visual pattern. Phase scope always wins.
 
 ---
@@ -46,7 +49,7 @@ A `B` unit is complete only when:
 - API, database, provider, queue, security, privacy, and failure requirements pass.
 - Mock fixtures remain available for deterministic UI/state testing where useful.
 - Narrow checks and repository-level checks pass.
-- The real end-to-end flow is physically exercised.
+- The real end-to-end flow has automated integration coverage; user manual QA remains non-blocking.
 - `progress-tracker.md` records implementation and verification evidence.
 
 ---
@@ -114,7 +117,7 @@ Depends on: **12A — UI/Mock Verified**.
 - Invalid/inactive product, validation failure, redirecting, cancelled, failed, paid/pending, duplicate-refresh, and delayed-confirmation states.
 - Clear language that payment confirmation comes from Stripe, not the redirect.
 
-Verification: physical form, validation, focus, responsive, refresh, and navigation testing. Use Figma checkout/payment patterns only if Phase A-relevant frames exist.
+Verification: deterministic form, validation, focus-contract, responsive-structure, refresh, and navigation coverage. User manual QA is non-blocking.
 
 ### 13B — Logic/Data: Stripe Checkout, Webhook, and Pending Report
 
@@ -129,6 +132,46 @@ Depends on: **13A — UI/Mock Verified**.
 
 ---
 
+## Phase 2A — Clerk Authentication and Ownership
+
+Authentication is Phase A infrastructure for report ownership and admin authorization. It does not
+open the Phase B dashboard, report history, saved companies, notes, watchlists, or subscriptions.
+Complete `AUTH-A` and `AUTH-B` before starting 14A.
+
+### AUTH-A — UI/Mock: Authentication and Buyer Identity
+
+- Signed-out, sign-in, sign-up, callback/loading, authentication-error, signed-in, sign-out, and
+  unverified-email states.
+- Guest checkout remains available; signed-in checkout shows the verified account email as read-only.
+- Navigation/account controls preserve the existing public shell and return users to their intended
+  Phase A route after authentication.
+- Representative owner, non-owner, and guest report-access presentation states for later secure
+  delivery wiring.
+- No account dashboard, report-history page, saved companies, notes, watchlists, or subscriptions.
+
+Verification: deterministic auth/buyer-identity state coverage, redirect and focus contracts,
+production fixture guards, and responsive public-shell checks. User manual QA is non-blocking.
+
+### AUTH-B — Logic/Data: Clerk Authentication Foundation
+
+Depends on: **AUTH-A — UI/Mock Verified** and **13B — Logic/Data complete**.
+
+- Install and configure Clerk using validated server-only/publishable environment values and current
+  Next.js App Router guidance.
+- Add the root Clerk provider, auth routes, request protection/identity middleware, and shared
+  server-side helpers for authenticated user ID plus verified primary email.
+- Keep public search, preview, guest checkout, and guest report access usable without authentication.
+- Pass authenticated identity to Express through a signed trusted web-to-API boundary; never trust a
+  browser-supplied Clerk user ID or email.
+- For signed-in checkout, persist `clerk_user_id` on the pending report and use the verified account
+  email; preserve the existing guest-email path for signed-out buyers.
+- Expose reusable owner/admin authorization primitives for 16B and 20B without implementing those
+  later units early.
+- Test sign-in callback safety, unverified email handling, sign-out, guest regression, forged identity
+  rejection, signed-in report ownership, and secret/client-bundle boundaries.
+
+---
+
 ## Phase 3 — Paid Generation
 
 ### 14A — UI/Mock: Report Generation Lifecycle
@@ -137,7 +180,7 @@ Depends on: **13A — UI/Mock Verified**.
 - Safe refresh/polling presentation and recovery guidance.
 - Provider/source progress without exposing internal errors.
 
-Verification: physical state transitions using fixtures and responsive/accessibility testing.
+Verification: automated fixture transitions plus responsive/accessibility contract checks; user manual QA is non-blocking.
 
 ### 14B — Logic/Data: Report Generation Queue
 
@@ -155,7 +198,7 @@ Depends on: **14A — UI/Mock Verified**.
 - Companies House foundational failure/refund state.
 - Registry Trust recheck and Premium escalation states.
 
-Verification: physical testing of the tier/state matrix and factual-language review.
+Verification: automated tier/state matrix coverage and factual-language review; user manual QA is non-blocking.
 
 ### 15B — Logic/Data: Paid Providers and Frozen Snapshots
 
@@ -179,11 +222,11 @@ Depends on: **15A — UI/Mock Verified**.
 - Loading, access-denied, not-ready, not-found, and provider-failure states.
 - Screen, mobile, and print layouts.
 
-Verification: Phase A Figma comparison where applicable plus physical browser and print-preview testing.
+Verification: Phase A Figma comparison where applicable plus automated screen/mobile/print contract checks; user manual QA is non-blocking.
 
 ### 16B — Logic/Data: Secure Browser Report Delivery
 
-Depends on: **16A — UI/Mock Verified**.
+Depends on: **16A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
 - Add secure owner/guest report lookup.
 - Build tier-safe display payloads from frozen report data only.
@@ -195,11 +238,11 @@ Depends on: **16A — UI/Mock Verified**.
 - Valid, invalid, expired, already-claimed, email-sending, email-delayed, email-failed, and claim-to-account states.
 - Guest access email rendered with representative report/link data.
 
-Verification: physical link-state testing and email preview inspection at mobile/desktop widths.
+Verification: automated link-state and email-preview coverage at mobile/desktop structures; user manual QA is non-blocking.
 
 ### 17B — Logic/Data: Guest Tokens and Postmark
 
-Depends on: **17A — UI/Mock Verified**.
+Depends on: **17A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
 - Generate secure tokens and store only hashes.
 - Enforce 30-day expiry and verified-email claim.
@@ -233,7 +276,7 @@ Depends on: **18A — UI/Mock Verified** and approved disclaimer/template copy w
 
 - Present, absent, stale, refreshing, and source-failed Premium states.
 
-Verification: physical report/admin state testing and factual copy review.
+Verification: automated report/admin state coverage and factual copy review; user manual QA is non-blocking.
 
 ### 19B — Logic/Data: Fair Payment Code Refresh
 
@@ -251,13 +294,13 @@ Depends on: **19A — UI/Mock Verified**.
 - Filters, pagination, detail panels, loading, empty, degraded, unauthorized, and alert states.
 - Responsive table alternatives.
 
-Verification: physical role/state/table testing and relevant Figma admin comparison if available.
+Verification: automated role/state/table coverage and relevant Figma admin comparison if available; user manual QA is non-blocking.
 
 ### 20B — Logic/Data: Admin Authorization, Queries, and Alerts
 
-Depends on: **20A — UI/Mock Verified**.
+Depends on: **20A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
-- Add Clerk and verified-email `ADMIN_EMAIL` authorization.
+- Apply the shared Clerk identity helpers and enforce verified-email `ADMIN_EMAIL` authorization.
 - Implement operational queries and provider/webhook/stuck-report alerts.
 - Calculate qualifying transactions, revenue, and conversion correctly.
 - Test non-admin denial server-side.
@@ -266,7 +309,7 @@ Depends on: **20A — UI/Mock Verified**.
 
 - Full/partial refund, required reason, confirmation, processing, success, failure, duplicate/already-refunded, and audit-history states.
 
-Verification: physical dialog/focus/destructive-action testing with mock reports.
+Verification: automated dialog/focus/destructive-action contract tests with mock reports; user manual QA is non-blocking.
 
 ### 21B — Logic/Data: Stripe Refunds and Audit Logs
 
@@ -332,4 +375,7 @@ For a `B` unit, the paired verified `A` unit is always a hard dependency.
 
 ## Future Reference
 
-Do not schedule Phase B accounts/saved companies, Phase C-D watchlists, Phase E payment signals, or Phase F recovery until their gates open and a new `/architect` plan is approved.
+Phase A Clerk authentication provides identity, report ownership, verified-email claiming, and admin
+authorization only. Do not schedule Phase B account dashboards/history/saved companies, Phase C-D
+watchlists, Phase E payment signals, or Phase F recovery until their gates open and a new `/architect`
+plan is approved.

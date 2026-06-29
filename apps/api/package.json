@@ -16,11 +16,13 @@
     "@workspace/db": "*",
     "@workspace/integrations": "*",
     "@workspace/logger": "*",
+    "@workspace/queues": "^0.0.0",
     "@workspace/utils": "*",
     "@workspace/validation": "*",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
-    "ioredis": "5.10.1"
+    "ioredis": "5.10.1",
+    "stripe": "^22.3.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   providerUsageLogs,
+  purchasedReports,
   purchasedReportStatusEnum,
   snapshotSourceContextEnum,
 } from "./index.js";
@@ -13,6 +14,18 @@ void test("Phase A report and snapshot enums contain only approved lifecycle val
   assert.deepEqual(snapshotSourceContextEnum.enumValues, ["free_preview", "paid_report"]);
   assert.equal("reportTier" in providerUsageLogs, true);
   assert.equal("subscriptionTier" in providerUsageLogs, false);
+});
+
+void test("purchased reports freeze the Stripe-confirmed financial values", async () => {
+  assert.equal("amountPaidPence" in purchasedReports, true);
+  assert.equal("currency" in purchasedReports, true);
+
+  const migration = await readFile(
+    new URL("../../drizzle/0002_confused_sphinx.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /UPDATE "purchased_reports"/);
+  assert.match(migration, /ALTER COLUMN "amount_paid_pence" SET NOT NULL/);
 });
 
 void test("context compliance migration guards destructive enum conversion", async () => {

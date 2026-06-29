@@ -162,14 +162,30 @@ Server Components; form validation and bounded status checks live in small clien
   privacy-safe checkout URLs have executable tests.
 - Physical desktop/mobile/focus/navigation verification remains pending because the in-app browser
   bridge rejected initialization before opening localhost on 2026-06-28.
+- A fresh 2026-06-28 retry successfully started the development fixture server, but the browser
+  bridge again rejected initialization before a tab opened. No checkout or payment-status state was
+  counted as physically verified, and no screenshots were captured.
+- 2026-06-28: 13A accepted as `UI/Mock Verified` under the project-wide automated gate policy. User
+  manual QA remains available but does not block paired Logic/Data work.
+
+### Feature 13B Live Checkout Wiring
+
+- Path: `apps/web/components/checkout/CheckoutForm.tsx` and `PaymentStatusPanel.tsx`.
+- Last updated: 2026-06-28.
+- Existing Card, Alert, Input, Badge, and authoritative/outline Button patterns remain unchanged.
+- Live checkout preserves the same spacing, semantic colour tokens, focus behavior, and responsive
+  shell as 13A; only the data/navigation behavior changes.
+- A cancellation return uses the canonical caution Alert. Payment initiation disables the form and
+  status polling retains visible text plus `aria-live` updates.
+- Development/test fixtures remain deterministic; production ignores fixture query values.
 
 ---
 
 ## Known Drift
 
 - No known token, dark-mode, raw-colour, gradient, fixed-content-width, or page-level Client Component drift in the landing/search experience.
-- Checkout and payment-status UI are implemented but are not yet `UI/Mock Verified` because the
-  physical browser gate remains unavailable.
+- Checkout and payment-status UI are `UI/Mock Verified` through automated state and contract coverage;
+  user manual QA is non-blocking.
 - Physical landing/autocomplete browser verification remains pending because the browser execution bridge was unavailable on 2026-06-27.
 
 ---

@@ -40,3 +40,4 @@ Read in this exact order before any implementation:
 - `/find-skills` - Helps identify relevant skills by domain and task when users ask "how do I do X" or "find a skill for X"
 - `/shadcn` - Manages shadcn components and projects
 - `stripe best practices` - good strip installation choices, stripe documentation and best practices
+- `clerk/skills` - helps with good practices for clerk authentiation and organization management

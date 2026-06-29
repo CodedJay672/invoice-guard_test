@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import { ArrowRight, LoaderCircle, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
@@ -17,15 +16,25 @@ import {
 import { Input } from "@workspace/ui/components/input";
 import { guestEmailSchema } from "@workspace/validation/checkout";
 
+import { startCheckout } from "@/actions/checkout";
+
 import type { CheckoutFixtureName } from "./fixtures";
 
 type CheckoutFormProps = {
   fixtureName?: CheckoutFixtureName | undefined;
+  companyNumber: string;
+  tier: "basic" | "standard" | "premium";
   statusHref: string;
+  cancelled?: boolean | undefined;
 };
 
-export function CheckoutForm({ fixtureName, statusHref }: CheckoutFormProps) {
-  const router = useRouter();
+export function CheckoutForm({
+  fixtureName,
+  companyNumber,
+  tier,
+  statusHref,
+  cancelled,
+}: CheckoutFormProps) {
   const isAuthenticated = fixtureName === "authenticated-ready";
   const [email, setEmail] = useState(
     isAuthenticated
@@ -39,7 +48,7 @@ export function CheckoutForm({ fixtureName, statusHref }: CheckoutFormProps) {
   );
   const [isRedirecting, setIsRedirecting] = useState(fixtureName === "redirecting");
 
-  function submitCheckout(event: FormEvent<HTMLFormElement>): void {
+  async function submitCheckout(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     const result = guestEmailSchema.safeParse(email);
 
@@ -50,7 +59,23 @@ export function CheckoutForm({ fixtureName, statusHref }: CheckoutFormProps) {
 
     setError(undefined);
     setIsRedirecting(true);
-    window.setTimeout(() => router.push(statusHref), 600);
+    if (fixtureName) {
+      window.setTimeout(() => window.location.assign(statusHref), 600);
+      return;
+    }
+
+    const checkout = await startCheckout({
+      companyNumber,
+      tier,
+      email: result.data,
+      attemptId: window.crypto.randomUUID(),
+    });
+    if (!checkout.ok) {
+      setError(checkout.message);
+      setIsRedirecting(false);
+      return;
+    }
+    window.location.assign(checkout.url);
   }
 
   return (
@@ -66,7 +91,19 @@ export function CheckoutForm({ fixtureName, statusHref }: CheckoutFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="flex flex-col gap-5" noValidate onSubmit={submitCheckout}>
+        <form
+          className="flex flex-col gap-5"
+          noValidate
+          onSubmit={(event) => void submitCheckout(event)}
+        >
+          {cancelled ? (
+            <Alert variant="caution">
+              <AlertTitle>Checkout cancelled</AlertTitle>
+              <AlertDescription>
+                No payment was confirmed. Your company and report selection have been preserved.
+              </AlertDescription>
+            </Alert>
+          ) : null}
           <div className="flex flex-col gap-2" data-invalid={error ? true : undefined}>
             <label className="text-sm font-medium text-content" htmlFor="checkout-email">
               Report delivery email
@@ -137,7 +174,7 @@ export function CheckoutForm({ fixtureName, statusHref }: CheckoutFormProps) {
       </CardContent>
       <CardFooter>
         <p className="text-xs text-content-muted">
-          This is a UI verification flow. No payment will be taken in Phase 13A.
+          Stripe securely hosts payment. InvoiceGuard creates your report only after confirmation.
         </p>
       </CardFooter>
     </Card>

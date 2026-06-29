@@ -15,6 +15,13 @@
       "when": 1782127537364,
       "tag": "0001_context_compliance",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782668539476,
+      "tag": "0002_confused_sphinx",
+      "breakpoints": true
     }
   ]
 }

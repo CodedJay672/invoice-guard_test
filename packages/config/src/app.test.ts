@@ -18,6 +18,8 @@ void test("production API configuration accepts required infrastructure and secr
     REDIS_URL: "redis://localhost:6379",
     WEB_API_SHARED_SECRET: "invoiceguard-web-api-shared-secret-123456",
     SEARCH_IP_HASH_SECRET: "invoiceguard-search-hash-secret-1234567",
+    STRIPE_SECRET_KEY: "sk_test_invoiceguard",
+    STRIPE_WEBHOOK_SECRET: "whsec_invoiceguard",
   });
 
   assert.doesNotThrow(() => assertApiProductionConfig(config));

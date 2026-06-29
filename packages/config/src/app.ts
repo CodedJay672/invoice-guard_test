@@ -110,9 +110,15 @@ export function assertApiProductionConfig(config: AppConfig): void {
     ["REDIS_URL", config.redisUrl],
     ["WEB_API_SHARED_SECRET", config.webApiSharedSecret],
     ["SEARCH_IP_HASH_SECRET", config.searchIpHashSecret],
+    ["STRIPE_SECRET_KEY", config.stripeSecretKey],
+    ["STRIPE_WEBHOOK_SECRET", config.stripeWebhookSecret],
   ]
     .filter((entry) => !entry[1])
     .map((entry) => entry[0]);
+
+  if (config.companiesHouseProviderMode === "live" && !config.companiesHouseApiKey) {
+    missing.push("COMPANIES_HOUSE_API_KEY");
+  }
 
   if (missing.length > 0) {
     throw new Error(`Missing production API configuration: ${missing.join(", ")}.`);

@@ -1,5 +1,5 @@
 import { schema, type Database } from "@workspace/db";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 export type ReportProductTier = "basic" | "standard" | "premium";
 
@@ -13,6 +13,7 @@ export interface ReportProductSummary {
 
 export interface ReportProductRepository {
   listActive(): Promise<ReportProductSummary[]>;
+  findActiveByTier(tier: ReportProductTier): Promise<ReportProductSummary | undefined>;
 }
 
 export const canonicalReportProducts: readonly ReportProductSummary[] = [
@@ -55,6 +56,11 @@ export class InMemoryReportProductRepository implements ReportProductRepository 
   listActive(): Promise<ReportProductSummary[]> {
     return Promise.resolve(canonicalReportProducts.map((product) => ({ ...product })));
   }
+
+  findActiveByTier(tier: ReportProductTier): Promise<ReportProductSummary | undefined> {
+    const product = canonicalReportProducts.find((candidate) => candidate.tier === tier);
+    return Promise.resolve(product ? { ...product } : undefined);
+  }
 }
 
 export class DrizzleReportProductRepository implements ReportProductRepository {
@@ -74,6 +80,24 @@ export class DrizzleReportProductRepository implements ReportProductRepository {
       includesPdf: row.includesPdf,
       includedItems: readIncludedItems(row.entitlements),
     }));
+  }
+
+  async findActiveByTier(tier: ReportProductTier): Promise<ReportProductSummary | undefined> {
+    const rows = await this.db
+      .select()
+      .from(schema.reportProducts)
+      .where(and(eq(schema.reportProducts.tier, tier), eq(schema.reportProducts.isActive, true)))
+      .limit(1);
+    const row = rows[0];
+    return row
+      ? {
+          tier: row.tier,
+          name: row.name,
+          pricePence: row.pricePence,
+          includesPdf: row.includesPdf,
+          includedItems: readIncludedItems(row.entitlements),
+        }
+      : undefined;
   }
 }
 

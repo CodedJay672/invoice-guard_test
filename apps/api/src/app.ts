@@ -3,6 +3,7 @@ import { createLogger } from "@workspace/logger";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 
 import { registerCompanyRoutes } from "./companies/routes.js";
+import { registerCheckoutRoutes, registerStripeWebhookRoute } from "./checkout/routes.js";
 import { createApiDependencies, type ApiDependencies } from "./dependencies.js";
 
 const config = loadAppConfig();
@@ -17,6 +18,9 @@ export function createApiApp(
   const app = express();
 
   app.disable("x-powered-by");
+  if (dependencies.checkoutService) {
+    registerStripeWebhookRoute(app, dependencies.checkoutService);
+  }
   app.use(express.json());
 
   app.get("/health", (_request: Request, response: Response) => {
@@ -33,6 +37,9 @@ export function createApiApp(
     anonymousSearchRateLimiter: dependencies.anonymousSearchRateLimiter,
     requestIdentityResolver: dependencies.requestIdentityResolver,
   });
+  if (dependencies.checkoutService) {
+    registerCheckoutRoutes(app, dependencies.checkoutService);
+  }
 
   app.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {
     logger.error({ error }, "Unhandled API error");

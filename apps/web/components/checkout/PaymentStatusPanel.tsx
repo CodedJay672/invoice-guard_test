@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import type { CheckoutStatus } from "@workspace/validation/checkout";
 
 import type { PaymentStatusFixtureName } from "./fixtures";
 
@@ -37,9 +38,14 @@ type PaymentState =
 type PaymentStatusPanelProps = {
   checkoutHref: string;
   fixtureName?: PaymentStatusFixtureName | undefined;
+  sessionId?: string | undefined;
 };
 
-export function PaymentStatusPanel({ checkoutHref, fixtureName }: PaymentStatusPanelProps) {
+export function PaymentStatusPanel({
+  checkoutHref,
+  fixtureName,
+  sessionId,
+}: PaymentStatusPanelProps) {
   const [state, setState] = useState<PaymentState>(() => initialState(fixtureName));
 
   useEffect(() => {
@@ -55,13 +61,41 @@ export function PaymentStatusPanel({ checkoutHref, fixtureName }: PaymentStatusP
         return;
       }
 
-      setState(
-        state.attempt >= 2 ? { status: "paid_pending" } : { status: "confirming", attempt: 2 },
-      );
+      if (fixtureName) {
+        setState(
+          state.attempt >= 2 ? { status: "paid_pending" } : { status: "confirming", attempt: 2 },
+        );
+        return;
+      }
+
+      if (!sessionId) {
+        setState({ status: "failed" });
+        return;
+      }
+
+      void fetch(`/api/checkout/sessions/${encodeURIComponent(sessionId)}/status`, {
+        cache: "no-store",
+      })
+        .then(async (response) => {
+          if (!response.ok) return { status: "failed" as CheckoutStatus };
+          const payload = (await response.json()) as { data?: { status?: CheckoutStatus } };
+          return { status: payload.data?.status ?? "failed" };
+        })
+        .then((result) => {
+          if (result.status === "paid_pending") setState({ status: "paid_pending" });
+          else if (result.status === "failed") setState({ status: "failed" });
+          else if (result.status === "cancelled") setState({ status: "cancelled" });
+          else if (result.status === "delayed" || state.attempt >= 3) {
+            setState({ status: "delayed", attempt: state.attempt });
+          } else {
+            setState({ status: "confirming", attempt: state.attempt + 1 });
+          }
+        })
+        .catch(() => setState({ status: "failed" }));
     }, 2000);
 
     return () => window.clearTimeout(timer);
-  }, [fixtureName, state]);
+  }, [fixtureName, sessionId, state]);
 
   const content = statusContent(state);
   const StatusIcon = content.icon;
@@ -173,7 +207,7 @@ function statusContent(state: PaymentState) {
         alertVariant: "positive" as const,
         alertTitle: "Stripe confirmed this payment",
         alertBody:
-          "One pending report will be created by the webhook flow in the next implementation phase.",
+          "Your pending report was created once from Stripe's signed payment confirmation.",
         icon: CheckCircle2,
       };
     case "delayed":

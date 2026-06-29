@@ -2,9 +2,13 @@ import type { QueueName } from "./names.js";
 
 export type ReportTier = "basic" | "standard" | "premium";
 
-export interface GeneratePaidReportJobData {
+export interface GeneratePaidReportJobData extends Record<string, unknown> {
   reportId: string;
 }
+
+export const QUEUE_JOB_NAMES = {
+  generatePaidReport: "generate-paid-report",
+} as const;
 
 export interface GenerateReportPdfJobData {
   reportId: string;

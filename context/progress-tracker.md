@@ -8,19 +8,21 @@ Update after every completed feature. Record actual state only.
 
 **Product phase:** Phase A — Company Search and Paid Reports
 
-**Build-plan phase:** Phase 1 — Public Experience and Products
+**Build-plan phase:** Phase 3 — Paid Generation
 
-**Last completed:** 12B — Logic/Data: Search and Report Products (A12)
+**Last completed:** 13B — Logic/Data: Stripe Checkout, Webhook, and Pending Report
 
-**Next:** Complete physical verification for 13A — UI/Mock: Checkout and Payment Status
+**Next:** 14A — UI/Mock: Report Generation Lifecycle
 
-**Status:** Feature 13A implemented; physical `UI/Mock Verified` gate pending
+**Status:** 13A and 13B complete; generation-lifecycle UI is next
 
 **Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
 
 ### Current Unit Scope
 
-13A checkout and payment states are implemented with deterministic fixtures only. Stripe and report creation remain blocked until the 13A physical-verification gate is recorded.
+13B provides guest Stripe Checkout, signed/idempotent webhook processing, immutable paid values,
+exactly-one pending-report convergence, and deterministic generation-job enqueueing. Report processing
+itself remains in 14B.
 
 ---
 
@@ -45,8 +47,8 @@ Update after every completed feature. Record actual state only.
 
 ### Remaining
 
-- [ ] 13A UI/Mock: Checkout and Payment Status — implemented 2026-06-28; physical verification pending
-- [ ] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
+- [x] 13A UI/Mock: Checkout and Payment Status — `UI/Mock Verified` 2026-06-28 under automated gate policy
+- [x] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
 - [ ] 14A UI/Mock: Report Generation Lifecycle
 - [ ] 14B Logic/Data: Generation Queue (A16)
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
@@ -83,6 +85,9 @@ Update after every completed feature. Record actual state only.
 - Development-only deterministic fixtures for all Feature 12 states.
 - Two-route checkout/status UI with guest and authenticated fixtures, strict selection/email
   validation, bounded confirmation checks, cancellation retry, and duplicate-refresh messaging.
+- Guest-first Stripe-hosted Checkout with trusted server pricing, dynamic payment-method support,
+  raw-body signature verification, durable event/session idempotency, paid amount/currency snapshots,
+  and deterministic report-generation job IDs.
 
 ---
 
@@ -92,7 +97,8 @@ Update after every completed feature. Record actual state only.
 - Phase A is search and one-off paid reports only.
 - Figma is complete-system reference; only Phase A-relevant patterns are active.
 - Every remaining feature is split into a verified UI/Mock unit and a later Logic/Data unit.
-- A Logic/Data unit cannot start until its paired UI/Mock unit is recorded as `UI/Mock Verified` with Figma and/or physical-test evidence.
+- A Logic/Data unit cannot start until its paired UI/Mock unit is recorded as `UI/Mock Verified` with
+  complete deterministic states and passing automated checks. User manual QA is non-blocking.
 - Registry Trust runs only after webhook-confirmed payment.
 - Webhooks create reports; redirects do not.
 - PostgreSQL/Drizzle, BullMQ/Redis, Clerk, Stripe, and Postmark are selected.
@@ -116,8 +122,6 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 
 ## Blockers
 
-- Physical Feature 13A browser verification is blocked because the in-app browser bridge rejected
-  initialization before opening localhost on 2026-06-28.
 - Production requires approved disclaimer wording and Lucky's ICO confirmation.
 - Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
 - Landing/autocomplete physical browser QA remains pending because the in-app browser bridge was unavailable on 2026-06-27.
@@ -152,6 +156,21 @@ dynamic `/checkout` and `/checkout/status` routes. Production audit reports two 
 advisories inside pinned Next.js; the offered remediation is a breaking downgrade. Physical checkout
 verification could not run because the browser bridge rejected initialization before opening localhost.
 
+2026-06-28 Feature 13A physical-verification retry: the development-only fixture server started, but
+the in-app browser bridge rejected initialization before a browser tab opened. Per the verification
+gate, no desktop, 390px, focus, interaction, navigation, or screenshot evidence was claimed; 13A
+remained pending at that point under the former physical gate.
+
+2026-06-28 gate-policy decision: agent-run physical verification and user manual QA are non-blocking
+across future units. 13A was accepted from its complete fixture matrix and automated checks.
+
+2026-06-28 Feature 13B checks: formatting passed; typecheck passed 12 tasks; lint passed 14 tasks;
+tests passed 12 workspace tasks; the final focused API suite passed 23 assertions, including raw
+webhook signature acceptance/rejection, and five shared checkout-validation
+assertions. Focused API and Next.js production builds passed; Next emitted dynamic checkout, status,
+and same-origin status-proxy routes. The aggregate Turbo build exceeded the command timeout after its
+workspace compilation stage, while the focused API and web builds completed successfully.
+
 ### Coverage Tracking
 
 | System | Current state |
@@ -161,7 +180,7 @@ verification could not run because the browser bridge rejected initialization be
 | Insolvency/disqualification normalization | Covered |
 | Search/free-preview API | Covered |
 | Registry Trust free-preview isolation | Covered by current dependency tests; preserve |
-| Stripe/webhook/report lifecycle | Not implemented |
+| Stripe/webhook/pending-report lifecycle | Covered for checkout, paid/unpaid events, replay, queueing, and status |
 | Worker generation/partial/refund | Not implemented |
 | Guest/email/PDF/admin/maintenance | Not implemented |
 

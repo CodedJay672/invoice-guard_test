@@ -148,6 +148,8 @@ export const purchasedReports = pgTable(
     reportTier: reportTierEnum("report_tier").notNull(),
     stripePaymentId: varchar("stripe_payment_id", { length: 128 }),
     stripeCheckoutSessionId: varchar("stripe_checkout_session_id", { length: 128 }),
+    amountPaidPence: integer("amount_paid_pence").notNull(),
+    currency: varchar("currency", { length: 3 }).notNull(),
     status: purchasedReportStatusEnum("status").notNull().default("pending"),
     reportData: jsonb("report_data").$type<JsonRecord>(),
     providerStatuses: jsonb("provider_statuses")

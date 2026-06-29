@@ -11,10 +11,12 @@ declare module "express" {
     query: Record<string, unknown>;
     params: Record<string, string | undefined>;
     headers: Record<string, string | string[] | undefined>;
+    body: unknown;
     socket: {
       remoteAddress?: string;
     };
     get(name: string): string | undefined;
+    header(name: string): string | undefined;
   }
 
   export interface Response {
@@ -29,6 +31,8 @@ declare module "express" {
   export interface Express {
     disable(setting: string): void;
     get(path: string, handler: RequestHandler): void;
+    post(path: string, handler: RequestHandler): void;
+    post(path: string, middleware: RequestHandler, handler: RequestHandler): void;
     use(handler: RequestHandler): void;
     use(
       handler: (error: unknown, request: Request, response: Response, next: NextFunction) => void,
@@ -39,6 +43,9 @@ declare module "express" {
   export interface ExpressFactory {
     (): Express;
     json(): (request: Request, response: Response, next: NextFunction) => void;
+    raw(options: {
+      type: string;
+    }): (request: Request, response: Response, next: NextFunction) => void;
   }
 
   const express: ExpressFactory;

@@ -6,6 +6,12 @@ import {
   createLondonGazetteClient,
 } from "@workspace/integrations";
 import { Redis } from "ioredis";
+import {
+  createQueue,
+  QUEUE_JOB_NAMES,
+  QUEUE_NAMES,
+  type GeneratePaidReportJobData,
+} from "@workspace/queues";
 
 import {
   InMemoryAnonymousSearchRateLimiter,
@@ -18,6 +24,9 @@ import {
   InMemorySearchLogRepository,
 } from "./companies/repository.js";
 import { CompanyService } from "./companies/service.js";
+import { DrizzleCheckoutRepository } from "./checkout/repository.js";
+import { CheckoutService } from "./checkout/service.js";
+import { StripeSdkGateway } from "./checkout/stripe-gateway.js";
 import { createRequestIdentityResolver, type RequestIdentityResolver } from "./request-context.js";
 import {
   DrizzleReportProductRepository,
@@ -28,6 +37,7 @@ export interface ApiDependencies {
   companyService: CompanyService;
   anonymousSearchRateLimiter: InMemoryAnonymousSearchRateLimiter | RedisAnonymousSearchRateLimiter;
   requestIdentityResolver: RequestIdentityResolver;
+  checkoutService?: CheckoutService | undefined;
 }
 
 export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiDependencies {
@@ -51,21 +61,28 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
 
   if (config.databaseUrl) {
     const db = createDatabase(config.databaseUrl);
+    const reportProductRepository = new DrizzleReportProductRepository(db);
+    const companyService = new CompanyService({
+      companiesHouseClient,
+      londonGazetteClient,
+      insolvencyDisqualifiedOfficersClient,
+      companyRepository: new DrizzleCompanyRepository(db),
+      searchLogRepository: new DrizzleSearchLogRepository(db),
+      reportProductRepository,
+    });
+    const checkoutService =
+      config.redisUrl && config.stripeSecretKey && config.stripeWebhookSecret
+        ? createCheckoutService(config, db, companyService, reportProductRepository)
+        : undefined;
 
     return {
-      companyService: new CompanyService({
-        companiesHouseClient,
-        londonGazetteClient,
-        insolvencyDisqualifiedOfficersClient,
-        companyRepository: new DrizzleCompanyRepository(db),
-        searchLogRepository: new DrizzleSearchLogRepository(db),
-        reportProductRepository: new DrizzleReportProductRepository(db),
-      }),
+      companyService,
       anonymousSearchRateLimiter: createAnonymousSearchRateLimiter(config),
       requestIdentityResolver: createRequestIdentityResolver({
         webApiSharedSecret: config.webApiSharedSecret,
         searchIpHashSecret: config.searchIpHashSecret,
       }),
+      checkoutService,
     };
   }
 
@@ -84,6 +101,30 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
       searchIpHashSecret: config.searchIpHashSecret,
     }),
   };
+}
+
+function createCheckoutService(
+  config: AppConfig,
+  db: ReturnType<typeof createDatabase>,
+  companyService: CompanyService,
+  reportProductRepository: DrizzleReportProductRepository,
+): CheckoutService {
+  const queue = createQueue<GeneratePaidReportJobData, void, string>({
+    name: QUEUE_NAMES.reportGeneration,
+    connectionString: config.redisUrl!,
+  });
+  return new CheckoutService({
+    appUrl: config.appUrl,
+    companyService,
+    reportProductRepository,
+    checkoutRepository: new DrizzleCheckoutRepository(db),
+    stripeGateway: new StripeSdkGateway(config.stripeSecretKey!, config.stripeWebhookSecret!),
+    reportGenerationQueue: {
+      async enqueue(reportId: string): Promise<void> {
+        await queue.add(QUEUE_JOB_NAMES.generatePaidReport, { reportId }, { jobId: reportId });
+      },
+    },
+  });
 }
 
 function createAnonymousSearchRateLimiter(

@@ -19,15 +19,17 @@ export default async function Page({ searchParams }: PageProps) {
     config.environment,
   );
   const selection = resolveCheckoutSelection({
-    companyNumber: singleValue(params.companyNumber) ?? "12345678",
-    tier: singleValue(params.tier) ?? "basic",
+    companyNumber: singleValue(params.companyNumber) ?? (fixtureName ? "12345678" : undefined),
+    tier: singleValue(params.tier) ?? (fixtureName ? "basic" : undefined),
     q: singleValue(params.q),
   });
+  const sessionId = singleValue(params.sessionId);
 
   return (
     <PaymentStatusPanel
       checkoutHref={selection ? buildCheckoutHref(selection) : "/search"}
       fixtureName={fixtureName}
+      sessionId={sessionId}
     />
   );
 }
