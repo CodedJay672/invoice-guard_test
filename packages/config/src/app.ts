@@ -36,6 +36,11 @@ const appConfigSchema = z.object({
     .url()
     .default("https://api.company-information.service.gov.uk/free-preview-adverse-checks"),
   INSOLVENCY_DISQUALIFIED_OFFICERS_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
+  REPORT_GENERATION_STUCK_AFTER_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(15 * 60 * 1000),
   ENABLE_FLAG_SUMMARY: z.string().optional(),
 });
 
@@ -64,6 +69,7 @@ export interface AppConfig {
   insolvencyDisqualifiedOfficersProviderMode: "mock" | "live";
   insolvencyDisqualifiedOfficersBaseUrl: string;
   insolvencyDisqualifiedOfficersTimeoutMs: number;
+  reportGenerationStuckAfterMs: number;
   enableFlagSummary: boolean;
 }
 
@@ -96,6 +102,7 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
       parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_PROVIDER_MODE,
     insolvencyDisqualifiedOfficersBaseUrl: parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_BASE_URL,
     insolvencyDisqualifiedOfficersTimeoutMs: parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_TIMEOUT_MS,
+    reportGenerationStuckAfterMs: parsed.REPORT_GENERATION_STUCK_AFTER_MS,
     enableFlagSummary: readBooleanFlag(parsed.ENABLE_FLAG_SUMMARY, false),
   };
 }

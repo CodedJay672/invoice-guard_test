@@ -10,20 +10,20 @@ Update after every completed feature. Record actual state only.
 
 **Build-plan phase:** Phase 3 — Paid Generation
 
-**Last completed:** 14A — UI/Mock: Report Generation Lifecycle
+**Last completed:** 14B — Logic/Data: Generation Queue (A16)
 
-**Next:** 14B — Logic/Data: Generation Queue (A16)
+**Next:** 15A — UI/Mock: Paid Source and Tier Sections
 
-**Status:** 14A UI/Mock Verified; 14B is unblocked
+**Status:** 14B complete; 15A is unblocked
 
 **Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
 
 ### Current Unit Scope
 
-14A provides deterministic pending, generating, slow/stuck, ready, partial, failed,
-refund-required, refund-processing, and refunded presentation states. Safe status checks,
-development-only fixture transitions, responsive action layout, and accessible live status contracts
-are verified. No worker or paid-provider behavior was implemented early.
+14B provides the backend-only BullMQ report-generation lifecycle engine: atomic pending claims,
+idempotent terminal convergence, safe retry resumption, retry exhaustion, explicit terminal failures,
+and 15-minute delayed-report detection. Production consumption remains intentionally unregistered
+until 15B supplies the paid-provider generation handler.
 
 ---
 
@@ -53,7 +53,7 @@ are verified. No worker or paid-provider behavior was implemented early.
 - [x] AUTH-A UI/Mock: Authentication and Buyer Identity — `UI/Mock Verified` 2026-06-29
 - [x] AUTH-B Logic/Data: Clerk Authentication Foundation
 - [x] 14A UI/Mock: Report Generation Lifecycle — `UI/Mock Verified` 2026-06-30
-- [ ] 14B Logic/Data: Generation Queue (A16)
+- [x] 14B Logic/Data: Generation Queue (A16)
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
 - [ ] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
 - [ ] 16A UI/Mock: Browser Reports
@@ -98,6 +98,8 @@ are verified. No worker or paid-provider behavior was implemented early.
   presentation components for AUTH-B and 16A/16B.
 - Clerk v7 embedded sign-in/sign-up routes, public middleware context, session-aware account controls,
   verified-email checkout enforcement, HMAC-signed internal principals, and webhook-owned reports.
+- Typed BullMQ report-generation processor factory with guarded Drizzle lifecycle transitions,
+  retryable/terminal failure handling, deterministic job validation, and delayed-report queries.
 
 ---
 
@@ -124,8 +126,8 @@ Browser -> Next proxy -> Express company routes -> CompanyService
         -> Companies House + Gazette + insolvency/disqualified officers
         -> normalized preview payload -> clean/adverse/standard/source-failure UI
 
-Stripe webhook (future) -> idempotent pending report -> BullMQ worker
-                        -> entitled providers/snapshots -> frozen delivery
+Stripe webhook -> idempotent pending report -> BullMQ generation lifecycle
+               -> 15B entitled providers/snapshots -> frozen delivery
 ```
 
 Free preview is architecturally isolated from Registry Trust. Ready reports are frozen artifacts. Redis is ephemeral infrastructure; PostgreSQL is durable truth.
@@ -149,7 +151,7 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 
 ## Known Debt
 
-- Queue processors are not implemented.
+- Paid-provider generation handler and production worker composition remain 15B work.
 - Live-shaped insolvency endpoint requires production verification.
 
 ---
@@ -214,6 +216,14 @@ responsive classes, semantic-token enforcement, and accessible live-status contr
 production build passed and emitted dynamic `/reports/[reportReference]/status`. User manual QA is
 non-blocking under the project-wide automated gate policy.
 
+2026-06-30 Feature 14B checks: focused worker lint, typecheck, build, and all 11 worker assertions
+passed. Coverage includes ready/partial/refund-required outcomes, terminal no-ops, retry resumption,
+retry exhaustion, non-retryable failure, missing/malformed IDs, concurrent terminal convergence,
+the exact 15-minute delayed boundary, canonical BullMQ contracts, and the production-consumer gate.
+Repository typecheck passed 12 tasks, lint passed 14 tasks, and tests passed 12 workspace tasks.
+The aggregate Turbo build exceeded its four-minute command window without a reported compilation
+failure; focused worker, config, API, and Next.js production builds all passed afterward.
+
 ### Coverage Tracking
 
 | System | Current state |
@@ -224,12 +234,13 @@ non-blocking under the project-wide automated gate policy.
 | Search/free-preview API | Covered |
 | Registry Trust free-preview isolation | Covered by current dependency tests; preserve |
 | Stripe/webhook/pending-report lifecycle | Covered for checkout, paid/unpaid events, replay, queueing, and status |
-| Worker generation/partial/refund | Not implemented |
+| Worker generation lifecycle | Covered for claim, retry, terminal convergence, failure, and delay |
+| Paid provider/partial/refund outcomes | Handler contract ready; provider implementation remains 15B |
 | Guest/email/PDF/admin/maintenance | Not implemented |
 
 ### Environment Variables in Scope
 
-Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Secrets remain server-only.
+Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, `REPORT_GENERATION_STUCK_AFTER_MS`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Secrets remain server-only.
 
 ---
 

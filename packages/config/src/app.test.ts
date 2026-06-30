@@ -36,3 +36,15 @@ void test("production web proxy configuration requires a trusted host header", (
     message: /TRUSTED_CLIENT_IP_HEADER/,
   });
 });
+
+void test("report generation uses a validated fifteen-minute stuck threshold", () => {
+  assert.equal(loadAppConfig({ NODE_ENV: "test" }).reportGenerationStuckAfterMs, 900_000);
+  assert.equal(
+    loadAppConfig({
+      NODE_ENV: "test",
+      REPORT_GENERATION_STUCK_AFTER_MS: "120000",
+    }).reportGenerationStuckAfterMs,
+    120_000,
+  );
+  assert.throws(() => loadAppConfig({ NODE_ENV: "test", REPORT_GENERATION_STUCK_AFTER_MS: "0" }));
+});
