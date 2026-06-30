@@ -314,3 +314,30 @@ registered outline/menu pattern with Clerk-backed sign-out and a distinct unveri
   reachability. Production instance setup remains a deployment concern.
 - Signed principal rejection, verified-email checkout ownership, guest regression, and safe return
   paths have executable coverage.
+
+---
+
+## Report Generation Lifecycle
+
+### Report Lifecycle Panel
+
+File: `apps/web/components/report-lifecycle/ReportLifecyclePanel.tsx`
+Last updated: 2026-06-30
+
+| Property | Class/pattern |
+| --- | --- |
+| Background | shared Card `bg-surface`; progress panel `bg-surface-subtle` |
+| Border | shared `border-line`; semantic Alert borders for factual state |
+| Border radius | shared Card/Alert `rounded-lg`; progress panel `rounded-lg` |
+| Text — primary | `text-brand-navy`, `text-content` |
+| Text — secondary | `text-content-muted` |
+| Spacing | public wrapper `px-4 py-10 sm:px-6 lg:px-8`; content `gap-5`; actions `gap-3` |
+| Interactive states | existing authoritative and outline Button focus/hover patterns |
+| Shadow | shared Card subtle elevation |
+| Accent usage | positive for ready/refunded, caution for generating/partial/delayed, critical for failed/refund-required |
+
+**Pattern notes:** Pending, generating, slow/stuck, ready, partial, failed, refund-required,
+refund-processing, and refunded states share one stable status card. Every state repeats meaning through
+badge, heading, icon, Alert copy, and live progress text. Actions stack on mobile and become a row from
+`sm`; checking status is explicitly idempotent and never suggests starting another purchase. Fixture
+query values and automated transitions are development/test-only.

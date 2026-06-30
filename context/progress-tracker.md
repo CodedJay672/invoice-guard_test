@@ -8,22 +8,22 @@ Update after every completed feature. Record actual state only.
 
 **Product phase:** Phase A — Company Search and Paid Reports
 
-**Build-plan phase:** Phase 2A — Clerk Authentication and Ownership
+**Build-plan phase:** Phase 3 — Paid Generation
 
-**Last completed:** AUTH-B — Logic/Data: Clerk Authentication Foundation
+**Last completed:** 14A — UI/Mock: Report Generation Lifecycle
 
-**Next:** 14A — UI/Mock: Report Generation Lifecycle
+**Next:** 14B — Logic/Data: Generation Queue (A16)
 
-**Status:** AUTH-B complete; 14A architecture alignment pending
+**Status:** 14A UI/Mock Verified; 14B is unblocked
 
 **Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
 
 ### Current Unit Scope
 
-AUTH-B provides Clerk v7 middleware/provider/routes, verified-primary-email identity, signed
-web-to-API principals, signed-in checkout ownership, and reusable owner/admin helpers. Host Clerk
-doctor verifies authentication, project linkage, and application reachability; all automated gates
-and the production build pass.
+14A provides deterministic pending, generating, slow/stuck, ready, partial, failed,
+refund-required, refund-processing, and refunded presentation states. Safe status checks,
+development-only fixture transitions, responsive action layout, and accessible live status contracts
+are verified. No worker or paid-provider behavior was implemented early.
 
 ---
 
@@ -52,7 +52,7 @@ and the production build pass.
 - [x] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
 - [x] AUTH-A UI/Mock: Authentication and Buyer Identity — `UI/Mock Verified` 2026-06-29
 - [x] AUTH-B Logic/Data: Clerk Authentication Foundation
-- [ ] 14A UI/Mock: Report Generation Lifecycle
+- [x] 14A UI/Mock: Report Generation Lifecycle — `UI/Mock Verified` 2026-06-30
 - [ ] 14B Logic/Data: Generation Queue (A16)
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
 - [ ] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
@@ -206,6 +206,13 @@ and tests passed 12 workspace tasks including forged-principal rejection and aut
 ownership. The host production build passed all 12 tasks. Clerk CLI 1.5.0 doctor verified login,
 authentication, git-remote project linkage, development instance, and application reachability.
 Production instance configuration remains a deployment-time warning and does not block this unit.
+
+2026-06-30 Feature 14A checks: focused web lint and typecheck passed; all 16 web assertions passed,
+including the complete lifecycle matrix, production fixture guards, malformed-reference rejection,
+deterministic pending-to-ready and generating-to-partial transitions, terminal-state convergence,
+responsive classes, semantic-token enforcement, and accessible live-status contracts. The Next.js
+production build passed and emitted dynamic `/reports/[reportReference]/status`. User manual QA is
+non-blocking under the project-wide automated gate policy.
 
 ### Coverage Tracking
 
