@@ -1,6 +1,8 @@
 node_modules
 .agents
 .next
+.clerk
+**/.clerk
 .turbo
 dist
 context

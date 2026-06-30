@@ -33,8 +33,8 @@ export function ClerkAuthScreen({ mode, fixture, returnTo }: ClerkAuthScreenProp
       fallbackRedirectUrl={safeReturnTo}
       appearance={{
         elements: {
-          formButtonPrimary: "text-blue-50"
-        }
+          formButtonPrimary: "text-content-inverse",
+        },
       }}
       signUpUrl="/sign-up"
     />

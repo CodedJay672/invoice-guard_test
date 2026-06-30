@@ -36,9 +36,9 @@ export default async function Page({ searchParams }: PageProps) {
         </h2>
         <div className="flex min-h-16 items-center justify-end rounded-lg border border-line bg-surface p-3 shadow-sm">
           {fixture === "signed-in" ||
-            fixture === "signing-out" ||
-            fixture === "owner-access" ||
-            fixture === "non-owner-access" ? (
+          fixture === "signing-out" ||
+          fixture === "owner-access" ||
+          fixture === "non-owner-access" ? (
             <AccountControl
               state="signed-in"
               email="verified.buyer@example.com"

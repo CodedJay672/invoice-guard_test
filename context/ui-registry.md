@@ -306,3 +306,11 @@ Last updated: 2026-06-29
 AUTH-A fixtures remain development/test-only and reuse `AuthPanel`. Safe Phase A return paths remain
 the only caller-controlled fallback destinations. The public account control now uses the same
 registered outline/menu pattern with Clerk-backed sign-out and a distinct unverified-email label.
+
+### AUTH-B Verification
+
+- 2026-06-30: repository typecheck, lint, tests, formatting, and production build verified.
+- Clerk doctor verified host authentication, project linkage, development instance, and application
+  reachability. Production instance setup remains a deployment concern.
+- Signed principal rejection, verified-email checkout ownership, guest regression, and safe return
+  paths have executable coverage.

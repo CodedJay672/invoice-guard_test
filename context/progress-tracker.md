@@ -10,20 +10,20 @@ Update after every completed feature. Record actual state only.
 
 **Build-plan phase:** Phase 2A — Clerk Authentication and Ownership
 
-**Last completed:** AUTH-A — UI/Mock: Authentication and Buyer Identity
+**Last completed:** AUTH-B — Logic/Data: Clerk Authentication Foundation
 
-**Next:** AUTH-B — Logic/Data: Clerk Authentication Foundation
+**Next:** 14A — UI/Mock: Report Generation Lifecycle
 
-**Status:** AUTH-B implementation and automated verification pass; host Clerk doctor/live smoke remain pending
+**Status:** AUTH-B complete; 14A architecture alignment pending
 
 **Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
 
 ### Current Unit Scope
 
-AUTH-B now provides Clerk v7 middleware/provider/routes, verified-primary-email identity, signed
-web-to-API principals, signed-in checkout ownership, and reusable owner/admin helpers. The existing
-local `.env` still needs its publishable-key variable renamed and host Clerk CLI/live smoke verification
-must pass before the unit is marked complete.
+AUTH-B provides Clerk v7 middleware/provider/routes, verified-primary-email identity, signed
+web-to-API principals, signed-in checkout ownership, and reusable owner/admin helpers. Host Clerk
+doctor verifies authentication, project linkage, and application reachability; all automated gates
+and the production build pass.
 
 ---
 
@@ -51,7 +51,7 @@ must pass before the unit is marked complete.
 - [x] 13A UI/Mock: Checkout and Payment Status — `UI/Mock Verified` 2026-06-28 under automated gate policy
 - [x] 13B Logic/Data: Checkout, Webhook, Pending Report (A13-A15)
 - [x] AUTH-A UI/Mock: Authentication and Buyer Identity — `UI/Mock Verified` 2026-06-29
-- [ ] AUTH-B Logic/Data: Clerk Authentication Foundation — implementation/automated checks pass; host verification pending
+- [x] AUTH-B Logic/Data: Clerk Authentication Foundation
 - [ ] 14A UI/Mock: Report Generation Lifecycle
 - [ ] 14B Logic/Data: Generation Queue (A16)
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
@@ -137,8 +137,6 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 - Production requires approved disclaimer wording and Lucky's ICO confirmation.
 - Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
 - Landing/autocomplete physical browser QA remains pending because the in-app browser bridge was unavailable on 2026-06-27.
-- `clerk doctor --json` could not start through the Windows/npm package runner and timed out without
-  Clerk output; rerun from a normal host terminal after renaming the local publishable-key variable.
 
 ### Open Questions
 
@@ -200,8 +198,14 @@ including 25 API assertions plus new signed-principal and authenticated-checkout
 Repository lint passed 13 unaffected workspaces and focused web lint passed after cleanup. The web
 production build passed with dynamic Clerk sign-in/sign-up routes and the Next.js proxy. The build
 used a process-only alias for the existing legacy local publishable-key name; `.env` was not modified.
-`clerk doctor --json` timed out inside `npx` before emitting output, so live sign-in/sign-out/checkout
-smoke verification remains outstanding and AUTH-B is not yet marked complete.
+The first sandboxed `clerk doctor --json` attempt timed out inside `npx`; the later host verification
+below supersedes that environment-specific result.
+
+2026-06-30 AUTH-B completion verification: repository typecheck passed 12 tasks, lint passed 14 tasks,
+and tests passed 12 workspace tasks including forged-principal rejection and authenticated checkout
+ownership. The host production build passed all 12 tasks. Clerk CLI 1.5.0 doctor verified login,
+authentication, git-remote project linkage, development instance, and application reachability.
+Production instance configuration remains a deployment-time warning and does not block this unit.
 
 ### Coverage Tracking
 
