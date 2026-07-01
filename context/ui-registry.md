@@ -20,12 +20,39 @@ Living record of InvoiceGuard patterns. Match an existing pattern before inventi
 Feature 12 is the canonical public-search implementation. The page remains a Server Component;
 interactive state belongs to the smallest practical client leaf.
 
+### Public Template Visual System
+
+- Path: `apps/web/design-template/`, `packages/ui/src/styles/globals.css`, and
+  `apps/web/app/(landing)/page.tsx`.
+- Last updated: 2026-07-01.
+- Source: Lucky-approved local templates; canonical for public landing and company-search pages.
+- Background: `bg-brand-navy` hero/footer, `bg-surface` primary sections/cards, and `bg-page`
+  alternating sections.
+- Border: `border-line`; featured conversion cards may use `border-brand-teal`.
+- Radius: `rounded-lg` for cards/search shells and `rounded-md` for controls and nested facts.
+- Text: `text-content`/`text-brand-navy` primary, `text-content-muted` secondary,
+  `text-content-subtle` tertiary, and `text-content-inverse/70` on dark surfaces.
+- Typography: Bricolage Grotesque display headings, DM Sans interface/body copy, and DM Mono for
+  company numbers, report references, and prices.
+- Spacing: public sections use `py-20 sm:py-24`; cards use the shared Card spacing contract;
+  compact internal groups use `gap-3` and section groups use `gap-6` to `gap-12`.
+- Interaction: cards may use a restrained `hover:-translate-y-0.5` or `hover:-translate-y-1` with
+  `hover:shadow-md`; focus remains `ring-focus`.
+- Elevation: `shadow-sm` for standard cards, `shadow-md` for primary search/snapshot cards, and
+  `shadow-xl`/`shadow-2xl` only for the hero search and report mock.
+- Accent: teal identifies primary actions, highlights, and selected/featured presentation. It never
+  communicates company quality or risk.
+- Product constraint: no risk score, risk band, approval verdict, subscription, or monitoring UI is
+  carried from the templates into Phase A.
+
 ### Phase A Landing Shell
 
 - Path: `apps/web/app/(landing)/page.tsx`, `apps/web/components/topbar.tsx`, and `apps/web/components/footer.tsx`.
-- Last updated: 2026-06-27.
+- Last updated: 2026-07-01.
 - Purpose: introduce the report product, establish free-source boundaries, and lead directly into canonical company selection.
-- Background: hero uses `bg-brand-navy text-content-inverse`; informational sections alternate `bg-surface` and `bg-page` without gradients.
+- Background: hero uses `bg-brand-navy text-content-inverse`; informational sections alternate
+  `bg-surface` and `bg-page`, with restrained semantic-token glow decoration from the approved
+  template.
 - Structure: `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8`; content uses responsive grids without fixed content widths.
 - Cards: shared `Card` composition with `rounded-lg border border-line bg-surface shadow-sm`.
 - Text: headings use `text-brand-navy` or inherited inverse content; supporting copy uses `text-content-muted` or `text-content-inverse/70`.
@@ -97,14 +124,14 @@ interactive state belongs to the smallest practical client leaf.
 
 ### Verified State Matrix
 
-| State | Owner | Verified presentation |
-| --- | --- | --- |
-| Search idle/typing/loading/results/empty | `CompanySearchExperience` | stable form, deterministic fixture, clear result count/status |
-| Invalid/rate-limited/provider error | `SearchFeedback` | user-safe alert copy with retry/correction guidance |
-| Preview loading/error | `CompanySearchExperience` | preserved search context and durable status |
-| Preview clean/adverse/standard/source failure | `FreePreview` | explicit text and icons; never inferred from colour |
-| Paid CTA unavailable/ready mock | `TierCard` | disabled reason or keyboard-operable mock action |
-| Provider failure | `SourceStatusList` | failed source shown; no clean conclusion |
+| State                                         | Owner                     | Verified presentation                                         |
+| --------------------------------------------- | ------------------------- | ------------------------------------------------------------- |
+| Search idle/typing/loading/results/empty      | `CompanySearchExperience` | stable form, deterministic fixture, clear result count/status |
+| Invalid/rate-limited/provider error           | `SearchFeedback`          | user-safe alert copy with retry/correction guidance           |
+| Preview loading/error                         | `CompanySearchExperience` | preserved search context and durable status                   |
+| Preview clean/adverse/standard/source failure | `FreePreview`             | explicit text and icons; never inferred from colour           |
+| Paid CTA unavailable/ready mock               | `TierCard`                | disabled reason or keyboard-operable mock action              |
+| Provider failure                              | `SourceStatusList`        | failed source shown; no clean conclusion                      |
 
 ### Feature 12 Verification
 
@@ -125,7 +152,7 @@ Server Components; form validation and bounded status checks live in small clien
 
 - Path: `apps/web/components/checkout/CheckoutShell.tsx`.
 - Layout: `mx-auto grid max-w-5xl gap-6 px-4 py-8 sm:px-6
-  lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
+lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
 - Summary rail moves below the form in DOM/mobile order and becomes sticky at `lg`.
 - Company name wraps without becoming identity; the monospace Companies House number remains the
   canonical identifier.
@@ -227,17 +254,17 @@ Production renders the mock auth routes as not found and omits mock account navi
 File: `apps/web/components/auth/AuthPanel.tsx`
 Last updated: 2026-06-29
 
-| Property | Class/pattern |
-| --- | --- |
-| Background | shared `Card` / `bg-surface` |
-| Border | shared `Card` / `border-line` |
-| Border radius | shared `Card` / `rounded-lg` |
-| Text — primary | `text-brand-navy`, `text-content` |
-| Text — secondary | `text-content-muted` |
-| Spacing | card sections with `gap-4` or `gap-5`; public wrapper `px-4 py-10 sm:px-6 lg:px-8` |
-| Interactive states | shared Button/Input focus rings using `focus` token |
-| Shadow | shared Card subtle elevation |
-| Accent usage | semantic Badge and Alert variants; authoritative navy action |
+| Property           | Class/pattern                                                                      |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| Background         | shared `Card` / `bg-surface`                                                       |
+| Border             | shared `Card` / `border-line`                                                      |
+| Border radius      | shared `Card` / `rounded-lg`                                                       |
+| Text — primary     | `text-brand-navy`, `text-content`                                                  |
+| Text — secondary   | `text-content-muted`                                                               |
+| Spacing            | card sections with `gap-4` or `gap-5`; public wrapper `px-4 py-10 sm:px-6 lg:px-8` |
+| Interactive states | shared Button/Input focus rings using `focus` token                                |
+| Shadow             | shared Card subtle elevation                                                       |
+| Accent usage       | semantic Badge and Alert variants; authoritative navy action                       |
 
 **Pattern notes:** Sign-in, sign-up, callback/loading, error, signed-in, signing-out, and
 unverified-email states share one stable card structure. Loading and state changes include visible
@@ -248,17 +275,17 @@ text and `aria-live`; accounts remain optional and guest checkout stays explicit
 File: `apps/web/components/auth/AccountControl.tsx`
 Last updated: 2026-06-29
 
-| Property | Class/pattern |
-| --- | --- |
-| Background | `bg-surface` through outline Button and menu panel |
-| Border | `border-line` |
-| Border radius | `rounded-md` trigger; `rounded-lg` menu |
-| Text — primary | `text-content` |
-| Text — secondary | `text-content-muted` |
-| Spacing | `p-2` menu, `px-2 py-2` metadata, minimum 44px controls |
-| Hover state | shared outline/ghost Button variants |
-| Shadow | `shadow-sm` on menu panel |
-| Accent usage | none; account navigation remains restrained |
+| Property         | Class/pattern                                           |
+| ---------------- | ------------------------------------------------------- |
+| Background       | `bg-surface` through outline Button and menu panel      |
+| Border           | `border-line`                                           |
+| Border radius    | `rounded-md` trigger; `rounded-lg` menu                 |
+| Text — primary   | `text-content`                                          |
+| Text — secondary | `text-content-muted`                                    |
+| Spacing          | `p-2` menu, `px-2 py-2` metadata, minimum 44px controls |
+| Hover state      | shared outline/ghost Button variants                    |
+| Shadow           | `shadow-sm` on menu panel                               |
+| Accent usage     | none; account navigation remains restrained             |
 
 **Pattern notes:** Signed-out navigation shows one quiet Sign in action. Signed-in navigation shows
 the verified email and a sign-out-only menu—no dashboard links. Escape restores trigger focus and
@@ -269,17 +296,17 @@ outside pointer interaction closes the menu.
 File: `apps/web/components/auth/ReportAccessState.tsx`
 Last updated: 2026-06-29
 
-| Property | Class/pattern |
-| --- | --- |
-| Background | shared Card plus semantic Alert surface |
-| Border | shared Card and semantic Alert border |
-| Border radius | shared `rounded-lg` Card/Alert |
-| Text — primary | shared Card/Alert semantic content |
-| Text — secondary | `text-content-muted` |
-| Spacing | shared Card sections; header `gap-4` |
-| Hover state | none |
-| Shadow | shared Card subtle elevation |
-| Accent usage | positive owner, neutral guest, caution verification, critical non-owner |
+| Property         | Class/pattern                                                           |
+| ---------------- | ----------------------------------------------------------------------- |
+| Background       | shared Card plus semantic Alert surface                                 |
+| Border           | shared Card and semantic Alert border                                   |
+| Border radius    | shared `rounded-lg` Card/Alert                                          |
+| Text — primary   | shared Card/Alert semantic content                                      |
+| Text — secondary | `text-content-muted`                                                    |
+| Spacing          | shared Card sections; header `gap-4`                                    |
+| Hover state      | none                                                                    |
+| Shadow           | shared Card subtle elevation                                            |
+| Accent usage     | positive owner, neutral guest, caution verification, critical non-owner |
 
 **Pattern notes:** Status is always repeated through badge, heading, icon, and explanatory text.
 This component presents deterministic access outcomes only; AUTH-B/16B must perform authorization
@@ -290,17 +317,17 @@ server-side before returning report data.
 File: `apps/web/components/auth/ClerkAuthScreen.tsx`
 Last updated: 2026-06-29
 
-| Property | Class/pattern |
-| --- | --- |
-| Background | Clerk shadcn theme bound to `surface`/`page` semantic variables |
-| Border | Clerk shadcn theme bound to `line` |
-| Border radius | `0.625rem`, matching the canonical medium radius |
-| Text — primary | Clerk foreground bound to `content` |
-| Text — secondary | Clerk muted foreground bound to `content-muted` |
-| Spacing | public wrapper `max-w-lg px-4 py-10 sm:px-6 lg:px-8` |
+| Property           | Class/pattern                                                     |
+| ------------------ | ----------------------------------------------------------------- |
+| Background         | Clerk shadcn theme bound to `surface`/`page` semantic variables   |
+| Border             | Clerk shadcn theme bound to `line`                                |
+| Border radius      | `0.625rem`, matching the canonical medium radius                  |
+| Text — primary     | Clerk foreground bound to `content`                               |
+| Text — secondary   | Clerk muted foreground bound to `content-muted`                   |
+| Spacing            | public wrapper `max-w-lg px-4 py-10 sm:px-6 lg:px-8`              |
 | Interactive states | Clerk ring bound to `focus`; primary action bound to `brand-navy` |
-| Shadow | Clerk shadcn default subtle elevation |
-| Accent usage | semantic InvoiceGuard variables only; no raw Tailwind colours |
+| Shadow             | Clerk shadcn default subtle elevation                             |
+| Accent usage       | semantic InvoiceGuard variables only; no raw Tailwind colours     |
 
 **Pattern notes:** Production `/sign-in` and `/sign-up` use Clerk's embedded, path-routed components.
 AUTH-A fixtures remain development/test-only and reuse `AuthPanel`. Safe Phase A return paths remain
@@ -324,17 +351,17 @@ registered outline/menu pattern with Clerk-backed sign-out and a distinct unveri
 File: `apps/web/components/report-lifecycle/ReportLifecyclePanel.tsx`
 Last updated: 2026-06-30
 
-| Property | Class/pattern |
-| --- | --- |
-| Background | shared Card `bg-surface`; progress panel `bg-surface-subtle` |
-| Border | shared `border-line`; semantic Alert borders for factual state |
-| Border radius | shared Card/Alert `rounded-lg`; progress panel `rounded-lg` |
-| Text — primary | `text-brand-navy`, `text-content` |
-| Text — secondary | `text-content-muted` |
-| Spacing | public wrapper `px-4 py-10 sm:px-6 lg:px-8`; content `gap-5`; actions `gap-3` |
-| Interactive states | existing authoritative and outline Button focus/hover patterns |
-| Shadow | shared Card subtle elevation |
-| Accent usage | positive for ready/refunded, caution for generating/partial/delayed, critical for failed/refund-required |
+| Property           | Class/pattern                                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------------------------- |
+| Background         | shared Card `bg-surface`; progress panel `bg-surface-subtle`                                             |
+| Border             | shared `border-line`; semantic Alert borders for factual state                                           |
+| Border radius      | shared Card/Alert `rounded-lg`; progress panel `rounded-lg`                                              |
+| Text — primary     | `text-brand-navy`, `text-content`                                                                        |
+| Text — secondary   | `text-content-muted`                                                                                     |
+| Spacing            | public wrapper `px-4 py-10 sm:px-6 lg:px-8`; content `gap-5`; actions `gap-3`                            |
+| Interactive states | existing authoritative and outline Button focus/hover patterns                                           |
+| Shadow             | shared Card subtle elevation                                                                             |
+| Accent usage       | positive for ready/refunded, caution for generating/partial/delayed, critical for failed/refund-required |
 
 **Pattern notes:** Pending, generating, slow/stuck, ready, partial, failed, refund-required,
 refund-processing, and refunded states share one stable status card. Every state repeats meaning through

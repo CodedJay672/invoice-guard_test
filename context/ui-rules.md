@@ -10,7 +10,9 @@
 
 ## Figma and Phase Scope
 
-Reference: `https://www.figma.com/design/KgnaNquB0qRPbTrJLD2BDQ/Untitled?node-id=58-176`
+Primary visual reference: `apps/web/design-template/`. The local landing and company-search
+templates are the source of truth for public-page composition, colour, type, radius, and elevation.
+The complete-system Figma remains a secondary reference for screens not covered by a local template.
 
 Phase A may use logo, navigation, search hero, trust strip, section rhythm, factual company snapshot, one-off report pricing, CTA, report, and footer patterns.
 
@@ -20,7 +22,8 @@ Do not use the design's risk score, overdue-invoice metrics, Xero/QuickBooks, st
 
 ## Layout and Components
 
-- Inter is loaded centrally; mono is used only for identifiers.
+- DM Sans is loaded centrally, Bricolage Grotesque is used for public display headings, and DM Mono
+  is used only for identifiers and prominent numeric values.
 - Public pages use a top navigation and no Phase A user-dashboard sidebar.
 - Use registered cards and semantic status surfaces; Court Records is the intentional dark conversion card.
 - One dominant action per section.
@@ -115,7 +118,8 @@ Never conclude `safe`, `unsafe`, `high risk`, `low risk`, `approved`, `rejected`
 
 ## Do Nots
 
-- No raw Tailwind colours, hardcoded colours, decorative gradients, or unapproved card surfaces.
+- No raw Tailwind colours or hardcoded colours. Restrained template-derived glow effects may use
+  semantic brand tokens; status surfaces remain flat and factual.
 - No hidden provider failures.
 - No colour-only status communication.
 - No raw provider/payment errors shown to users.

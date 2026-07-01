@@ -16,7 +16,8 @@ Update after every completed feature. Record actual state only.
 
 **Status:** 14B complete; 15A is unblocked
 
-**Latest refinement:** Phase A landing page and canonical landing-to-search handoff completed 2026-06-27; physical browser re-verification pending tooling availability.
+**Latest refinement:** Lucky-approved public design templates applied to landing and search pages on
+2026-07-01; existing search/free-preview behavior preserved and all risk-scoring UI excluded.
 
 ### Current Unit Scope
 
@@ -84,6 +85,8 @@ until 15B supplies the paid-provider generation handler.
 - Search/profile/free-preview API, atomic Redis/in-memory rate limiting, signed proxy identity, and HMAC-hashed search logs.
 - Server-authoritative one-off report products and working clean/adverse/standard/source-failure preview UI.
 - Phase A landing page with debounced Companies House suggestions and canonical company selection into `/search`.
+- Lucky-approved premium public visual system: deep ink/teal semantic palette, DM Sans/Bricolage
+  Grotesque/DM Mono typography, template-derived landing composition, and matching search results.
 - Live Companies House adapter support for alphabetical search, registered-office-address, profile, officers, filing history, charges, and insolvency endpoints.
 - Development-only deterministic fixtures for all Feature 12 states.
 - Two-route checkout/status UI with guest and authenticated fixtures, strict selection/email
@@ -118,6 +121,8 @@ until 15B supplies the paid-provider generation handler.
 - No AI-generated legal/report copy or risk scores.
 - AUTH-A and AUTH-B are hard prerequisites for 14A; the earlier tracker ordering was stale.
 - Phase A account navigation contains sign-in/sign-out only and does not open a dashboard.
+- Local templates under `apps/web/design-template/` are the visual source of truth for covered public
+  routes. Context phase/product constraints still govern functionality and prohibit risk scoring.
 
 ### Architecture Snapshot
 
@@ -226,17 +231,17 @@ failure; focused worker, config, API, and Next.js production builds all passed a
 
 ### Coverage Tracking
 
-| System | Current state |
-| --- | --- |
-| Companies House normalization | Covered |
-| Gazette normalization | Covered |
-| Insolvency/disqualification normalization | Covered |
-| Search/free-preview API | Covered |
-| Registry Trust free-preview isolation | Covered by current dependency tests; preserve |
-| Stripe/webhook/pending-report lifecycle | Covered for checkout, paid/unpaid events, replay, queueing, and status |
-| Worker generation lifecycle | Covered for claim, retry, terminal convergence, failure, and delay |
-| Paid provider/partial/refund outcomes | Handler contract ready; provider implementation remains 15B |
-| Guest/email/PDF/admin/maintenance | Not implemented |
+| System                                    | Current state                                                          |
+| ----------------------------------------- | ---------------------------------------------------------------------- |
+| Companies House normalization             | Covered                                                                |
+| Gazette normalization                     | Covered                                                                |
+| Insolvency/disqualification normalization | Covered                                                                |
+| Search/free-preview API                   | Covered                                                                |
+| Registry Trust free-preview isolation     | Covered by current dependency tests; preserve                          |
+| Stripe/webhook/pending-report lifecycle   | Covered for checkout, paid/unpaid events, replay, queueing, and status |
+| Worker generation lifecycle               | Covered for claim, retry, terminal convergence, failure, and delay     |
+| Paid provider/partial/refund outcomes     | Handler contract ready; provider implementation remains 15B            |
+| Guest/email/PDF/admin/maintenance         | Not implemented                                                        |
 
 ### Environment Variables in Scope
 
@@ -251,6 +256,10 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
 - Preserve A0-A11 behavior during Feature 12 refactor.
 - Feature 12A passed its physical gate before report products were wired in 12B.
 - The Phase A landing page now owns first-entry company discovery; the original full search/free-preview experience lives at `/search`.
+- 2026-07-01: `/` and `/search` were visually rewritten from the Lucky-approved local templates.
+  Existing company autocomplete, canonical selection, free-preview states, tiers, and checkout
+  navigation were retained. Template risk scores, risk bands, subscriptions, monitoring, recovery,
+  testimonials, and unsupported performance claims were not implemented.
 - Landing suggestions carry the selected Companies House number to `/search`; display-name query text is contextual only and never canonical identity.
 - Update this tracker and `ui-registry.md` after every feature.
 - V1 context is reference material for depth; the canonical nine files remain the only active source of truth.

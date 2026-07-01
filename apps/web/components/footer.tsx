@@ -2,14 +2,16 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-line bg-brand-navy text-content-inverse">
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-8">
+    <footer className="border-t border-content-inverse/10 bg-brand-navy text-content-inverse">
+      <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-12 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-8">
         <div className="flex max-w-xl flex-col gap-3">
-          <p className="text-base font-semibold">InvoiceGuard</p>
+          <p className="font-[family-name:var(--font-display)] text-lg font-semibold">
+            Invoice<span className="text-brand-teal">Guard</span>
+          </p>
           <p className="text-sm leading-6 text-content-inverse/70">
             Factual UK company records for businesses deciding who to work with.
           </p>
-          <p className="text-xs text-content-inverse/60">
+          <p className="text-xs text-content-inverse/50">
             InvoiceGuard does not provide credit scores, legal advice, or approval decisions.
           </p>
         </div>

@@ -105,7 +105,10 @@ export function RootSearchBar() {
 
   return (
     <div className="relative max-w-2xl">
-      <form className="flex flex-col gap-3 sm:flex-row" onSubmit={submitSearch}>
+      <form
+        className="flex flex-col gap-3 rounded-lg bg-surface p-2 shadow-xl sm:flex-row"
+        onSubmit={submitSearch}
+      >
         <div className="relative min-w-0 flex-1">
           <Search
             aria-hidden="true"
@@ -117,7 +120,7 @@ export function RootSearchBar() {
             aria-expanded={showDropdown}
             aria-label="Search by registered company name or Companies House number"
             autoComplete="off"
-            className="h-12 bg-surface pr-4 pl-10 text-content"
+            className="h-12 border-transparent bg-surface pr-4 pl-10 text-content shadow-none"
             onChange={(event) => {
               const nextQuery = event.target.value;
               setQuery(nextQuery);
@@ -133,7 +136,12 @@ export function RootSearchBar() {
             value={query}
           />
         </div>
-        <Button type="submit" size="lg" disabled={query.trim().length < 2 || state === "loading"}>
+        <Button
+          type="submit"
+          size="lg"
+          className="h-12 px-5"
+          disabled={query.trim().length < 2 || state === "loading"}
+        >
           <Search data-icon="inline-start" />
           {state === "loading" ? "Searching" : "Search"}
         </Button>
@@ -144,7 +152,7 @@ export function RootSearchBar() {
           id={listboxId}
           role="listbox"
           aria-label="Company suggestions"
-          className="absolute top-full right-0 left-0 z-10 mt-2 overflow-hidden rounded-lg border border-line bg-surface text-content shadow-sm"
+          className="absolute top-full right-0 left-0 z-10 mt-2 overflow-hidden rounded-lg border border-line bg-surface text-content shadow-xl"
         >
           {state === "loading" ? (
             <div className="flex flex-col gap-3 p-4" role="status">

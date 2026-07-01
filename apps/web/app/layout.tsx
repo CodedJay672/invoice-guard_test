@@ -1,19 +1,24 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/ui/themes";
-import { Geist_Mono, Inter } from "next/font/google";
+import { Bricolage_Grotesque, DM_Mono, DM_Sans } from "next/font/google";
 import type { ComponentProps } from "react";
 
 import "@clerk/ui/themes/shadcn.css";
 import "@workspace/ui/globals.css";
 import { cn } from "@workspace/ui/lib/utils";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const fontSans = DM_Sans({ subsets: ["latin"], variable: "--font-sans" });
+const fontDisplay = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-display",
+});
 type ClerkAppearance = NonNullable<ComponentProps<typeof ClerkProvider>["appearance"]>;
 const clerkTheme = shadcn as unknown as NonNullable<ClerkAppearance["theme"]>;
 
-const fontMono = Geist_Mono({
+const fontMono = DM_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+  weight: ["400", "500"],
 });
 
 export default function RootLayout({
@@ -22,7 +27,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}>
+    <html
+      lang="en"
+      className={cn(
+        "antialiased",
+        fontMono.variable,
+        fontDisplay.variable,
+        "font-sans",
+        fontSans.variable,
+      )}
+    >
       <body>
         <ClerkProvider
           dynamic

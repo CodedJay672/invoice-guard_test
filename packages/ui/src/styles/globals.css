@@ -30,6 +30,8 @@
   --color-critical-surface: var(--ig-critical-surface);
   --color-critical-content: var(--ig-critical-content);
   --color-focus: var(--ig-focus);
+  --color-surface-strong: var(--ig-surface-strong);
+  --color-content-subtle: var(--ig-content-subtle);
 
   /* shadcn compatibility aliases resolve only to InvoiceGuard semantic tokens. */
   --color-background: var(--ig-page);
@@ -44,33 +46,35 @@
   --color-border: var(--ig-line);
   --color-input: var(--ig-line);
   --color-ring: var(--ig-focus);
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
 }
 
 :root {
-  --ig-page: #f8fafc;
+  --ig-page: #f6f8fb;
   --ig-surface: #ffffff;
-  --ig-surface-subtle: #f1f5f9;
-  --ig-brand-navy: #061b33;
-  --ig-brand-navy-hover: #0b2a4a;
-  --ig-brand-teal: #00b8c8;
-  --ig-brand-teal-hover: #0098a6;
-  --ig-content: #0f172a;
-  --ig-content-muted: #64748b;
+  --ig-surface-subtle: #eef2f8;
+  --ig-surface-strong: #122441;
+  --ig-brand-navy: #07101f;
+  --ig-brand-navy-hover: #1b3357;
+  --ig-brand-teal: #0ab5a8;
+  --ig-brand-teal-hover: #078c82;
+  --ig-content: #07101f;
+  --ig-content-muted: #5a6b82;
+  --ig-content-subtle: #8595ab;
   --ig-content-inverse: #ffffff;
-  --ig-line: #e2e8f0;
-  --ig-positive: #16a34a;
-  --ig-positive-surface: #f0fdf4;
-  --ig-positive-content: #166534;
-  --ig-caution: #d97706;
-  --ig-caution-surface: #fffbeb;
-  --ig-caution-content: #92400e;
-  --ig-critical: #dc2626;
-  --ig-critical-surface: #fef2f2;
-  --ig-critical-content: #7f1d1d;
-  --ig-focus: #00b8c8;
+  --ig-line: #e2e8f1;
+  --ig-positive: #0b9e6a;
+  --ig-positive-surface: #e3f7ee;
+  --ig-positive-content: #087a52;
+  --ig-caution: #c77705;
+  --ig-caution-surface: #fff4dc;
+  --ig-caution-content: #9e5e03;
+  --ig-critical: #d92d20;
+  --ig-critical-surface: #fdecec;
+  --ig-critical-content: #b22117;
+  --ig-focus: #0ab5a8;
 }
 
 @layer base {
@@ -102,5 +106,5 @@
 }
 
 .cl-formButtonPrimary {
-  color: #fff;
+  color: var(--ig-content-inverse);
 }

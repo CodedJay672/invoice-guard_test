@@ -1,6 +1,8 @@
 # UI Tokens
 
-InvoiceGuard is trustworthy, restrained, and commercially serious. Use semantic project tokens everywhere; never hardcode colours or use Tailwind's built-in colour scales.
+InvoiceGuard is trustworthy, premium, and commercially serious. The design template in
+`apps/web/design-template/` is the canonical visual source. Use semantic project tokens everywhere;
+never hardcode colours or use Tailwind's built-in colour scales.
 
 The complete-system Figma file is the visual reference, filtered by active phase scope.
 
@@ -12,10 +14,10 @@ Tailwind CSS 4 tokens live in `packages/ui/src/styles/globals.css`. Define value
 
 ```tsx
 // Correct
-className="bg-surface text-content border-line"
+className = "bg-surface text-content border-line";
 
 // Never
-className="bg-[#061B33] text-slate-700"
+className = "bg-[#061B33] text-slate-700";
 ```
 
 The current preview page still mixes direct variables and raw Tailwind colours. That is cleanup, not a pattern to copy.
@@ -52,27 +54,29 @@ The current preview page still mixes direct variables and raw Tailwind colours. 
 }
 
 :root {
-  --ig-page: #f8fafc;
+  --ig-page: #f6f8fb;
   --ig-surface: #ffffff;
-  --ig-surface-subtle: #f1f5f9;
-  --ig-brand-navy: #061b33;
-  --ig-brand-navy-hover: #0b2a4a;
-  --ig-brand-teal: #00b8c8;
-  --ig-brand-teal-hover: #0098a6;
-  --ig-content: #0f172a;
-  --ig-content-muted: #64748b;
+  --ig-surface-subtle: #eef2f8;
+  --ig-surface-strong: #122441;
+  --ig-brand-navy: #07101f;
+  --ig-brand-navy-hover: #1b3357;
+  --ig-brand-teal: #0ab5a8;
+  --ig-brand-teal-hover: #078c82;
+  --ig-content: #07101f;
+  --ig-content-muted: #5a6b82;
+  --ig-content-subtle: #8595ab;
   --ig-content-inverse: #ffffff;
-  --ig-line: #e2e8f0;
-  --ig-positive: #16a34a;
-  --ig-positive-surface: #f0fdf4;
-  --ig-positive-content: #166534;
-  --ig-caution: #d97706;
-  --ig-caution-surface: #fffbeb;
-  --ig-caution-content: #92400e;
-  --ig-critical: #dc2626;
-  --ig-critical-surface: #fef2f2;
-  --ig-critical-content: #7f1d1d;
-  --ig-focus: #00b8c8;
+  --ig-line: #e2e8f1;
+  --ig-positive: #0b9e6a;
+  --ig-positive-surface: #e3f7ee;
+  --ig-positive-content: #087a52;
+  --ig-caution: #c77705;
+  --ig-caution-surface: #fff4dc;
+  --ig-caution-content: #9e5e03;
+  --ig-critical: #d92d20;
+  --ig-critical-surface: #fdecec;
+  --ig-critical-content: #b22117;
+  --ig-focus: #0ab5a8;
 }
 ```
 
@@ -82,17 +86,18 @@ Hex values belong only in the central definition.
 
 ## Typography
 
-- Inter through `next/font/google` is the UI/report font.
-- Geist Mono is reserved for company numbers, report references, and technical IDs.
+- DM Sans through `next/font/google` is the UI/report font.
+- Bricolage Grotesque is reserved for public-page display headings.
+- DM Mono is reserved for company numbers, report references, and technical IDs.
 
-| Element | Size/weight | Token |
-| --- | --- | --- |
-| Page title | 30px / 600 | `text-content` or `text-brand-navy` |
-| Section heading | 20px / 600 | `text-content` |
-| Card heading | 16px / 600 | `text-content` |
-| Body | 14px / 400 | `text-content` |
-| Label/metadata | 12px / 400-600 | `text-content-muted` |
-| Price | 24px / 600 | `text-content` |
+| Element         | Size/weight    | Token                               |
+| --------------- | -------------- | ----------------------------------- |
+| Page title      | 30px / 600     | `text-content` or `text-brand-navy` |
+| Section heading | 20px / 600     | `text-content`                      |
+| Card heading    | 16px / 600     | `text-content`                      |
+| Body            | 14px / 400     | `text-content`                      |
+| Label/metadata  | 12px / 400-600 | `text-content-muted`                |
+| Price           | 24px / 600     | `text-content`                      |
 
 ### Type Rules
 
@@ -105,18 +110,18 @@ Hex values belong only in the central definition.
 
 ## Spacing, Radius, and Elevation
 
-| Pattern | Value | Use |
-| --- | ---: | --- |
-| Compact gap | 8px | icon/label, badge groups |
-| Control gap | 12px | forms and compact cards |
-| Component gap | 16px | card internals and grids |
-| Section gap | 24px | primary page sections |
-| Major gap | 32px | page-level separation |
-| Compact padding | 16px | rows and compact cards |
-| Standard padding | 20-24px | product/report cards |
-| Small radius | 6px | badges and compact controls |
-| Medium radius | 10px | inputs/buttons |
-| Large radius | 14px | cards/panels |
+| Pattern          |   Value | Use                         |
+| ---------------- | ------: | --------------------------- |
+| Compact gap      |     8px | icon/label, badge groups    |
+| Control gap      |    12px | forms and compact cards     |
+| Component gap    |    16px | card internals and grids    |
+| Section gap      |    24px | primary page sections       |
+| Major gap        |    32px | page-level separation       |
+| Compact padding  |    16px | rows and compact cards      |
+| Standard padding | 20-24px | product/report cards        |
+| Small radius     |     6px | badges and compact controls |
+| Medium radius    |    10px | inputs/buttons              |
+| Large radius     |    14px | cards/panels                |
 
 Use subtle elevation only to separate interactive cards or sticky rails. Borders provide most structure; do not stack heavy shadows.
 
@@ -138,12 +143,12 @@ Public layouts use `max-w-7xl`, `px-4 sm:px-6 lg:px-8`, and `py-8`. Preview/tier
 
 ### State Tokens
 
-| State | Surface | Content | Border |
-| --- | --- | --- | --- |
-| Clean/success | `bg-positive-surface` | `text-positive-content` | `border-positive` |
-| Partial/attention | `bg-caution-surface` | `text-caution-content` | `border-caution` |
+| State               | Surface               | Content                 | Border            |
+| ------------------- | --------------------- | ----------------------- | ----------------- |
+| Clean/success       | `bg-positive-surface` | `text-positive-content` | `border-positive` |
+| Partial/attention   | `bg-caution-surface`  | `text-caution-content`  | `border-caution`  |
 | Adverse/destructive | `bg-critical-surface` | `text-critical-content` | `border-critical` |
-| Unchecked/locked | `bg-surface-subtle` | `text-content-muted` | `border-line` |
+| Unchecked/locked    | `bg-surface-subtle`   | `text-content-muted`    | `border-line`     |
 
 ### Motion
 

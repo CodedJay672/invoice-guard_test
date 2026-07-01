@@ -1,0 +1,124 @@
+/* ==========================================================================
+   InvoiceGuard — Design Tokens
+   "Confidence by design" — premium fintech SaaS system
+   ========================================================================== */
+
+:root {
+  /* ── Brand Colors ── */
+  --ink:        #07101F;     /* deepest navy — primary text, dark surfaces */
+  --ink-2:      #0B1A30;     /* sidebar / footer bg */
+  --ink-3:      #122441;     /* elevated dark surfaces */
+  --ink-4:      #1B3357;     /* hover on dark */
+  --navy:       #0A1E3A;     /* hero / report-header bg */
+  --navy-2:     #0E2A4E;     /* lighter navy gradient stop */
+
+  --teal:       #0AB5A8;     /* PRIMARY accent — CTAs, active */
+  --teal-bright:#16D9C9;     /* highlights, links on dark, glows */
+  --teal-2:     #078C82;     /* hover teal */
+  --teal-dark:  #066B63;     /* pressed / deep teal */
+  --teal-soft:  #E2F8F5;     /* light teal bg */
+  --teal-tint:  #F0FBFA;     /* faintest teal wash */
+  --teal-glow:  rgba(10,181,168,.16);
+  --teal-glow-2:rgba(22,217,201,.22);
+
+  /* ── Neutrals ── */
+  --white:      #FFFFFF;
+  --off:        #F6F8FB;     /* app page bg */
+  --off-2:      #EEF2F8;     /* alt row / hover */
+  --paper:      #FCFDFE;     /* card content */
+  --border:     #E2E8F1;     /* primary border */
+  --border-2:   #CBD5E3;     /* stronger border */
+  --border-3:   #94A3B8;     /* input border focus-pre */
+  --muted:      #5A6B82;     /* secondary text */
+  --muted-2:    #8595AB;     /* tertiary text */
+  --muted-3:    #A8B4C6;     /* placeholder */
+
+  /* ── Semantic ── */
+  --green:      #0B9E6A;
+  --green-2:    #087A52;
+  --green-soft: #E3F7EE;
+  --amber:      #C77705;
+  --amber-2:    #9E5E03;
+  --amber-soft: #FFF4DC;
+  --red:        #D92D20;
+  --red-2:      #B22117;
+  --red-soft:   #FDECEC;
+  --purple:     #6D3FD6;
+  --purple-soft:#F0EAFE;
+  --slate:      #64748B;
+  --slate-soft: #F1F4F8;
+
+  /* ── Gradients ── */
+  --grad-navy:    linear-gradient(160deg, #0E2A4E 0%, #07101F 100%);
+  --grad-teal:    linear-gradient(135deg, #0AB5A8 0%, #078C82 100%);
+  --grad-teal-bright: linear-gradient(135deg, #16D9C9 0%, #0AB5A8 100%);
+  --grad-card:    linear-gradient(180deg, #FFFFFF 0%, #FCFDFE 100%);
+  --grad-hero-mesh: radial-gradient(60% 80% at 80% 0%, rgba(22,217,201,.18) 0%, transparent 60%),
+                     radial-gradient(50% 70% at 10% 30%, rgba(10,181,168,.10) 0%, transparent 55%);
+
+  /* ── Typography ── */
+  --font-sans: 'DM Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'DM Mono', 'SFMono-Regular', Consolas, monospace;
+  --font-display: 'Bricolage Grotesque', 'DM Sans', sans-serif;
+
+  --text-base: 15px;
+  --text-leading: 1.6;
+  --text-hero-h1: clamp(2.6rem, 5.2vw, 4.6rem);
+  --text-hero-sub: clamp(1.05rem, 1.4vw, 1.22rem);
+  --text-page: clamp(1.6rem, 2.4vw, 2rem);
+  --text-card-title: 1.05rem;
+  --text-h2: clamp(1.6rem, 2.6vw, 2.4rem);
+  --text-h3: 1.22rem;
+  --text-body: 1rem;
+  --text-body-sm: .9rem;
+  --text-small: .86rem;
+  --text-tiny: .76rem;
+  --text-caps: .72rem;
+
+  /* ── Spacing ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+  --space-4xl: 64px;
+
+  /* ── Border Radius ── */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius-3xl: 28px;
+  --radius-full: 999px;
+
+  /* ── Shadows ── */
+  --shadow-xs:  0 1px 2px rgba(7,16,31,.05);
+  --shadow-sm:  0 1px 3px rgba(7,16,31,.07), 0 1px 2px rgba(7,16,31,.04);
+  --shadow-md:  0 6px 20px rgba(7,16,31,.08), 0 2px 6px rgba(7,16,31,.04);
+  --shadow-lg:  0 20px 50px rgba(7,16,31,.14), 0 6px 16px rgba(7,16,31,.07);
+  --shadow-xl:  0 30px 70px rgba(7,16,31,.18), 0 10px 24px rgba(7,16,31,.08);
+  --shadow-teal: 0 0 0 3px rgba(10,181,168,.16);
+  --shadow-teal-lg: 0 12px 30px rgba(10,181,168,.22);
+  --shadow-card-hover: 0 16px 40px rgba(7,16,31,.12), 0 4px 10px rgba(7,16,31,.05);
+
+  /* ── Transitions ── */
+  --ease: cubic-bezier(.4,0,.2,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --duration: .2s;
+  --duration-md: .3s;
+  --duration-lg: .45s;
+
+  /* ── Layout ── */
+  --max: 1200px;
+  --max-narrow: 880px;
+  --section-pad: 88px;
+  --card-pad: 22px;
+  --card-pad-lg: 28px;
+  --nav-h: 68px;
+  --sidebar-w: 264px;
+}

@@ -146,8 +146,8 @@ export function CompanySearchExperience({
   const tierCards = preview?.tierCards ?? fallbackTierCards;
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
-      <section aria-label="Company search and free preview" className="flex min-w-0 flex-col gap-6">
+    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
+      <section aria-label="Company search and free preview" className="flex min-w-0 flex-col gap-7">
         <SearchPanel
           query={query}
           searchStatus={searchStatus}
@@ -178,7 +178,7 @@ export function CompanySearchExperience({
 
       <aside
         aria-label="Report options"
-        className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-6 lg:self-start"
+        className="flex min-w-0 flex-col gap-5 lg:sticky lg:top-24 lg:self-start"
       >
         {tierCards.map((tier) => (
           <TierCard
@@ -215,9 +215,9 @@ type SearchPanelProps = {
 
 function SearchPanel({ query, searchStatus, onQueryChange, onSubmit }: SearchPanelProps) {
   return (
-    <Card>
+    <Card className="border-brand-teal/30 shadow-md">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="text-lg font-semibold">
           <h2>Find a UK company</h2>
         </CardTitle>
         <CardDescription>
@@ -229,7 +229,7 @@ function SearchPanel({ query, searchStatus, onQueryChange, onSubmit }: SearchPan
           <label className="text-sm font-medium text-content" htmlFor="company-search">
             Company name or number
           </label>
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col gap-3 rounded-md bg-page p-2 sm:flex-row">
             <div className="relative min-w-0 flex-1">
               <Search
                 aria-hidden="true"
@@ -240,7 +240,7 @@ function SearchPanel({ query, searchStatus, onQueryChange, onSubmit }: SearchPan
                 value={query}
                 onChange={(event) => onQueryChange(event.target.value)}
                 aria-invalid={searchStatus === "invalid"}
-                className="pl-9"
+                className="h-11 border-transparent bg-surface pl-9 shadow-sm"
                 placeholder="For example, ACME or 12345678"
               />
             </div>
@@ -248,7 +248,7 @@ function SearchPanel({ query, searchStatus, onQueryChange, onSubmit }: SearchPan
               type="submit"
               size="lg"
               disabled={searchStatus === "loading"}
-              className="h-11 px-4"
+              className="h-11 px-5"
             >
               <Search data-icon="inline-start" />
               {searchStatus === "loading" ? "Searching" : "Search"}
@@ -319,7 +319,7 @@ function SearchResults({ matches, onSelect }: SearchResultsProps) {
           key={company.companiesHouseNumber}
           type="button"
           onClick={() => void onSelect(company.companiesHouseNumber)}
-          className="min-h-11 rounded-lg border border-line bg-surface p-4 text-left shadow-sm transition hover:border-brand-teal focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
+          className="min-h-11 rounded-lg border border-line bg-surface p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-teal hover:shadow-md focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -366,13 +366,13 @@ function FreePreview({ preview }: FreePreviewProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <Card>
+      <Card className="shadow-md">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-sm font-medium text-content-muted">Company snapshot</p>
               <CardTitle>
-                <h2 className="mt-2 text-2xl font-semibold text-brand-navy">
+                <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-brand-navy">
                   {preview.company.companyName}
                 </h2>
               </CardTitle>
@@ -463,7 +463,7 @@ type FactProps = {
 
 function Fact({ icon: Icon, label, value }: FactProps) {
   return (
-    <div className="rounded-md border border-line bg-surface p-3">
+    <div className="rounded-md border border-line bg-page p-3">
       <dt className="flex items-center gap-2 text-xs font-medium text-content-muted uppercase">
         <Icon aria-hidden="true" className="size-4" />
         {label}
@@ -516,7 +516,7 @@ type CourtRecordsCardProps = {
 
 function CourtRecordsCard({ prompt }: CourtRecordsCardProps) {
   return (
-    <Card tone="navy">
+    <Card tone="navy" className="shadow-lg">
       <CardHeader>
         <p className="text-xs font-semibold tracking-wider text-brand-teal uppercase">
           {prompt.label}
@@ -595,7 +595,10 @@ type TierCardProps = {
 
 function TierCard({ tier, ready, onSelect }: TierCardProps) {
   return (
-    <Card size="sm">
+    <Card
+      size="sm"
+      className="transition hover:-translate-y-0.5 hover:border-brand-teal hover:shadow-md"
+    >
       <CardHeader>
         <CardTitle>
           <h2>{tier.name}</h2>
