@@ -186,11 +186,15 @@ Integration modules separate client/factory, live adapter, mock adapter, types, 
 
 ---
 
-## Legal and Product Copy
+## AI Interpretation, Legal, and Product Copy
 
-- No AI-generated legal, credit, or report analysis.
+- Paid-report interpretation is required in Phase A and runs only after authenticated payment and frozen factual assembly.
+- Use exactly `claude-haiku-4-5-20251001` with `max_tokens: 1500`; model and output limit are server-controlled validated configuration/constants.
+- Send only tier-entitled frozen facts and explicit source statuses. Store model, prompt/template version, generation time, and outcome with the immutable report artifact.
+- AI output must not invent facts, infer from unchecked sources, provide legal/financial advice, make credit decisions, or create risk scores/labels. Provider facts and failures remain independently visible.
+- AI calls require timeouts, bounded retries, structured failures, idempotent generation, and tests for malformed/unsafe output and unavailable sources.
 - Approved templates are implemented exactly and never paraphrased.
-- `ENABLE_FLAG_SUMMARY` defaults to `false` everywhere.
+- `ENABLE_FLAG_SUMMARY` remains the separate legacy template-summary flag and defaults to `false` everywhere.
 - Never conclude safe/unsafe, high/low risk, approved/rejected, bad payer, or creditworthy.
 - Future recovery and risk-score concepts in Figma are not Phase A authorization.
 
@@ -202,9 +206,9 @@ Integration modules separate client/factory, live adapter, mock adapter, types, 
 - Processors are small, service-driven, idempotent, and retry transient failures only.
 - PostgreSQL/Drizzle are the only core database/ORM.
 - Schema changes require reviewed migrations and database constraints.
-- Do not store PDFs, raw guest tokens, or secrets in PostgreSQL.
+- Do not store PDFs or secrets in PostgreSQL. Guest access tokens must not exist because guest purchase/access is unsupported.
 - Search IP data is anonymised/deleted after 90 days.
-- Guest links expire after 30 days; guest report data remains 12 months.
+- Purchased reports require a Clerk owner and verified primary email; report authorization is owner/admin only.
 
 ### Database and Financial Rules
 
@@ -246,7 +250,7 @@ Integration modules separate client/factory, live adapter, mock adapter, types, 
 
 ## Verification
 
-Preserve tests for free-preview provider isolation, anonymous limits, webhook idempotency, refund/partial-report paths, guest expiry, admin authorization, report immutability, disclaimer presence, and flag-summary behavior.
+Preserve tests for Companies House-only free-tier isolation, anonymous limits, authenticated checkout enforcement, webhook idempotency, refund/partial-report paths, owner authorization, AI model/token/prompt boundaries, report immutability, disclaimer presence, and flag-summary behavior.
 
 Run narrow checks during development and repository typecheck, lint, tests, and formatting before completion.
 
@@ -264,7 +268,7 @@ Test naming describes behavior, not implementation. Mock external boundaries, no
 ### Prohibited Practices
 
 - Business logic in routes/components or database queries in UI.
-- Paid providers in free-preview composition.
+- Any non-Companies-House provider or AI client in free-tier search/preview composition.
 - Fire-and-forget financial/report effects.
 - Swallowed errors, unbounded retries, arbitrary sleeps, or hidden partial data.
 - Premature microservices, speculative packages/tables, or future-phase implementation.

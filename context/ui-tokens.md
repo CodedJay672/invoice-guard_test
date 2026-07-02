@@ -1,8 +1,9 @@
 # UI Tokens
 
-InvoiceGuard is trustworthy, premium, and commercially serious. The design template in
-`apps/web/design-template/` is the canonical visual source. Use semantic project tokens everywhere;
-never hardcode colours or use Tailwind's built-in colour scales.
+InvoiceGuard is trustworthy, analytical, and commercially serious. The canonical brand reference is
+`context/designs/brand_asset.png`. Production logo files are `apps/web/public/light mode logo.png`
+for light surfaces and `apps/web/public/dark mode logo.png` for dark/navy surfaces. Use semantic project tokens everywhere; never hardcode colours or
+use Tailwind's built-in colour scales.
 
 The complete-system Figma file is the visual reference, filtered by active phase scope.
 
@@ -54,29 +55,31 @@ The current preview page still mixes direct variables and raw Tailwind colours. 
 }
 
 :root {
-  --ig-page: #f6f8fb;
+  --ig-page: #f8fafc;
   --ig-surface: #ffffff;
-  --ig-surface-subtle: #eef2f8;
-  --ig-surface-strong: #122441;
-  --ig-brand-navy: #07101f;
-  --ig-brand-navy-hover: #1b3357;
-  --ig-brand-teal: #0ab5a8;
-  --ig-brand-teal-hover: #078c82;
-  --ig-content: #07101f;
-  --ig-content-muted: #5a6b82;
-  --ig-content-subtle: #8595ab;
+  --ig-surface-subtle: #e2e8f0;
+  --ig-surface-strong: #334155;
+  --ig-brand-navy: #001b4d;
+  --ig-brand-navy-hover: #002867;
+  --ig-brand-teal: #12d6a0;
+  --ig-brand-teal-hover: #0fb88a;
+  --ig-content: #001b4d;
+  --ig-content-muted: #334155;
+  --ig-content-subtle: #64748b;
   --ig-content-inverse: #ffffff;
-  --ig-line: #e2e8f1;
-  --ig-positive: #0b9e6a;
-  --ig-positive-surface: #e3f7ee;
-  --ig-positive-content: #087a52;
-  --ig-caution: #c77705;
-  --ig-caution-surface: #fff4dc;
-  --ig-caution-content: #9e5e03;
-  --ig-critical: #d92d20;
-  --ig-critical-surface: #fdecec;
-  --ig-critical-content: #b22117;
-  --ig-focus: #0ab5a8;
+  --ig-line: #e2e8f0;
+  --ig-positive: #10b981;
+  --ig-positive-surface: #ecfdf5;
+  --ig-positive-content: #047857;
+  --ig-caution: #f59e0b;
+  --ig-caution-surface: #fffbeb;
+  --ig-caution-content: #b45309;
+  --ig-critical: #ef4444;
+  --ig-critical-surface: #fef2f2;
+  --ig-critical-content: #b91c1c;
+  --ig-focus: #12d6a0;
+  --ig-dark-background: #020817;
+  --ig-monitoring: #8b5cf6;
 }
 ```
 
@@ -86,9 +89,8 @@ Hex values belong only in the central definition.
 
 ## Typography
 
-- DM Sans through `next/font/google` is the UI/report font.
-- Bricolage Grotesque is reserved for public-page display headings.
-- DM Mono is reserved for company numbers, report references, and technical IDs.
+- Inter through `next/font/google` is the only brand UI/report font.
+- Geist Mono is reserved for company numbers, report references, and technical IDs.
 
 | Element         | Size/weight    | Token                               |
 | --------------- | -------------- | ----------------------------------- |
@@ -166,4 +168,4 @@ Public layouts use `max-w-7xl`, `px-4 sm:px-6 lg:px-8`, and `py-8`. Preview/tier
 - Navy and teal are the only brand colours.
 - Green, amber, and red describe factual source/operation state, never credit risk.
 - New components follow `ui-rules.md` and are recorded in `ui-registry.md`.
-- Dark mode is not part of Phase A unless explicitly scheduled; do not create incomplete parallel tokens.
+- Supplying light-surface and dark-surface logo variants does not authorize a full application dark mode. Use the correct logo asset for its surface and do not create incomplete parallel theme tokens.

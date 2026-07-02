@@ -20,39 +20,45 @@ Living record of InvoiceGuard patterns. Match an existing pattern before inventi
 Feature 12 is the canonical public-search implementation. The page remains a Server Component;
 interactive state belongs to the smallest practical client leaf.
 
-### Public Template Visual System
+### Brand Asset System
 
-- Path: `apps/web/design-template/`, `packages/ui/src/styles/globals.css`, and
-  `apps/web/app/(landing)/page.tsx`.
+- Path: `context/designs/brand_asset.png` and `packages/ui/src/styles/globals.css`.
 - Last updated: 2026-07-01.
-- Source: Lucky-approved local templates; canonical for public landing and company-search pages.
-- Background: `bg-brand-navy` hero/footer, `bg-surface` primary sections/cards, and `bg-page`
-  alternating sections.
-- Border: `border-line`; featured conversion cards may use `border-brand-teal`.
-- Radius: `rounded-lg` for cards/search shells and `rounded-md` for controls and nested facts.
-- Text: `text-content`/`text-brand-navy` primary, `text-content-muted` secondary,
-  `text-content-subtle` tertiary, and `text-content-inverse/70` on dark surfaces.
-- Typography: Bricolage Grotesque display headings, DM Sans interface/body copy, and DM Mono for
-  company numbers, report references, and prices.
-- Spacing: public sections use `py-20 sm:py-24`; cards use the shared Card spacing contract;
-  compact internal groups use `gap-3` and section groups use `gap-6` to `gap-12`.
-- Interaction: cards may use a restrained `hover:-translate-y-0.5` or `hover:-translate-y-1` with
-  `hover:shadow-md`; focus remains `ring-focus`.
-- Elevation: `shadow-sm` for standard cards, `shadow-md` for primary search/snapshot cards, and
-  `shadow-xl`/`shadow-2xl` only for the hero search and report mock.
-- Accent: teal identifies primary actions, highlights, and selected/featured presentation. It never
-  communicates company quality or risk.
-- Product constraint: no risk score, risk band, approval verdict, subscription, or monitoring UI is
-  carried from the templates into Phase A.
+- Logo: ascending emerald/slate bars, shield-check mark, and `InvoiceGuard` wordmark; preserve the
+  documented clear space and use the standalone shield/bar icon for compact surfaces.
+- Primary: `bg-brand-navy` (`#001B4D`) and `bg-brand-teal` (`#12D6A0`).
+- Neutrals: dark background `#020817`, slate 700 `#334155`, slate 200 `#E2E8F0`, slate 100
+  `#F8FAFC`, and white.
+- Typography: Inter only; 64/800 display, 48/700 heading, 32/600 subheading, 24/600 section title,
+  18/400 large body, 16/400 body, 14/400 caption, and 12/400 meta.
+- Buttons: 12px radius, 12px/20px padding, Inter 600, 18px outline icon. Primary uses emerald with
+  navy text; secondary uses white, navy text, and slate-200 border.
+- Icons: rounded two-pixel outline, normally navy.
+- Gradient: navy-to-emerald at 90 degrees and used sparingly.
+- Product constraint: risk/signal swatches and score visuals shown in the brand guide are not active
+  product patterns. No risk score, risk band, or company-quality verdict may be added.
+- Production logos: `apps/web/public/light mode logo.png` on light surfaces and
+  `apps/web/public/dark mode logo.png` on dark/navy surfaces. These variants do not establish full
+  application dark mode.
+
+### Local Design Reference Set
+
+- Paths: `context/designs/landing_page.html`, `landing_page.png`,
+  `free-preview-suggestions.png`, `paid-search-result.png`, and `payment-page.png`.
+- Last updated: 2026-07-02.
+- `landing_page.html` is the implementation template and `landing_page.png` is the screenshot target
+  for the Phase A landing page. The remaining images are flow-specific visual references.
+- Local Phase A references take precedence over the complete-system Figma when they conflict on
+  layout details; product scope, factual-language, semantic-token, accessibility, and no-risk-score
+  rules still take precedence over every design artifact.
 
 ### Phase A Landing Shell
 
 - Path: `apps/web/app/(landing)/page.tsx`, `apps/web/components/topbar.tsx`, and `apps/web/components/footer.tsx`.
 - Last updated: 2026-07-01.
 - Purpose: introduce the report product, establish free-source boundaries, and lead directly into canonical company selection.
-- Background: hero uses `bg-brand-navy text-content-inverse`; informational sections alternate
-  `bg-surface` and `bg-page`, with restrained semantic-token glow decoration from the approved
-  template.
+- Background: hero may use `bg-brand-navy text-content-inverse`; informational sections alternate
+  `bg-surface` and `bg-page`. The brand gradient is reserved for sparse emphasis.
 - Structure: `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8`; content uses responsive grids without fixed content widths.
 - Cards: shared `Card` composition with `rounded-lg border border-line bg-surface shadow-sm`.
 - Text: headings use `text-brand-navy` or inherited inverse content; supporting copy uses `text-content-muted` or `text-content-inverse/70`.
@@ -163,7 +169,9 @@ lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
 ### Checkout Form
 
 - Path: `apps/web/components/checkout/CheckoutForm.tsx`.
-- Guest is the default state; the authenticated fixture renders a verified read-only email.
+- Historical implementation note: guest was originally the default state. The 2026-07-02 client
+  decision supersedes it; AUTH-C must replace this with a registration/sign-in gate and a verified,
+  read-only owner email. No new feature may extend the guest pattern.
 - Email errors use `aria-invalid`, a linked description, and an alert role while preserving input.
 - Redirecting disables the field and primary action and uses visible text plus a spinner.
 - The caution Alert states that a browser return never confirms payment.
@@ -268,7 +276,8 @@ Last updated: 2026-06-29
 
 **Pattern notes:** Sign-in, sign-up, callback/loading, error, signed-in, signing-out, and
 unverified-email states share one stable card structure. Loading and state changes include visible
-text and `aria-live`; accounts remain optional and guest checkout stays explicit.
+text and `aria-live`. Authentication is now mandatory before payment; the guest-checkout presentation
+is historical and must be removed by AUTH-C.
 
 ### Public Account Control
 
@@ -306,11 +315,22 @@ Last updated: 2026-06-29
 | Spacing          | shared Card sections; header `gap-4`                                    |
 | Hover state      | none                                                                    |
 | Shadow           | shared Card subtle elevation                                            |
-| Accent usage     | positive owner, neutral guest, caution verification, critical non-owner |
+| Accent usage     | positive owner, caution authentication/verification, critical non-owner |
 
 **Pattern notes:** Status is always repeated through badge, heading, icon, and explanatory text.
-This component presents deterministic access outcomes only; AUTH-B/16B must perform authorization
-server-side before returning report data.
+Guest fixtures are obsolete under the 2026-07-02 no-guest-purchase decision. AUTH-C/16B must retain
+owner, signed-out, verification-required, and non-owner outcomes and authorize server-side before
+returning report data.
+
+### Paid AI Interpretation Block (Planned in 15A)
+
+- Required states: loading, ready, partial-source, unavailable/failed, and safety fallback.
+- Required metadata: clear `AI interpretation` label and factual source-status context; model/internal
+  prompt details need not be exposed in the primary UI.
+- Facts remain visually primary and independently readable. Interpretation cannot hide provider
+  failures, imply unchecked sources were checked, or render legal/financial advice, credit decisions,
+  risk scores, or safe/unsafe verdicts.
+- Applies to Basic, Standard, and Premium in Phase A.
 
 ### Live Clerk Authentication Surface
 

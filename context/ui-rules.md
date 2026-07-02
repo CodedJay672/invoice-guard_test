@@ -8,11 +8,22 @@
 
 ---
 
-## Figma and Phase Scope
+## Brand and Phase Scope
 
-Primary visual reference: `apps/web/design-template/`. The local landing and company-search
-templates are the source of truth for public-page composition, colour, type, radius, and elevation.
-The complete-system Figma remains a secondary reference for screens not covered by a local template.
+Primary brand reference: `context/designs/brand_asset.png` (Brand Asset Guide v1.0). It is the
+source of truth for the InvoiceGuard logo, navy/emerald palette, Inter typography, button geometry,
+outline iconography, and restrained gradient usage. The complete-system Figma remains a secondary
+layout reference where it does not conflict with Phase A scope.
+
+Use `apps/web/public/light mode logo.png` on light surfaces and `apps/web/public/dark mode logo.png`
+on dark/navy surfaces. The Phase A landing implementation must use `context/designs/landing_page.html`
+as its template and `context/designs/landing_page.png` as its screenshot reference. Supporting design
+references in the folder are `free-preview-suggestions.png`, `paid-search-result.png`, and
+`payment-page.png`.
+
+The brand guide's risk meters, score rings, and risk labels are illustrative brand applications,
+not approved InvoiceGuard product behavior. They must not appear while the no-risk-scoring product
+decision remains active.
 
 Phase A may use logo, navigation, search hero, trust strip, section rhythm, factual company snapshot, one-off report pricing, CTA, report, and footer patterns.
 
@@ -22,8 +33,7 @@ Do not use the design's risk score, overdue-invoice metrics, Xero/QuickBooks, st
 
 ## Layout and Components
 
-- DM Sans is loaded centrally, Bricolage Grotesque is used for public display headings, and DM Mono
-  is used only for identifiers and prominent numeric values.
+- Inter is loaded centrally for all brand and interface typography. Mono is used only for identifiers.
 - Public pages use a top navigation and no Phase A user-dashboard sidebar.
 - Use registered cards and semantic status surfaces; Court Records is the intentional dark conversion card.
 - One dominant action per section.
@@ -35,7 +45,7 @@ Do not use the design's risk score, overdue-invoice metrics, Xero/QuickBooks, st
 ### Public Marketing Experience
 
 - Lead with company search rather than recovery automation.
-- Trust claims identify real sources without implying every source was checked for free.
+- Trust claims identify real sources while stating that free-tier search/preview queries Companies House only.
 - Primary CTA is search/select/report purchase; secondary links remain quiet.
 - Figma recovery-focused sections are omitted or rewritten for the active report product.
 
@@ -48,9 +58,11 @@ Do not use the design's risk score, overdue-invoice metrics, Xero/QuickBooks, st
 
 ### Buttons and Icons
 
-- Teal is the primary conversion action; navy is the authoritative/report action.
+- Emerald is the primary conversion action; navy is the authoritative/report action.
 - Secondary buttons use surface/border tokens; danger actions use critical tokens only when destructive.
-- Lucide icons use consistent 16-20px sizing, support text, and are hidden from assistive technology when decorative.
+- Buttons use a 12px radius, 12px vertical/20px horizontal padding, and Inter Semi Bold.
+- Lucide icons use rounded, two-pixel outline styling at 18px in controls and are hidden from
+  assistive technology when decorative.
 
 ---
 
@@ -71,7 +83,9 @@ Adverse previews stack every applicable factual banner. Clean previews use the a
 
 ## Reports and Admin
 
-Every browser report includes reference, timestamp, company identity, tier, source status, entitled sections, summary placeholder/approved output, disclaimer, issue link, and entitled PDF action.
+Every browser report includes reference, timestamp, company identity, tier, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and entitled PDF action.
+
+Every paid-tier report also includes a clearly labelled AI interpretation. It distinguishes facts from interpretation, identifies unavailable sources, and never presents legal/financial advice, a credit decision, or a risk score.
 
 Partial reports identify both successful and failed sources.
 
@@ -118,8 +132,8 @@ Never conclude `safe`, `unsafe`, `high risk`, `low risk`, `approved`, `rejected`
 
 ## Do Nots
 
-- No raw Tailwind colours or hardcoded colours. Restrained template-derived glow effects may use
-  semantic brand tokens; status surfaces remain flat and factual.
+- No raw Tailwind colours or hardcoded colours. The documented brand gradient may be used sparingly;
+  status surfaces remain flat and factual.
 - No hidden provider failures.
 - No colour-only status communication.
 - No raw provider/payment errors shown to users.

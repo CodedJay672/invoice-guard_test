@@ -4,7 +4,7 @@
 
 InvoiceGuard is a UK company-intelligence platform for SMEs, freelancers, agencies, and contractors who need to check a company before deciding whether to work with it.
 
-The active commercial build is Phase A: search for a UK company, review a free preview, purchase a Basic, Standard, or Premium report, and receive a frozen, timestamped report assembled from public and paid sources. Guest checkout is supported and Premium includes a branded PDF.
+The active commercial build is Phase A: search for a UK company, review a Companies House-only free preview, register or sign in, purchase a Basic, Standard, or Premium report, and receive a frozen, timestamped report assembled from public and paid sources. Every paid report includes an AI interpretation generated with `claude-haiku-4-5-20251001` and `max_tokens: 1500`; Premium also includes a branded PDF. Guest purchases are not supported.
 
 Invoice chasing and late-payment recovery belong to a future phase.
 
@@ -27,7 +27,6 @@ InvoiceGuard does not issue credit scores, approve or reject companies, or provi
 /api/companies/[companyNumber]/free-preview
                                        -> Next.js proxy to Express
 /reports/[reportReference]             -> Paid report delivery (planned)
-/reports/access/[token]                -> Guest report access (planned)
 /admin                                 -> Operations dashboard (planned)
 ```
 
@@ -59,42 +58,40 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 1. Visitor searches by registered name or Companies House number from the landing page or search page.
 2. Landing-page suggestions require selection of a Companies House entity; its company number becomes the canonical identity passed to `/search`.
 3. Anonymous visitors are limited to five searches per hashed IP per 24 hours.
-4. Free preview calls exactly Companies House, the configured insolvency/disqualified-officer source, and London Gazette.
-5. Registry Trust is never called before payment.
-6. The UI renders clean, adverse, or standard preview state plus Court Records prompt and report tiers.
+4. Free-tier search and preview call Companies House only. London Gazette, insolvency/disqualified-officer sources, Registry Trust, and AI are never called for free-tier requests.
+5. The UI presents Companies House facts, clearly labels all other checks as not yet checked, and shows the paid report tiers.
 
 ### Purchase and Generation
 
 1. Visitor selects Basic, Standard, or Premium.
-2. The server creates a one-off Stripe Checkout Session.
-3. Stripe webhook signature and event idempotency are verified.
-4. The webhook—not the redirect—creates one pending report and enqueues generation.
-5. The worker fetches fresh entitled provider data, stores snapshots and statuses, and assembles frozen report data.
-6. Companies House failure enters the automatic refund path; other failures produce a visible partial report.
+2. A signed-out visitor must register or sign in and return to the selected company/tier before checkout.
+3. The server requires an authenticated Clerk user with a verified primary email, then creates a one-off Stripe Checkout Session.
+4. Stripe webhook signature and event idempotency are verified.
+5. The webhook—not the redirect—creates one pending report owned by that Clerk user and enqueues generation.
+6. The worker fetches fresh entitled provider data, stores snapshots and statuses, generates the bounded AI interpretation, and assembles frozen report data.
+7. Companies House failure enters the automatic refund path; other failures produce a visible partial report.
 
 ### Delivery
 
 - Every report shows reference, timestamp, company identity, tier, source statuses, disclaimer, and issue link.
-- Guest links are emailed, stored as hashes, and expire after 30 days.
-- Guest report data is retained for 12 months.
+- Reports are accessible only to their authenticated owner (or an authorized admin).
+- Postmark may send report-ready notifications, but email links must resolve through authenticated owner access.
 - Premium includes PDF; Basic does not.
-- A later account may claim guest reports only after matching-email verification.
 
 ---
 
 ## Primary Actors
 
-### Public Visitor and Guest Buyer
+### Public Visitor
 
 - Searches without an account within anonymous limits.
 - Selects the correct Companies House entity before purchase.
-- Sees only free-source results before payment.
-- Can purchase with an email address and receives a secure report link.
+- Sees only Companies House results before payment.
+- Must register or sign in before checkout and cannot purchase as a guest.
 
 ### Authenticated Business User
 
 - Uses Clerk identity for owned reports.
-- May claim earlier guest reports only after the matching email is verified.
 - Account history, saved companies, and notes remain Phase B features.
 
 ### Admin
@@ -108,7 +105,7 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 - Companies House supplies canonical identity and core company records.
 - London Gazette supplies strike-off and winding-up notices.
-- The configured insolvency/disqualified-officer route supplies free-source flags.
+- The configured insolvency/disqualified-officer route supplies paid-report flags when entitled.
 - Registry Trust supplies paid CCJ data only after payment.
 - Fair Payment Code supplies Premium-only status when implemented.
 
@@ -118,18 +115,18 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 | Product | Price | Scope |
 | --- | ---: | --- |
-| Free Preview | GBP 0 | Company identity, status, incorporation, industry, partial address, active director count, and free-source adverse flags. |
-| Basic | GBP 7.99 | Preview plus CCJ count/court/year, directors, and registered-address history. No PDF. |
-| Standard | GBP 14.99 | Basic plus CCJ amounts/satisfaction, recent filing compliance, and charges. |
-| Premium | GBP 27.00 | Standard plus deeper director/insolvency/related-company checks, Fair Payment Code, Confidence Indicator, timestamped reference, and PDF. |
+| Free Preview | GBP 0 | Companies House company identity, status, incorporation, industry, partial address, and active director count. No other provider or AI call. |
+| Basic | GBP 7.99 | Preview plus CCJ count/court/year, directors, registered-address history, and AI interpretation. No PDF. |
+| Standard | GBP 14.99 | Basic plus CCJ amounts/satisfaction, recent filing compliance, charges, and AI interpretation. |
+| Premium | GBP 27.00 | Standard plus deeper director/insolvency/related-company checks, Fair Payment Code, Confidence Indicator, AI interpretation, timestamped reference, and PDF. |
 
-`ENABLE_FLAG_SUMMARY` defaults to `false` everywhere until approved templates receive solicitor sign-off.
+The AI interpretation is mandatory Phase A scope for paid reports. It uses `claude-haiku-4-5-20251001` with `max_tokens: 1500`, interprets only frozen factual report data, and must remain clearly labelled as an interpretation rather than legal, credit, or financial advice. `ENABLE_FLAG_SUMMARY` continues to govern the separate legacy approved-template flag summary and defaults to `false`.
 
 ### Free Preview Presentation
 
 Always show registered name, company number, status, incorporation date and age, registered town/county, active-director count, Court Records prompt, and paid tiers.
 
-Adverse banners stack when insolvency, disqualification, Gazette strike-off, or Gazette winding-up flags are true. The clean path requires all four flags false and active company status. Provider failure must not be represented as a clean check.
+The free preview makes no adverse or clean conclusion from Gazette, insolvency, disqualification, court, or other paid sources because they are not queried. Those sources are shown as not yet checked. Companies House failure must not be represented as a clean check.
 
 ### Paid Data Freshness and Failure
 
@@ -151,7 +148,8 @@ In scope:
 - One-off report products and Stripe payment.
 - Paid-only Registry Trust boundary.
 - BullMQ report generation, provider snapshots, and partial reports.
-- Secure guest delivery, Postmark email, and Premium PDF.
+- Authenticated owner-only delivery, Postmark notifications, and Premium PDF.
+- Paid-report AI interpretation using the fixed Claude model and output limit.
 - Mandatory disclaimer, issue reporting, approved copy templates, and Fair Payment Code refresh.
 - Clerk-protected admin operations, refunds, conversion analytics, and maintenance jobs.
 
@@ -160,7 +158,7 @@ Out of scope:
 - User dashboard, saved companies, notes, watchlists, and subscriptions.
 - Payment-signal collection.
 - Invoice upload, OCR, chasing, accounting integrations, interest calculators, demand letters, response portals, or SMS.
-- AI-generated legal/report copy, credit scores, risk scores, or colour-band risk ratings.
+- AI-generated legal or credit advice, risk scores, colour-band risk ratings, or conclusions beyond the bounded paid-report interpretation.
 
 ---
 
@@ -188,8 +186,6 @@ The Figma design preserves future product direction: dashboard, invoice ingestio
 - Redis holds ephemeral rate-limit and queue state, not durable report truth.
 - PDFs live in object storage; PostgreSQL stores references only.
 - Search IP identity is hashed and removed/anonymised after 90 days.
-- Guest access tokens are stored hashed and expire after 30 days.
-- Guest report data remains for 12 months.
 - Registered-user reports remain until deletion is requested, subject to payment/audit retention duties.
 - App-level deletion does not erase required Stripe or admin-audit records.
 
@@ -207,7 +203,8 @@ Phase A measures searches, selected companies, checkout starts, paid/delivered r
 - Registry Trust is technically unreachable from free preview.
 - A payment creates exactly one report through the webhook path.
 - Paid reports use fresh entitled data and expose provider failures.
-- Guest access, admin authorization, refunds, and report immutability are secure and tested.
+- Owner access, admin authorization, refunds, and report immutability are secure and tested.
+- Every paid tier generates its AI interpretation in Phase A with the exact configured model and token limit; AI failure is visible and does not invent or conceal source data.
 - Every report and PDF contains approved compliance content.
 - Lucky provides the mandatory disclaimer and confirms ICO registration before production launch.
 - Admin alerts expose provider, webhook, generation, email, and stuck-report failures.

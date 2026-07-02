@@ -12,12 +12,13 @@ Update after every completed feature. Record actual state only.
 
 **Last completed:** 14B — Logic/Data: Generation Queue (A16)
 
-**Next:** 15A — UI/Mock: Paid Source and Tier Sections
+**Next:** AUTH-C — Registration-Before-Payment Retrofit, then 15A — UI/Mock: Paid Source, Tier, and AI Interpretation Sections
 
-**Status:** 14B complete; 15A is unblocked
+**Status:** 14B complete; new client decisions require AUTH-C before continuing the paid-report path
 
-**Latest refinement:** Lucky-approved public design templates applied to landing and search pages on
-2026-07-01; existing search/free-preview behavior preserved and all risk-scoring UI excluded.
+**Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
+is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
+assets are now authoritative implementation references.
 
 ### Current Unit Scope
 
@@ -55,12 +56,13 @@ until 15B supplies the paid-provider generation handler.
 - [x] AUTH-B Logic/Data: Clerk Authentication Foundation
 - [x] 14A UI/Mock: Report Generation Lifecycle — `UI/Mock Verified` 2026-06-30
 - [x] 14B Logic/Data: Generation Queue (A16)
+- [ ] AUTH-C Client-Decision Retrofit: Registration Before Payment
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
 - [ ] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
 - [ ] 16A UI/Mock: Browser Reports
 - [ ] 16B Logic/Data: Secure Report Delivery (A20)
-- [ ] 17A UI/Mock: Guest Access and Email Outcomes
-- [ ] 17B Logic/Data: Guest Tokens and Postmark (A21-A22)
+- [ ] 17A UI/Mock: Authenticated Report Notification Outcomes
+- [ ] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
 - [ ] 18A UI/Mock: Premium PDF and Compliance Blocks
 - [ ] 18B Logic/Data: PDF, Storage, and Templates (A23-A25)
 - [ ] 19A UI/Mock: Fair Payment Code States
@@ -85,15 +87,15 @@ until 15B supplies the paid-provider generation handler.
 - Search/profile/free-preview API, atomic Redis/in-memory rate limiting, signed proxy identity, and HMAC-hashed search logs.
 - Server-authoritative one-off report products and working clean/adverse/standard/source-failure preview UI.
 - Phase A landing page with debounced Companies House suggestions and canonical company selection into `/search`.
-- Lucky-approved premium public visual system: deep ink/teal semantic palette, DM Sans/Bricolage
-  Grotesque/DM Mono typography, template-derived landing composition, and matching search results.
+- Brand Asset Guide v1.0 visual foundation: InvoiceGuard navy/emerald palette, Inter typography,
+  12px controls, rounded outline icons, and sparse brand-gradient usage.
 - Live Companies House adapter support for alphabetical search, registered-office-address, profile, officers, filing history, charges, and insolvency endpoints.
 - Development-only deterministic fixtures for all Feature 12 states.
 - Two-route checkout/status UI with guest and authenticated fixtures, strict selection/email
   validation, bounded confirmation checks, cancellation retry, and duplicate-refresh messaging.
-- Guest-first Stripe-hosted Checkout with trusted server pricing, dynamic payment-method support,
+- Existing guest-first Stripe-hosted Checkout with trusted server pricing, dynamic payment-method support,
   raw-body signature verification, durable event/session idempotency, paid amount/currency snapshots,
-  and deterministic report-generation job IDs.
+  and deterministic report-generation job IDs. Guest entry is now superseded and must be removed in AUTH-C.
 - Development/test-only auth previews for sign-in, sign-up, callback, error, signed-in, sign-out,
   unverified-email, owner, non-owner, and guest states; production omits mock auth navigation and
   returns not found for preview routes.
@@ -110,6 +112,9 @@ until 15B supplies the paid-provider generation handler.
 
 - Companies House number is canonical identity.
 - Phase A is search and one-off paid reports only.
+- Free-tier search and preview query Companies House only; no other provider or AI dependency is permitted.
+- Users must register/sign in with a verified primary email before Stripe Checkout; no guest purchases or guest access tokens.
+- Every paid tier receives an AI interpretation in Phase A using exactly `claude-haiku-4-5-20251001` with `max_tokens: 1500`.
 - Figma is complete-system reference; only Phase A-relevant patterns are active.
 - Every remaining feature is split into a verified UI/Mock unit and a later Logic/Data unit.
 - A Logic/Data unit cannot start until its paired UI/Mock unit is recorded as `UI/Mock Verified` with
@@ -117,25 +122,25 @@ until 15B supplies the paid-provider generation handler.
 - Registry Trust runs only after webhook-confirmed payment.
 - Webhooks create reports; redirects do not.
 - PostgreSQL/Drizzle, BullMQ/Redis, Clerk, Stripe, and Postmark are selected.
-- `ENABLE_FLAG_SUMMARY=false` everywhere by default.
-- No AI-generated legal/report copy or risk scores.
+- `ENABLE_FLAG_SUMMARY=false` remains the default for the separate legacy template summary.
+- AI interpretation is bounded to frozen factual report data and cannot provide legal/financial advice, credit decisions, risk scores, or invented conclusions.
 - AUTH-A and AUTH-B are hard prerequisites for 14A; the earlier tracker ordering was stale.
-- Phase A account navigation contains sign-in/sign-out only and does not open a dashboard.
-- Local templates under `apps/web/design-template/` are the visual source of truth for covered public
-  routes. Context phase/product constraints still govern functionality and prohibit risk scoring.
+- Phase A account navigation contains sign-in/sign-out only and does not open a dashboard; authentication is nevertheless mandatory before payment.
+- `context/designs/brand_asset.png` is the canonical brand source. Its risk visuals do not override
+  the product prohibition on risk scoring.
 
 ### Architecture Snapshot
 
 ```text
 Browser -> Next proxy -> Express company routes -> CompanyService
-        -> Companies House + Gazette + insolvency/disqualified officers
-        -> normalized preview payload -> clean/adverse/standard/source-failure UI
+        -> Companies House only for free tier
+        -> normalized factual preview -> other sources shown as not yet checked
 
-Stripe webhook -> idempotent pending report -> BullMQ generation lifecycle
-               -> 15B entitled providers/snapshots -> frozen delivery
+Clerk owner -> Stripe webhook -> idempotent pending report -> BullMQ generation lifecycle
+            -> 15B entitled providers/snapshots -> Claude interpretation -> frozen delivery
 ```
 
-Free preview is architecturally isolated from Registry Trust. Ready reports are frozen artifacts. Redis is ephemeral infrastructure; PostgreSQL is durable truth.
+Free preview is architecturally isolated from every source except Companies House and from AI. Ready reports, including their interpretation and generation metadata, are frozen artifacts. Redis is ephemeral infrastructure; PostgreSQL is durable truth.
 
 ---
 
@@ -150,6 +155,7 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 - Final mandatory disclaimer text and approved issue-report address.
 - Registry Trust production contract/credentials and exact failure/refund operations.
 - PDF rendering and object-storage provider selection.
+- Anthropic SDK/credential setup and current official API verification for the fixed model.
 - Production hosting choices for API/worker/PostgreSQL/Redis.
 
 ---
@@ -157,7 +163,8 @@ Free preview is architecturally isolated from Registry Trust. Ready reports are 
 ## Known Debt
 
 - Paid-provider generation handler and production worker composition remain 15B work.
-- Live-shaped insolvency endpoint requires production verification.
+- Live-shaped insolvency endpoint requires production verification for paid reports; it is no longer a free-tier dependency.
+- Existing guest checkout/access fixtures, validation, and tests require removal or conversion in AUTH-C.
 
 ---
 
@@ -236,16 +243,17 @@ failure; focused worker, config, API, and Next.js production builds all passed a
 | Companies House normalization             | Covered                                                                |
 | Gazette normalization                     | Covered                                                                |
 | Insolvency/disqualification normalization | Covered                                                                |
-| Search/free-preview API                   | Covered                                                                |
-| Registry Trust free-preview isolation     | Covered by current dependency tests; preserve                          |
+| Search/free-preview API                   | Existing coverage; update to assert Companies House-only composition   |
+| All non-Companies-House free-tier isolation | Requires expanded regression coverage in AUTH-C/current refinement   |
 | Stripe/webhook/pending-report lifecycle   | Covered for checkout, paid/unpaid events, replay, queueing, and status |
 | Worker generation lifecycle               | Covered for claim, retry, terminal convergence, failure, and delay     |
 | Paid provider/partial/refund outcomes     | Handler contract ready; provider implementation remains 15B            |
-| Guest/email/PDF/admin/maintenance         | Not implemented                                                        |
+| AI interpretation                         | Required in Phase A; planned in 15A/15B                                |
+| Owner notification/PDF/admin/maintenance  | Not implemented                                                        |
 
 ### Environment Variables in Scope
 
-Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, `REPORT_GENERATION_STUCK_AFTER_MS`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Secrets remain server-only.
+Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, `REPORT_GENERATION_STUCK_AFTER_MS`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Phase A 15B must add a server-only Anthropic credential and lock interpretation to model `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Secrets remain server-only.
 
 ---
 
@@ -256,10 +264,13 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
 - Preserve A0-A11 behavior during Feature 12 refactor.
 - Feature 12A passed its physical gate before report products were wired in 12B.
 - The Phase A landing page now owns first-entry company discovery; the original full search/free-preview experience lives at `/search`.
-- 2026-07-01: `/` and `/search` were visually rewritten from the Lucky-approved local templates.
-  Existing company autocomplete, canonical selection, free-preview states, tiers, and checkout
-  navigation were retained. Template risk scores, risk bands, subscriptions, monitoring, recovery,
-  testimonials, and unsupported performance claims were not implemented.
+- 2026-07-01: Brand Asset Guide v1.0 replaced the temporary public design source as the canonical
+  brand reference. The obsolete source was removed. Risk-score examples in the guide remain
+  explicitly outside approved product behavior.
+- 2026-07-02: registered `context/designs/landing_page.html`, `landing_page.png`,
+  `free-preview-suggestions.png`, `paid-search-result.png`, and `payment-page.png`; registered
+  light/dark-surface logo assets under `apps/web/public/`; recorded Companies House-only free tier,
+  mandatory pre-payment registration, and paid-report Phase A AI interpretation.
 - Landing suggestions carry the selected Companies House number to `/search`; display-name query text is contextual only and never canonical identity.
 - Update this tracker and `ui-registry.md` after every feature.
 - V1 context is reference material for depth; the canonical nine files remain the only active source of truth.

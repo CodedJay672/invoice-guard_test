@@ -17,6 +17,7 @@
 | UI | Tailwind CSS 4 + shadcn/ui/Radix | Foundation implemented |
 | Logging/validation | Pino + Zod | Implemented |
 | PDF/storage | To be selected | Planned |
+| AI report interpreter | Anthropic `claude-haiku-4-5-20251001`, `max_tokens: 1500` | Phase A planned |
 
 ---
 
@@ -25,8 +26,10 @@
 ```text
 apps/
   web/          # Next pages, UI, thin same-origin API proxies
-    /           # landing page with search bar in hero section
-    /search       # selected-company preview and report-tier selection (`companyNumber` query)
+    (landing)
+      /           # landing page with search bar in hero section
+      /search     # selected-company preview and report-tier selection (`companyNumber` query)
+      /pricing    # Pricing page
   api/          # Express routes, services, repositories, composition
   worker/       # BullMQ processors and schedulers
 packages/
@@ -89,20 +92,29 @@ Landing autocomplete -> Next search proxy -> Companies House matches
 ```
 
 ```text
-Tier selection -> Stripe Checkout -> signed webhook -> stripe_events
+Tier selection -> Clerk registration/sign-in gate -> Stripe Checkout -> signed webhook -> stripe_events
                -> purchased_reports(pending) -> report-generation-queue
 ```
 
 ```text
 Report job -> generating -> entitled fresh providers
            -> provider_usage_logs + company_data_snapshots
+           -> frozen factual report data -> Claude interpretation (max 1500 tokens)
            -> frozen report_data -> ready | partial | refund_required
            -> PDF/email/alert jobs
 ```
 
 ### Free Preview Isolation
 
-The free-preview dependency graph receives only Companies House, Gazette, and insolvency/disqualified-officer clients. Registry Trust isolation is architectural, not a conditional inside one provider function.
+The free-preview dependency graph receives only Companies House. Gazette, insolvency/disqualified-officer client and Registry Trust isolation is architectural, not a conditional inside one provider function.
+
+### Paid AI Interpretation
+
+- AI interpretation is Phase A report-generation work, not a later enhancement.
+- Only authenticated, webhook-confirmed paid reports may invoke it.
+- The server/worker uses the exact model `claude-haiku-4-5-20251001` with `max_tokens: 1500`; neither value is client-controlled.
+- Input is limited to the frozen, tier-entitled factual report payload and explicit source statuses. Prompting must prohibit invented facts, legal/financial advice, credit decisions, risk scores, and conclusions from unavailable sources.
+- Store the interpretation with model, generation timestamp, prompt/template version, and status as part of the frozen report artifact. Retries are idempotent and failures are visible.
 
 ### Webhook Flow
 
@@ -142,7 +154,7 @@ Current adapters: Companies House, London Gazette, and insolvency/disqualified o
 - `company_data_snapshots`: timestamped provider data/status by source context and tier.
 - `search_logs`: search/conversion metadata and anonymisation state.
 - `report_products`: tier, price in pence, PDF flag, and entitlements.
-- `purchased_reports`: payment/report lifecycle, frozen JSON, provider statuses, PDF URL, and guest access hash.
+- `purchased_reports`: authenticated owner, payment/report lifecycle, frozen JSON including AI interpretation metadata/status, provider statuses, and PDF URL.
 - `stripe_events`: durable webhook idempotency.
 - `provider_usage_logs`: paid-provider calls and cost modelling.
 - `admin_audit_logs`: sensitive admin actions.
@@ -165,7 +177,7 @@ Do not add future-phase tables before their gate opens.
 | --- | --- |
 | `report-generation-queue` | `{ reportId }` paid generation |
 | `pdf-generation-queue` | `{ reportId }` PDF generation |
-| `email-queue` | `{ reportId }` report email |
+| `email-queue` | `{ reportId }` authenticated-owner report-ready notification |
 | `provider-alert-queue` | operational alerts |
 | `maintenance-queue` | expiry, anonymisation, stuck reports, Fair Payment Code |
 
@@ -188,7 +200,7 @@ Defaults are three attempts with exponential backoff. Side effects still require
 - API and worker share validated configuration but scale independently.
 - Health checks cover runtime readiness; job/provider health is monitored separately.
 
-Required observability includes structured logs, provider latency/failure, queue depth/failures, webhook failures, stuck reports, email failures, refunds, and conversion metrics. Logs carry correlation/report/provider IDs without secrets or raw guest tokens.
+Required observability includes structured logs, provider latency/failure, queue depth/failures, webhook failures, stuck reports, email failures, AI interpretation failures, refunds, and conversion metrics. Logs carry correlation/report/provider IDs without secrets, report contents, or personal data.
 
 ---
 
@@ -211,13 +223,13 @@ Required observability includes structured logs, provider latency/failure, queue
 - Frontend redirects never create purchased reports.
 - Ready report data is immutable; rechecks create new rows.
 - Paid fetches attempt fresh entitled data and reject cache older than 24 hours.
-- Guest tokens are random, expiring, and stored hashed.
+- Checkout and report delivery require an authenticated Clerk owner with a verified primary email; no guest purchase/access path exists.
 - Admin authorization is enforced server-side with Clerk and `ADMIN_EMAIL`.
 - Provider failures remain visible.
 - Search IP information is anonymised/deleted after 90 days.
 - Mandatory disclaimer is present on every paid report and PDF.
-- `ENABLE_FLAG_SUMMARY` defaults to `false`; only approved templates may run.
-- No AI-generated legal, credit, or report analysis.
+- Paid AI interpretation uses only `claude-haiku-4-5-20251001` with `max_tokens: 1500` and is completed in Phase A.
+- AI output is interpretive assistance, never legal/financial advice, a credit decision, a risk score, or a substitute for source facts. `ENABLE_FLAG_SUMMARY` remains a separate disabled-by-default template flag.
 - The complete-system Figma design never overrides phase gates.
 - Secrets are server-only validated environment values and never logged or exposed through `NEXT_PUBLIC_*`.
 - Rate limiting, input validation, webhook verification, authorization, token hashing, secure headers, and least-privilege provider credentials are mandatory controls.

@@ -6,7 +6,7 @@ type PublicSearchShellProps = {
 
 export function PublicSearchShell({ children }: PublicSearchShellProps) {
   return (
-    <>
+    <div className="min-h-svh bg-page">
       <section className="relative overflow-hidden bg-brand-navy text-content-inverse">
         <div className="pointer-events-none absolute -top-40 right-0 size-96 rounded-full bg-brand-teal/15 blur-3xl" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-4 px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -39,7 +39,7 @@ export function PublicSearchShell({ children }: PublicSearchShellProps) {
           <p>It does not provide credit, financial, or legal advice.</p>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
 

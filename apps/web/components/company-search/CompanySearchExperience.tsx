@@ -146,8 +146,8 @@ export function CompanySearchExperience({
   const tierCards = preview?.tierCards ?? fallbackTierCards;
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
-      <section aria-label="Company search and free preview" className="flex min-w-0 flex-col gap-7">
+    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
+      <section aria-label="Company search and free preview" className="flex min-w-0 flex-col gap-6">
         <SearchPanel
           query={query}
           searchStatus={searchStatus}
@@ -178,7 +178,7 @@ export function CompanySearchExperience({
 
       <aside
         aria-label="Report options"
-        className="flex min-w-0 flex-col gap-5 lg:sticky lg:top-24 lg:self-start"
+        className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24 lg:self-start"
       >
         {tierCards.map((tier) => (
           <TierCard

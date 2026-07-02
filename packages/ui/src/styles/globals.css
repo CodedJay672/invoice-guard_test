@@ -48,33 +48,35 @@
   --color-ring: var(--ig-focus);
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-lg: 12px;
 }
 
 :root {
-  --ig-page: #f6f8fb;
+  --ig-page: #f8fafc;
   --ig-surface: #ffffff;
-  --ig-surface-subtle: #eef2f8;
-  --ig-surface-strong: #122441;
-  --ig-brand-navy: #07101f;
-  --ig-brand-navy-hover: #1b3357;
-  --ig-brand-teal: #0ab5a8;
-  --ig-brand-teal-hover: #078c82;
-  --ig-content: #07101f;
-  --ig-content-muted: #5a6b82;
-  --ig-content-subtle: #8595ab;
+  --ig-surface-subtle: #e2e8f0;
+  --ig-surface-strong: #334155;
+  --ig-brand-navy: #001b4d;
+  --ig-brand-navy-hover: #002867;
+  --ig-brand-teal: #12d6a0;
+  --ig-brand-teal-hover: #0fb88a;
+  --ig-content: #001b4d;
+  --ig-content-muted: #334155;
+  --ig-content-subtle: #64748b;
   --ig-content-inverse: #ffffff;
-  --ig-line: #e2e8f1;
-  --ig-positive: #0b9e6a;
-  --ig-positive-surface: #e3f7ee;
-  --ig-positive-content: #087a52;
-  --ig-caution: #c77705;
-  --ig-caution-surface: #fff4dc;
-  --ig-caution-content: #9e5e03;
-  --ig-critical: #d92d20;
-  --ig-critical-surface: #fdecec;
-  --ig-critical-content: #b22117;
-  --ig-focus: #0ab5a8;
+  --ig-line: #e2e8f0;
+  --ig-positive: #10b981;
+  --ig-positive-surface: #ecfdf5;
+  --ig-positive-content: #047857;
+  --ig-caution: #f59e0b;
+  --ig-caution-surface: #fffbeb;
+  --ig-caution-content: #b45309;
+  --ig-critical: #ef4444;
+  --ig-critical-surface: #fef2f2;
+  --ig-critical-content: #b91c1c;
+  --ig-focus: #12d6a0;
+  --ig-dark-background: #020817;
+  --ig-monitoring: #8b5cf6;
 }
 
 @layer base {

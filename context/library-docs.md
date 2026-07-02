@@ -511,7 +511,7 @@ const CompanyInsolvency = {
 ## London Gazette
 
 - Normalize strike-off and winding-up flags.
-- Free preview may call it.
+- Paid reports may call it when entitled. Free-tier search/preview must not call it.
 - Failure is source-status failure, never a false clean paid result.
 
 Live endpoint behavior, rate limits, response shape, attribution, and terms require production verification.
@@ -519,7 +519,7 @@ Live endpoint behavior, rate limits, response shape, attribution, and terms requ
 ## Insolvency and Disqualified Officers
 
 - Normalize insolvency and director-disqualification flags.
-- Free preview may call it.
+- Paid reports may call it when entitled. Free-tier search/preview must not call it.
 - Current live-shaped endpoint must be verified before production.
 
 ## Registry Trust
@@ -530,6 +530,15 @@ Live endpoint behavior, rate limits, response shape, attribution, and terms requ
 - Load current official integration docs before implementation.
 
 Every call records operation, company number, report, estimated cost, status, and timestamp. Basic/Standard failure supports a recovery recheck; Premium failure is escalated for refund/recheck decision.
+
+## Anthropic Paid-Report Interpretation
+
+- This integration is mandatory Phase A work for every paid report tier.
+- Use exactly `claude-haiku-4-5-20251001` and set `max_tokens` to `1500` on every interpretation request.
+- Invoke Anthropic only in the paid report worker after webhook-confirmed payment, authenticated ownership, entitled source collection, and frozen factual assembly. Free-tier search/preview must have no Anthropic dependency.
+- The model receives only tier-entitled facts and explicit source statuses. Prompts require factual attribution, uncertainty for missing sources, and no invented data, legal/financial advice, credit decisions, risk scores, or safety verdicts.
+- Persist model ID, prompt/template version, generation timestamp, status, and output with the immutable report artifact. Use explicit timeout, bounded retry, idempotency, and visible failure behavior.
+- Before implementation, install/load an Anthropic skill if available and read the current official SDK/API documentation; do not infer SDK syntax from memory.
 
 ---
 
@@ -550,10 +559,10 @@ Checkout metadata is treated as an identifier carrier, not authority for price/e
 
 Configuration exists; package/feature are not implemented.
 
-- Public search and guest purchase do not require accounts.
+- Public Companies House search/preview does not require an account; purchase and report access do.
 - Persist `clerk_user_id`.
 - Admin requires verified email exactly matching `ADMIN_EMAIL`.
-- Claim guest reports only after matching-email verification.
+- Require a verified primary email before creating Checkout. No guest purchase, guest token, or guest-claim flow exists.
 
 Client auth state may improve navigation but cannot authorize admin/report access. Server checks use authenticated identity and verified email claims.
 
@@ -561,12 +570,12 @@ Client auth state may improve navigation but cannot authorize admin/report acces
 
 Selected/configured but not implemented.
 
-- Send guest links, report-ready notices, and admin alerts through jobs.
+- Send authenticated-owner report-ready notices and admin alerts through jobs.
 - Jobs receive report IDs and load trusted data.
-- Never log guest tokens.
+- Notification links resolve through authenticated owner authorization; never create bearer guest tokens.
 - Use approved templates and expose delivery failure operationally.
 
-Guest/report-ready/admin-alert messages are distinct templates. Email jobs load report/access state at execution time, avoid placing sensitive payloads in queues, and record terminal delivery failure.
+Report-ready and admin-alert messages are distinct templates. Email jobs load report/access state at execution time, avoid placing sensitive payloads in queues, and record terminal delivery failure.
 
 ## PDF and Object Storage
 
@@ -583,7 +592,7 @@ Evaluate server-runtime compatibility, deterministic pagination, font embedding,
 
 ## Environment Configuration
 
-Existing config covers app URL/API port, database, Redis, Clerk, Stripe, Postmark, admin emails, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Add variables only through the validated config package and document which runtime requires them.
+Existing config covers app URL/API port, database, Redis, Clerk, Stripe, Postmark, admin emails, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Phase A AI implementation must add validated server-only Anthropic credentials plus fixed model/token configuration without exposing them through `NEXT_PUBLIC_*`. Add variables only through the validated config package and document which runtime requires them.
 
 Mock provider mode is the local/test default. Production activation requires credentials and explicit live-mode verification; absence of optional future credentials must not block unrelated Phase A development.
 

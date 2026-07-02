@@ -66,10 +66,10 @@ A `B` unit is complete only when:
 - [x] A7 Anonymous rate limit and search logs
 - [x] A8 London Gazette integration
 - [x] A9 Insolvency/disqualified-officer integration
-- [x] A10 Free-preview API with three approved sources
-- [x] A11 Working clean/adverse free-preview UI
+- [x] A10 Historical free-preview API with three sources; superseded by the Companies House-only client decision and due for narrowing
+- [x] A11 Historical clean/adverse free-preview UI; non-Companies-House conclusions are due for removal
 
-Existing A0-A11 behavior is preserved. The current public UI still requires token, component, and Figma-alignment work in 12A.
+Existing A0-A11 implementation remains historical, but free-tier orchestration must be narrowed to Companies House only under the current client decision. The current public UI still requires token, component, and design-reference alignment work.
 
 ---
 
@@ -81,12 +81,12 @@ Build with mock fixtures:
 
 - Phase A navigation, wordmark, search hero, source-trust strip, factual company snapshot, CTA, and footer.
 - Search idle, typing, loading, results, no-results, invalid-query, rate-limited, and provider-error states.
-- Preview loading, clean, adverse with multiple banners, standard/non-active, and source-failed states.
+- Preview loading, Companies House factual result, standard/non-active, Companies House source-failed, and explicit not-yet-checked states for every non-free source.
 - Court Records unchecked/locked card.
 - Basic, Standard, and Premium cards with prices, entitlements, PDF availability, disabled/ready CTA states.
 - Responsive mobile, tablet, and desktop layouts.
 
-Verification: Figma comparison for Phase A-relevant shell patterns plus physical browser testing of every state. Do not include the Figma risk score or recovery features.
+Verification: compare the landing page against `context/designs/landing_page.html` and `landing_page.png`, and relevant flows against `free-preview-suggestions.png`, `paid-search-result.png`, and `payment-page.png`. Do not include risk scores or recovery features.
 
 ### 12B — Logic/Data: Search and Report Products
 
@@ -97,7 +97,7 @@ Depends on: **12A — UI/Mock Verified**.
 - Consolidate canonical design tokens and remove raw colour classes.
 - Seed/read report products at 799, 1499, and 2700 pence.
 - Validate trusted entitlements and PDF flags server-side.
-- Preserve tests proving free preview cannot call Registry Trust.
+- Preserve tests proving free-tier search/preview can call only Companies House and cannot call Gazette, insolvency/disqualification, Registry Trust, Fair Payment Code, or AI.
 
 #### Landing/Search Refinement
 
@@ -113,7 +113,7 @@ Depends on: **12A — UI/Mock Verified**.
 ### 13A — UI/Mock: Checkout and Payment Status
 
 - Checkout summary with canonical company identity, selected tier, exact price, and entitlements.
-- Guest email and authenticated states.
+- Signed-out registration/sign-in gate plus authenticated verified-email state. No guest checkout state.
 - Invalid/inactive product, validation failure, redirecting, cancelled, failed, paid/pending, duplicate-refresh, and delayed-confirmation states.
 - Clear language that payment confirmation comes from Stripe, not the redirect.
 
@@ -128,7 +128,7 @@ Depends on: **13A — UI/Mock Verified**.
 - Persist `stripe_events` for durable idempotency.
 - Create exactly one pending purchased report from the webhook.
 - Enqueue exactly one generation job.
-- Test invalid metadata, signature failure, duplicate/replayed events, guest/auth identity, and atomic effects.
+- Test invalid metadata, signature failure, duplicate/replayed events, signed-out/unverified rejection, authenticated ownership, and atomic effects.
 
 ---
 
@@ -142,10 +142,10 @@ Complete `AUTH-A` and `AUTH-B` before starting 14A.
 
 - Signed-out, sign-in, sign-up, callback/loading, authentication-error, signed-in, sign-out, and
   unverified-email states.
-- Guest checkout remains available; signed-in checkout shows the verified account email as read-only.
+- Signed-out buyers are sent through registration/sign-in before checkout; signed-in checkout shows the verified account email as read-only.
 - Navigation/account controls preserve the existing public shell and return users to their intended
   Phase A route after authentication.
-- Representative owner, non-owner, and guest report-access presentation states for later secure
+- Representative owner and non-owner report-access presentation states for later secure
   delivery wiring.
 - No account dashboard, report-history page, saved companies, notes, watchlists, or subscriptions.
 
@@ -160,15 +160,26 @@ Depends on: **AUTH-A — UI/Mock Verified** and **13B — Logic/Data complete**.
   Next.js App Router guidance.
 - Add the root Clerk provider, auth routes, request protection/identity middleware, and shared
   server-side helpers for authenticated user ID plus verified primary email.
-- Keep public search, preview, guest checkout, and guest report access usable without authentication.
+- Keep public Companies House search and preview usable without authentication; require authentication for checkout and report access.
 - Pass authenticated identity to Express through a signed trusted web-to-API boundary; never trust a
   browser-supplied Clerk user ID or email.
-- For signed-in checkout, persist `clerk_user_id` on the pending report and use the verified account
-  email; preserve the existing guest-email path for signed-out buyers.
+- Persist `clerk_user_id` on every pending report and use the verified account email. Reject signed-out and unverified-email checkout attempts server-side.
 - Expose reusable owner/admin authorization primitives for 16B and 20B without implementing those
   later units early.
-- Test sign-in callback safety, unverified email handling, sign-out, guest regression, forged identity
+- Test sign-in callback safety, unverified email handling, sign-out, no-guest-purchase enforcement, forged identity
   rejection, signed-in report ownership, and secret/client-bundle boundaries.
+
+### AUTH-C — Client-Decision Retrofit: Registration Before Payment
+
+Depends on: **AUTH-B — Logic/Data complete**.
+
+- Remove guest email entry and every guest Checkout creation path from UI, validation, API, webhook ownership, fixtures, and tests.
+- Preserve selected company, tier, and a safe return path through registration/sign-in.
+- Require an authenticated Clerk user with a verified primary email before Stripe Checkout is created.
+- Reject forged, missing, and unverified principals at the server boundary; every purchased report has a Clerk owner.
+- Remove guest-token/access/claim planning and migrate or explicitly handle any pre-launch guest-shaped development data.
+
+Verification: signed-out CTA redirect, safe return, verified-email checkout, server-side rejection, and no-guest regression coverage. This retrofit is required before further Phase A payment/report delivery work is considered production-ready.
 
 ---
 
@@ -197,6 +208,7 @@ Depends on: **14A — UI/Mock Verified**.
 - Complete and partial Basic, Standard, and Premium section fixtures.
 - Companies House foundational failure/refund state.
 - Registry Trust recheck and Premium escalation states.
+- AI interpretation loading, ready, unavailable/failed, partial-source, and safety-fallback states for every paid tier. The UI clearly separates source facts from interpretation.
 
 Verification: automated tier/state matrix coverage and factual-language review; user manual QA is non-blocking.
 
@@ -208,6 +220,8 @@ Depends on: **15A — UI/Mock Verified**.
 - Orchestrate sources from trusted tier entitlements.
 - Enforce fresh-data/cache-age rules.
 - Store snapshots, statuses, timestamps, reference, and frozen report JSON.
+- Generate the paid-report interpretation in the worker with exactly `claude-haiku-4-5-20251001` and `max_tokens: 1500` after factual assembly. Persist output plus model, prompt/template version, timestamp, and status in the frozen report artifact.
+- Enforce paid/authenticated-only invocation, tier-safe inputs, timeout/bounded retry/idempotency, visible failure, and prompt/output safety tests. AI must never invent missing facts or issue legal, financial, credit, or risk verdicts.
 - Implement Companies House refund-required and non-critical partial-report behavior.
 - Alert admin and test report immutability.
 
@@ -218,7 +232,7 @@ Depends on: **15A — UI/Mock Verified**.
 ### 16A — UI/Mock: Browser Reports
 
 - Complete and partial Basic, Standard, and Premium report pages.
-- Header, company identity, reference, timestamp, tier, source status, entitled sections, summary placeholder, disclaimer, issue link, and PDF action.
+- Header, company identity, reference, timestamp, tier, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and PDF action.
 - Loading, access-denied, not-ready, not-found, and provider-failure states.
 - Screen, mobile, and print layouts.
 
@@ -228,26 +242,26 @@ Verification: Phase A Figma comparison where applicable plus automated screen/mo
 
 Depends on: **16A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
-- Add secure owner/guest report lookup.
+- Add secure authenticated-owner report lookup.
 - Build tier-safe display payloads from frozen report data only.
 - Prevent not-entitled leakage and ready-report mutation.
 - Wire real source statuses and lifecycle state.
 
-### 17A — UI/Mock: Guest Access and Email Outcomes
+### 17A — UI/Mock: Authenticated Report Notification Outcomes
 
-- Valid, invalid, expired, already-claimed, email-sending, email-delayed, email-failed, and claim-to-account states.
-- Guest access email rendered with representative report/link data.
+- Owner-authorized, signed-out redirect, non-owner denial, email-sending, email-delayed, and email-failed states.
+- Report-ready email rendered with representative report/link data; the link requires sign-in and never acts as a bearer token.
 
 Verification: automated link-state and email-preview coverage at mobile/desktop structures; user manual QA is non-blocking.
 
-### 17B — Logic/Data: Guest Tokens and Postmark
+### 17B — Logic/Data: Owner Notifications and Postmark
 
 Depends on: **17A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
-- Generate secure tokens and store only hashes.
-- Enforce 30-day expiry and verified-email claim.
+- Send only to the purchased report owner's verified email and authorize report access from Clerk identity.
+- Do not generate guest tokens or claim flows.
 - Implement idempotent Postmark jobs and terminal failure visibility.
-- Test wrong token, expiry boundary, retries, duplicate jobs, and safe claim behavior.
+- Test signed-out/non-owner access, recipient ownership, retries, duplicate jobs, and safe authenticated links.
 
 ---
 
@@ -325,7 +339,7 @@ Depends on: **21A — UI/Mock Verified**.
 
 ### 22A — UI/Mock: Maintenance and Reliability Visibility
 
-- Admin fixtures for stuck reports, expired guest links, anonymisation runs, scheduled-job health, alert delivery, and maintenance failures.
+- Admin fixtures for stuck reports, anonymisation runs, scheduled-job health, alert delivery, and maintenance failures.
 - Define physical time-boundary test cases before scheduling jobs.
 
 Verification: operational mock testing. Figma is optional unless matching admin designs exist.
@@ -335,7 +349,6 @@ Verification: operational mock testing. Figma is optional unless matching admin 
 Depends on: **22A — UI/Mock Verified**.
 
 - Anonymise/delete search IP identity after 90 days.
-- Expire guest links after 30 days while retaining report data for 12 months.
 - Detect stuck reports and alert admin.
 - Make jobs scheduled, idempotent, observable, and boundary-tested.
 
@@ -351,7 +364,7 @@ Verification: signed-off UAT notes and no unresolved critical visual/interaction
 
 Depends on: **23A — UI/Mock Verified** and all prior B units complete.
 
-- Run end-to-end payment/provider/report/refund/guest/admin/maintenance flows.
+- Run end-to-end authenticated payment/provider/AI interpretation/report/refund/admin/maintenance flows.
 - Verify live credentials, rate limits, Stripe replay, backup/rollback, monitoring, alert routing, privacy, and security.
 - Clear disclaimer and ICO blockers before production deployment.
 
@@ -375,7 +388,7 @@ For a `B` unit, the paired verified `A` unit is always a hard dependency.
 
 ## Future Reference
 
-Phase A Clerk authentication provides identity, report ownership, verified-email claiming, and admin
+Phase A Clerk authentication provides identity, report ownership, verified-email checkout, and admin
 authorization only. Do not schedule Phase B account dashboards/history/saved companies, Phase C-D
 watchlists, Phase E payment signals, or Phase F recovery until their gates open and a new `/architect`
 plan is approved.

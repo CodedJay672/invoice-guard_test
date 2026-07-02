@@ -8,7 +8,7 @@ export interface AnonymousSearchRateLimiter {
   check(ipHash: string): Promise<RateLimitResult>;
 }
 
-export const anonymousSearchLimit = 5;
+export const anonymousSearchLimit = 100;
 export const anonymousSearchWindowSeconds = 24 * 60 * 60;
 
 interface RateLimitBucket {
