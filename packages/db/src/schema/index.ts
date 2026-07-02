@@ -141,8 +141,7 @@ export const purchasedReports = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     reportReference: varchar("report_reference", { length: 64 }).notNull(),
-    clerkUserId: varchar("clerk_user_id", { length: 128 }),
-    guestEmail: text("guest_email"),
+    clerkUserId: varchar("clerk_user_id", { length: 128 }).notNull(),
     companiesHouseNumber: varchar("companies_house_number", { length: 16 }).notNull(),
     companyName: text("company_name").notNull(),
     reportTier: reportTierEnum("report_tier").notNull(),
@@ -157,9 +156,6 @@ export const purchasedReports = pgTable(
       .notNull()
       .default(sql`'{}'::jsonb`),
     pdfStorageUrl: text("pdf_storage_url"),
-    guestAccessTokenHash: varchar("guest_access_token_hash", { length: 128 }),
-    guestAccessExpiresAt: timestamp("guest_access_expires_at", { withTimezone: true }),
-    claimedAt: timestamp("claimed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -175,7 +171,6 @@ export const purchasedReports = pgTable(
     ),
     companyIndex: index("purchased_reports_company_idx").on(table.companiesHouseNumber),
     statusIndex: index("purchased_reports_status_idx").on(table.status),
-    guestTokenIndex: index("purchased_reports_guest_token_idx").on(table.guestAccessTokenHash),
   }),
 );
 

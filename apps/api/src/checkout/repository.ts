@@ -1,18 +1,26 @@
 import { randomBytes } from "node:crypto";
 
 import { schema, type Database } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import type { CheckoutRepository, PaidReportEventInput, PaidReportEventResult } from "./types.js";
 
 export class DrizzleCheckoutRepository implements CheckoutRepository {
   constructor(private readonly db: Database) {}
 
-  async findReportBySessionId(sessionId: string): Promise<{ id: string } | undefined> {
+  async findReportBySessionId(
+    sessionId: string,
+    clerkUserId: string,
+  ): Promise<{ id: string } | undefined> {
     const rows = await this.db
       .select({ id: schema.purchasedReports.id })
       .from(schema.purchasedReports)
-      .where(eq(schema.purchasedReports.stripeCheckoutSessionId, sessionId))
+      .where(
+        and(
+          eq(schema.purchasedReports.stripeCheckoutSessionId, sessionId),
+          eq(schema.purchasedReports.clerkUserId, clerkUserId),
+        ),
+      )
       .limit(1);
     return rows[0];
   }
@@ -59,7 +67,6 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
           .values({
             reportReference: createReportReference(),
             clerkUserId: input.clerkUserId,
-            guestEmail: input.clerkUserId ? null : input.email,
             companiesHouseNumber: input.companyNumber,
             companyName: input.companyName,
             reportTier: input.tier,

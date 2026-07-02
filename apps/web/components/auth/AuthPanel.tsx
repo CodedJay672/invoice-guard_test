@@ -85,7 +85,7 @@ export function AuthPanel({ initialState, returnTo, fixtureName }: AuthPanelProp
           <CircleAlert aria-hidden="true" />
           <AlertTitle>Authentication was not completed</AlertTitle>
           <AlertDescription>
-            Try again. If the problem continues, use guest checkout.
+            Try again. If the problem continues, return to sign in.
           </AlertDescription>
         </Alert>
         <Button type="button" variant="authoritative" onClick={() => setState("sign-in")}>
@@ -132,7 +132,7 @@ export function AuthPanel({ initialState, returnTo, fixtureName }: AuthPanelProp
     return (
       <AuthCard
         title="Verify your email"
-        description="A verified primary email is required for owned reports and guest-report claims."
+        description="A verified primary email is required before payment and report access."
         badge="Not verified"
         badgeVariant="caution"
       >
@@ -226,7 +226,7 @@ function AuthCard({
       <CardContent className="flex flex-col gap-5">{children}</CardContent>
       <CardFooter>
         <p className="text-xs text-content-muted">
-          Accounts are optional. Guest company search and checkout remain available.
+          Company search remains public. Registration is required before payment.
         </p>
       </CardFooter>
     </Card>

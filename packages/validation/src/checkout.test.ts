@@ -5,7 +5,7 @@ import {
   checkoutSelectionSchema,
   checkoutSessionIdSchema,
   createCheckoutSessionSchema,
-  guestEmailSchema,
+  verifiedEmailSchema,
   reportTierSchema,
 } from "./checkout.js";
 
@@ -27,9 +27,9 @@ void test("checkout selection rejects unknown tiers", () => {
   assert.equal(reportTierSchema.safeParse("enterprise").success, false);
 });
 
-void test("guest email is required, valid, and normalised", () => {
-  assert.equal(guestEmailSchema.safeParse("not-an-email").success, false);
-  assert.equal(guestEmailSchema.parse("  Buyer@Example.COM "), "buyer@example.com");
+void test("verified email validation normalises trusted identity email", () => {
+  assert.equal(verifiedEmailSchema.safeParse("not-an-email").success, false);
+  assert.equal(verifiedEmailSchema.parse("  Buyer@Example.COM "), "buyer@example.com");
 });
 
 void test("checkout creation requires a UUID attempt and normalises boundary input", () => {
@@ -37,13 +37,11 @@ void test("checkout creation requires a UUID attempt and normalises boundary inp
     createCheckoutSessionSchema.parse({
       companyNumber: "sc123456",
       tier: "basic",
-      email: " Buyer@Example.COM ",
       attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
     }),
     {
       companyNumber: "SC123456",
       tier: "basic",
-      email: "buyer@example.com",
       attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
     },
   );

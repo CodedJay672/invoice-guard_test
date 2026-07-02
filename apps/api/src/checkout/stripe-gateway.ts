@@ -20,7 +20,7 @@ export class StripeSdkGateway implements StripeGateway {
     companyNumber: string;
     companyName: string;
     email: string;
-    clerkUserId?: string | undefined;
+    clerkUserId: string;
     pricePence: number;
     currency: string;
     tier: "basic" | "standard" | "premium";
@@ -47,7 +47,7 @@ export class StripeSdkGateway implements StripeGateway {
         metadata: {
           companyNumber: input.companyNumber,
           tier: input.tier,
-          ...(input.clerkUserId ? { clerkUserId: input.clerkUserId } : {}),
+          clerkUserId: input.clerkUserId,
         },
         success_url: `${input.appUrl}/checkout/status?sessionId={CHECKOUT_SESSION_ID}`,
         cancel_url: `${input.appUrl}/checkout?${cancelParams.toString()}&cancelled=1`,
@@ -61,7 +61,12 @@ export class StripeSdkGateway implements StripeGateway {
 
   async retrieveSession(sessionId: string): Promise<CheckoutSessionState> {
     const session = await this.client.checkout.sessions.retrieve(sessionId);
-    return { id: session.id, status: session.status, paymentStatus: session.payment_status };
+    return {
+      id: session.id,
+      status: session.status,
+      paymentStatus: session.payment_status,
+      clerkUserId: session.metadata?.["clerkUserId"],
+    };
   }
 
   constructEvent(payload: Buffer, signature: string): Stripe.Event {

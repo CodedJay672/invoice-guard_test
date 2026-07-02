@@ -29,7 +29,6 @@ void test("accepts only current Phase A return paths", () => {
     "/checkout?companyNumber=12345678&tier=basic",
     "/checkout/status?sessionId=cs_test",
     "/reports/RPT_123",
-    "/reports/access/token_123",
   ];
   for (const path of accepted) assert.equal(parseSafeReturnPath(path), path);
 });
@@ -45,6 +44,7 @@ void test("rejects external, malformed, admin, and future-phase return paths", (
     "/invoices",
     "/reports",
     "/reports/access/token/extra",
+    "/reports/access/token_123",
     "/%2f%2fexample.com",
     "/search\nmalformed",
   ];
@@ -57,4 +57,8 @@ void test("builds auth links from normalized return paths", () => {
     "/sign-in?returnTo=%2Fcheckout%3Ftier%3Dbasic",
   );
   assert.equal(authHref("/sign-up", "https://example.com"), "/sign-up?returnTo=%2Fsearch");
+  assert.equal(
+    authHref("/sign-up", "/checkout?companyNumber=12345678&tier=premium&q=Example+Limited"),
+    "/sign-up?returnTo=%2Fcheckout%3FcompanyNumber%3D12345678%26tier%3Dpremium%26q%3DExample%2BLimited",
+  );
 });

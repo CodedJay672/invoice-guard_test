@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 
-import { guestEmailSchema, reportTierSchema } from "@workspace/validation";
+import { reportTierSchema, verifiedEmailSchema } from "@workspace/validation";
 
 import { CompanyService } from "../companies/service.js";
 import type { ReportProductRepository } from "../report-products/repository.js";
@@ -12,7 +12,11 @@ import type {
   ReportGenerationQueue,
   StripeGateway,
 } from "./types.js";
-import { CheckoutUnavailableError, CheckoutValidationError } from "./types.js";
+import {
+  CheckoutAuthorizationError,
+  CheckoutUnavailableError,
+  CheckoutValidationError,
+} from "./types.js";
 
 export interface CheckoutServiceDependencies {
   appUrl: string;
@@ -39,7 +43,7 @@ export class CheckoutService {
         appUrl: this.dependencies.appUrl,
         companyNumber: company.companiesHouseNumber,
         companyName: company.companyName,
-        email: input.email,
+        email: input.verifiedEmail,
         clerkUserId: input.clerkUserId,
         pricePence: product.pricePence,
         currency: "GBP",
@@ -50,18 +54,25 @@ export class CheckoutService {
     }
   }
 
-  async getStatus(sessionId: string): Promise<CheckoutStatusResult> {
-    const report = await this.dependencies.checkoutRepository.findReportBySessionId(sessionId);
+  async getStatus(sessionId: string, clerkUserId: string): Promise<CheckoutStatusResult> {
+    const report = await this.dependencies.checkoutRepository.findReportBySessionId(
+      sessionId,
+      clerkUserId,
+    );
     if (report) return { status: "paid_pending" };
 
     try {
       const session = await this.dependencies.stripeGateway.retrieveSession(sessionId);
+      if (session.clerkUserId !== clerkUserId) {
+        throw new CheckoutAuthorizationError("Checkout Session owner does not match.");
+      }
       if (session.status === "expired") return { status: "failed" };
       if (session.status === "complete" && session.paymentStatus === "unpaid") {
         return { status: "delayed" };
       }
       return { status: "confirming" };
-    } catch {
+    } catch (error) {
+      if (error instanceof CheckoutAuthorizationError) throw error;
       throw new CheckoutUnavailableError("Payment status could not be retrieved.");
     }
   }
@@ -100,7 +111,7 @@ export class CheckoutService {
 
     const metadata = session.metadata ?? {};
     const tierResult = reportTierSchema.safeParse(metadata["tier"]);
-    const emailResult = guestEmailSchema.safeParse(session.customer_details?.email);
+    const emailResult = verifiedEmailSchema.safeParse(session.customer_details?.email);
     const companyNumber = metadata["companyNumber"];
     const clerkUserId = parseClerkUserId(metadata["clerkUserId"]);
     const amountPaidPence = session.amount_total;
@@ -111,6 +122,7 @@ export class CheckoutService {
       !tierResult.success ||
       !emailResult.success ||
       !companyNumber ||
+      !clerkUserId ||
       amountPaidPence === null ||
       currency !== "GBP"
     ) {

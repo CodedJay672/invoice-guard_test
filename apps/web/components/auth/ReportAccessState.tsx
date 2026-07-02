@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert, KeyRound, UserRound } from "lucide-react";
+import { CheckCircle2, CircleAlert, UserRound } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { Badge } from "@workspace/ui/components/badge";
@@ -57,24 +57,13 @@ function accessContent(identity: AuthIdentityState, outcome: ReportAccessOutcome
       icon: CheckCircle2,
     };
   }
-  if (outcome === "guest" && identity === "signed-out") {
-    return {
-      badge: "Guest link",
-      badgeVariant: "outline" as const,
-      alertVariant: "default" as const,
-      title: "Secure guest access",
-      description: "A valid guest token will grant access without requiring an account.",
-      icon: KeyRound,
-    };
-  }
   if (identity === "unverified-email") {
     return {
       badge: "Verification needed",
       badgeVariant: "caution" as const,
       alertVariant: "caution" as const,
-      title: "Verify the matching email",
-      description:
-        "Guest reports can be claimed only after the matching account email is verified.",
+      title: "Verify your account email",
+      description: "A verified primary email is required before an owned report can be accessed.",
       icon: UserRound,
     };
   }

@@ -1,10 +1,6 @@
 import { assertApiProductionConfig, loadAppConfig, type AppConfig } from "@workspace/config";
 import { createDatabase } from "@workspace/db";
-import {
-  createCompaniesHouseClient,
-  createInsolvencyDisqualifiedOfficersClient,
-  createLondonGazetteClient,
-} from "@workspace/integrations";
+import { createCompaniesHouseClient } from "@workspace/integrations";
 import { Redis } from "ioredis";
 import {
   createQueue,
@@ -48,24 +44,12 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
     apiKey: config.companiesHouseApiKey,
     timeoutMs: config.companiesHouseTimeoutMs,
   });
-  const londonGazetteClient = createLondonGazetteClient({
-    mode: config.londonGazetteProviderMode,
-    baseUrl: config.londonGazetteBaseUrl,
-    timeoutMs: config.londonGazetteTimeoutMs,
-  });
-  const insolvencyDisqualifiedOfficersClient = createInsolvencyDisqualifiedOfficersClient({
-    mode: config.insolvencyDisqualifiedOfficersProviderMode,
-    baseUrl: config.insolvencyDisqualifiedOfficersBaseUrl,
-    timeoutMs: config.insolvencyDisqualifiedOfficersTimeoutMs,
-  });
 
   if (config.databaseUrl) {
     const db = createDatabase(config.databaseUrl);
     const reportProductRepository = new DrizzleReportProductRepository(db);
     const companyService = new CompanyService({
       companiesHouseClient,
-      londonGazetteClient,
-      insolvencyDisqualifiedOfficersClient,
       companyRepository: new DrizzleCompanyRepository(db),
       searchLogRepository: new DrizzleSearchLogRepository(db),
       reportProductRepository,
@@ -89,8 +73,6 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
   return {
     companyService: new CompanyService({
       companiesHouseClient,
-      londonGazetteClient,
-      insolvencyDisqualifiedOfficersClient,
       companyRepository: new InMemoryCompanyRepository(),
       searchLogRepository: new InMemorySearchLogRepository(),
       reportProductRepository: new InMemoryReportProductRepository(),

@@ -10,11 +10,11 @@ Update after every completed feature. Record actual state only.
 
 **Build-plan phase:** Phase 3 — Paid Generation
 
-**Last completed:** 14B — Logic/Data: Generation Queue (A16)
+**Last completed:** AUTH-C — Registration Before Payment Retrofit
 
-**Next:** AUTH-C — Registration-Before-Payment Retrofit, then 15A — UI/Mock: Paid Source, Tier, and AI Interpretation Sections
+**Next:** 15A — UI/Mock: Paid Source, Tier, and AI Interpretation Sections
 
-**Status:** 14B complete; new client decisions require AUTH-C before continuing the paid-report path
+**Status:** AUTH-C complete; 15A is unblocked
 
 **Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
 is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
@@ -22,10 +22,10 @@ assets are now authoritative implementation references.
 
 ### Current Unit Scope
 
-14B provides the backend-only BullMQ report-generation lifecycle engine: atomic pending claims,
-idempotent terminal convergence, safe retry resumption, retry exhaustion, explicit terminal failures,
-and 15-minute delayed-report detection. Production consumption remains intentionally unregistered
-until 15B supplies the paid-provider generation handler.
+AUTH-C requires verified Clerk ownership before payment, creates only owner-bound reports, scopes
+checkout status to the owner, removes guest persistence/contracts, and limits free preview to
+Companies House with explicit not-yet-checked paid sources. The generation lifecycle remains ready
+for 15B's paid-provider and AI interpretation handler.
 
 ---
 
@@ -56,7 +56,7 @@ until 15B supplies the paid-provider generation handler.
 - [x] AUTH-B Logic/Data: Clerk Authentication Foundation
 - [x] 14A UI/Mock: Report Generation Lifecycle — `UI/Mock Verified` 2026-06-30
 - [x] 14B Logic/Data: Generation Queue (A16)
-- [ ] AUTH-C Client-Decision Retrofit: Registration Before Payment
+- [x] AUTH-C Client-Decision Retrofit: Registration Before Payment — complete 2026-07-02
 - [ ] 15A UI/Mock: Paid Source and Tier Sections
 - [ ] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
 - [ ] 16A UI/Mock: Browser Reports
@@ -85,19 +85,19 @@ until 15B supplies the paid-provider generation handler.
 - Typed BullMQ foundation; processors not implemented.
 - Mock/live-shaped Companies House, London Gazette, and insolvency/disqualified-officer adapters.
 - Search/profile/free-preview API, atomic Redis/in-memory rate limiting, signed proxy identity, and HMAC-hashed search logs.
-- Server-authoritative one-off report products and working clean/adverse/standard/source-failure preview UI.
+- Server-authoritative one-off report products and Companies House-only preview with explicit not-yet-checked paid sources.
 - Phase A landing page with debounced Companies House suggestions and canonical company selection into `/search`.
 - Brand Asset Guide v1.0 visual foundation: InvoiceGuard navy/emerald palette, Inter typography,
   12px controls, rounded outline icons, and sparse brand-gradient usage.
 - Live Companies House adapter support for alphabetical search, registered-office-address, profile, officers, filing history, charges, and insolvency endpoints.
 - Development-only deterministic fixtures for all Feature 12 states.
-- Two-route checkout/status UI with guest and authenticated fixtures, strict selection/email
+- Two-route checkout/status UI with verified-owner and verification-required fixtures, strict selection
   validation, bounded confirmation checks, cancellation retry, and duplicate-refresh messaging.
-- Existing guest-first Stripe-hosted Checkout with trusted server pricing, dynamic payment-method support,
-  raw-body signature verification, durable event/session idempotency, paid amount/currency snapshots,
-  and deterministic report-generation job IDs. Guest entry is now superseded and must be removed in AUTH-C.
+- Registration-first Stripe-hosted Checkout with trusted server pricing, signed Clerk principal,
+  owner-scoped status, raw-body signature verification, durable event/session idempotency, paid
+  amount/currency snapshots, and deterministic report-generation job IDs.
 - Development/test-only auth previews for sign-in, sign-up, callback, error, signed-in, sign-out,
-  unverified-email, owner, non-owner, and guest states; production omits mock auth navigation and
+  unverified-email, owner, and non-owner states; production omits mock auth navigation and
   returns not found for preview routes.
 - Safe return-path parsing limited to current Phase A routes, plus reusable account and report-access
   presentation components for AUTH-B and 16A/16B.
@@ -164,7 +164,6 @@ Free preview is architecturally isolated from every source except Companies Hous
 
 - Paid-provider generation handler and production worker composition remain 15B work.
 - Live-shaped insolvency endpoint requires production verification for paid reports; it is no longer a free-tier dependency.
-- Existing guest checkout/access fixtures, validation, and tests require removal or conversion in AUTH-C.
 
 ---
 
@@ -236,6 +235,14 @@ Repository typecheck passed 12 tasks, lint passed 14 tasks, and tests passed 12 
 The aggregate Turbo build exceeded its four-minute command window without a reported compilation
 failure; focused worker, config, API, and Next.js production builds all passed afterward.
 
+2026-07-02 AUTH-C checks: generated and reviewed forward migration `0003_wandering_punisher.sql`
+with an ownerless-row failure guard before making `clerk_user_id` non-null and removing guest
+columns/indexes. Focused API tests passed 25 assertions, web passed 16, and worker passed 11; all
+focused suites terminate normally. Aggregate typecheck passed 12 tasks, lint passed 14 tasks, tests
+passed 12 tasks, and the production build passed 12 tasks with Next.js compiling all Phase A routes.
+Coverage includes signed-out checkout rejection, trusted verified ownership, owner-scoped status,
+missing webhook-owner rejection, migration safety, and Companies House-only free-preview isolation.
+
 ### Coverage Tracking
 
 | System                                    | Current state                                                          |
@@ -243,8 +250,8 @@ failure; focused worker, config, API, and Next.js production builds all passed a
 | Companies House normalization             | Covered                                                                |
 | Gazette normalization                     | Covered                                                                |
 | Insolvency/disqualification normalization | Covered                                                                |
-| Search/free-preview API                   | Existing coverage; update to assert Companies House-only composition   |
-| All non-Companies-House free-tier isolation | Requires expanded regression coverage in AUTH-C/current refinement   |
+| Search/free-preview API                   | Covered for Companies House-only response and failure boundaries       |
+| All non-Companies-House free-tier isolation | Covered: excluded from the free-preview dependency graph             |
 | Stripe/webhook/pending-report lifecycle   | Covered for checkout, paid/unpaid events, replay, queueing, and status |
 | Worker generation lifecycle               | Covered for claim, retry, terminal convergence, failure, and delay     |
 | Paid provider/partial/refund outcomes     | Handler contract ready; provider implementation remains 15B            |

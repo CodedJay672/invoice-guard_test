@@ -5,11 +5,10 @@ import {
 } from "@workspace/validation/checkout";
 
 export const checkoutFixtureNames = [
-  "guest-ready",
   "authenticated-ready",
+  "unverified-email",
   "invalid-product",
   "inactive-product",
-  "validation-error",
   "redirecting",
 ] as const;
 
@@ -27,8 +26,8 @@ export const paymentStatusFixtureNames = [
 export type PaymentStatusFixtureName = (typeof paymentStatusFixtureNames)[number];
 
 export type CheckoutBuyerFixture =
-  | { mode: "guest"; initialEmail: string; emailReadOnly: false }
-  | { mode: "authenticated"; initialEmail: string; emailReadOnly: true };
+  | { mode: "authenticated"; initialEmail: string; emailReadOnly: true }
+  | { mode: "unverified"; clerkUserId: string };
 
 export interface ReportProductFixture {
   tier: ReportTier;
@@ -89,9 +88,8 @@ export function resolveCheckoutBuyerFixture(
     };
   }
   return {
-    mode: "guest",
-    initialEmail: fixtureName === "validation-error" ? "invalid" : "",
-    emailReadOnly: false,
+    mode: "unverified",
+    clerkUserId: "user_unverified_fixture",
   };
 }
 

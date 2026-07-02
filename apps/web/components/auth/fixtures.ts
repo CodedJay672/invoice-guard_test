@@ -9,15 +9,14 @@ export const authFixtureNames = [
   "unverified-email",
   "owner-access",
   "non-owner-access",
-  "guest-access",
 ] as const;
 
 export type AuthFixtureName = (typeof authFixtureNames)[number];
 
 export type AuthIdentityState = "signed-out" | "signed-in" | "unverified-email";
-export type ReportAccessOutcome = "owner" | "non-owner" | "guest";
+export type ReportAccessOutcome = "owner" | "non-owner";
 
-const reportPathPattern = /^\/reports\/(?:access\/)?[A-Za-z0-9_-]+\/?$/;
+const reportPathPattern = /^\/reports\/[A-Za-z0-9_-]+\/?$/;
 const currentPhasePaths = new Set(["/", "/search", "/checkout", "/checkout/status"]);
 
 export function resolveAuthFixtureName(

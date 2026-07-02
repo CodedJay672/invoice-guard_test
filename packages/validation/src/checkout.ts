@@ -8,7 +8,7 @@ const checkoutCompanyNumberSchema = z
   .regex(/^[A-Z0-9]{2,16}$/i, "Companies House number must be 2-16 letters or numbers.")
   .transform((value) => value.toUpperCase());
 
-export const guestEmailSchema = z
+export const verifiedEmailSchema = z
   .string()
   .trim()
   .min(1, "Enter the email address that should receive the report.")
@@ -25,7 +25,6 @@ export const checkoutSelectionSchema = z.object({
 export const createCheckoutSessionSchema = checkoutSelectionSchema
   .pick({ companyNumber: true, tier: true })
   .extend({
-    email: guestEmailSchema,
     attemptId: z.string().uuid("Checkout attempt ID must be a UUID."),
   });
 

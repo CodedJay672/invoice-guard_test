@@ -14,7 +14,7 @@ export interface GenerateReportPdfJobData {
   reportId: string;
 }
 
-export interface SendGuestReportLinkJobData {
+export interface SendOwnerReportNotificationJobData {
   reportId: string;
 }
 
@@ -26,17 +26,13 @@ export interface SendAdminAlertJobData {
 }
 
 export interface MaintenanceJobData {
-  task:
-    | "detect_stuck_reports"
-    | "expire_guest_report_links"
-    | "anonymise_old_search_logs"
-    | "scrape_fair_payment_code";
+  task: "detect_stuck_reports" | "anonymise_old_search_logs" | "scrape_fair_payment_code";
 }
 
 export type QueueJobPayloadByName = {
   "report-generation-queue": GeneratePaidReportJobData;
   "pdf-generation-queue": GenerateReportPdfJobData;
-  "email-queue": SendGuestReportLinkJobData;
+  "email-queue": SendOwnerReportNotificationJobData;
   "provider-alert-queue": SendAdminAlertJobData;
   "maintenance-queue": MaintenanceJobData;
 };

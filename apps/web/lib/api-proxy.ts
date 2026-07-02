@@ -8,9 +8,14 @@ import type { NextRequest } from "next/server";
 
 const config = loadWebProxyConfig();
 
-export async function proxyApiGet(request: NextRequest, path: string): Promise<Response> {
+export async function proxyApiGet(
+  request: NextRequest,
+  path: string,
+  additionalHeaders?: Headers,
+): Promise<Response> {
   assertWebProxyProductionConfig(config);
   const headers = new Headers({ Accept: "application/json" });
+  additionalHeaders?.forEach((value, key) => headers.set(key, value));
   const trustedClientIp = normaliseClientIp(request.headers.get(config.trustedClientIpHeader));
 
   if (trustedClientIp && config.webApiSharedSecret) {

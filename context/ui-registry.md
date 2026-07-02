@@ -97,10 +97,12 @@ interactive state belongs to the smallest practical client leaf.
 ### FreePreview and Fact
 
 - Path: `apps/web/components/company-search/CompanySearchExperience.tsx`.
-- States: loading, error, clean, adverse, standard, and source failure.
+- Last updated: 2026-07-02 (AUTH-C).
+- States: loading, Companies House factual result, non-active company status, and Companies House failure.
 - Facts: `rounded-md border border-line bg-surface p-3` in a one-to-three-column grid.
-- Source failures remain visible with a caution status and never render clean reassurance.
-- Adverse findings remain visible when another source fails.
+- Free preview displays exactly one checked source: Companies House.
+- Paid-only sources use a separate `Not yet checked` Card with `border-line`, `bg-surface`,
+  `text-content-muted`, and outline Badges. It never renders clean/adverse conclusions.
 
 ### CourtRecordsCard
 
@@ -110,8 +112,9 @@ interactive state belongs to the smallest practical client leaf.
 
 ### CuriosityCard
 
-- Implemented for clean preview only with `Card` default/positive tones.
-- Full-clearance spans the preview column at `md` and uses positive semantic tokens.
+- Uses the default shared Card for factual locked questions only.
+- Positive/full-clearance variants are prohibited because Companies House-only preview cannot support
+  a clearance conclusion.
 
 ### TierCard
 
@@ -169,11 +172,12 @@ lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
 ### Checkout Form
 
 - Path: `apps/web/components/checkout/CheckoutForm.tsx`.
-- Historical implementation note: guest was originally the default state. The 2026-07-02 client
-  decision supersedes it; AUTH-C must replace this with a registration/sign-in gate and a verified,
-  read-only owner email. No new feature may extend the guest pattern.
-- Email errors use `aria-invalid`, a linked description, and an alert role while preserving input.
-- Redirecting disables the field and primary action and uses visible text plus a spinner.
+- Last updated: 2026-07-02 (AUTH-C).
+- Signed-out users are redirected to sign-up with a validated checkout return path before this form renders.
+- Verified ownership uses `rounded-lg border border-line bg-page p-4`, `text-content`, and
+  `text-content-muted`; the browser never submits or edits an email address.
+- Unverified users see the canonical caution Alert and a disabled payment action while selection remains visible.
+- Redirecting disables the primary action and uses visible text plus a spinner.
 - The caution Alert states that a browser return never confirms payment.
 - No email or other personal data is placed in checkout/status URLs.
 
@@ -193,7 +197,7 @@ lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
 ### Feature 13A Verification
 
 - Repository formatting, typecheck, lint, unit tests, and production build pass.
-- Selection parsing, tier rejection, guest email normalization, production fixture guards, and
+- Selection parsing, tier rejection, verified-owner/verification-required states, production fixture guards, and
   privacy-safe checkout URLs have executable tests.
 - Physical desktop/mobile/focus/navigation verification remains pending because the in-app browser
   bridge rejected initialization before opening localhost on 2026-06-28.
@@ -260,7 +264,7 @@ Production renders the mock auth routes as not found and omits mock account navi
 ### Authentication Card
 
 File: `apps/web/components/auth/AuthPanel.tsx`
-Last updated: 2026-06-29
+Last updated: 2026-07-02 (AUTH-C)
 
 | Property           | Class/pattern                                                                      |
 | ------------------ | ---------------------------------------------------------------------------------- |
@@ -318,9 +322,8 @@ Last updated: 2026-06-29
 | Accent usage     | positive owner, caution authentication/verification, critical non-owner |
 
 **Pattern notes:** Status is always repeated through badge, heading, icon, and explanatory text.
-Guest fixtures are obsolete under the 2026-07-02 no-guest-purchase decision. AUTH-C/16B must retain
-owner, signed-out, verification-required, and non-owner outcomes and authorize server-side before
-returning report data.
+Owner, signed-out, verification-required, and non-owner outcomes are the only report-access patterns.
+Authorization is server-side before report or checkout-status data is returned.
 
 ### Paid AI Interpretation Block (Planned in 15A)
 

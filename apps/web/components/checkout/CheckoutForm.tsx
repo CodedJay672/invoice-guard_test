@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowRight, LoaderCircle, Mail } from "lucide-react";
+import { ArrowRight, LoaderCircle, MailCheck } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
@@ -13,17 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
-import { guestEmailSchema } from "@workspace/validation/checkout";
 
 import { startCheckout } from "@/actions/checkout";
 
 import { resolveCheckoutBuyerFixture, type CheckoutFixtureName } from "./fixtures";
 
 export type CheckoutBuyer =
-  | { mode: "guest"; initialEmail: string; emailReadOnly: false }
   | { mode: "authenticated"; initialEmail: string; emailReadOnly: true }
-  | { mode: "unverified"; initialEmail: ""; emailReadOnly: true };
+  | { mode: "unverified"; clerkUserId: string };
 
 type CheckoutFormProps = {
   fixtureName?: CheckoutFixtureName | undefined;
@@ -43,24 +40,14 @@ export function CheckoutForm({
   cancelled,
 }: CheckoutFormProps) {
   const buyer = fixtureName ? resolveCheckoutBuyerFixture(fixtureName) : liveBuyer;
-  const isAuthenticated = buyer.mode === "authenticated";
   const isUnverified = buyer.mode === "unverified";
-  const [email, setEmail] = useState(buyer.initialEmail);
-  const [error, setError] = useState(
-    fixtureName === "validation-error" ? "Enter a valid email address." : undefined,
-  );
+  const [error, setError] = useState<string | undefined>();
   const [isRedirecting, setIsRedirecting] = useState(fixtureName === "redirecting");
 
   async function submitCheckout(event: React.SubmitEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (isUnverified) {
-      setError("Verify your account email or sign out to continue as a guest.");
-      return;
-    }
-    const result = guestEmailSchema.safeParse(email);
-
-    if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Enter a valid email address.");
+      setError("Verify your account email before continuing to payment.");
       return;
     }
 
@@ -74,7 +61,6 @@ export function CheckoutForm({
     const checkout = await startCheckout({
       companyNumber,
       tier,
-      email: result.data,
       attemptId: window.crypto.randomUUID(),
     });
     if (!checkout.ok) {
@@ -115,55 +101,31 @@ export function CheckoutForm({
             <Alert variant="caution">
               <AlertTitle>Verify your email before account checkout</AlertTitle>
               <AlertDescription>
-                Complete Clerk email verification, or sign out and continue with guest checkout.
+                Complete Clerk email verification before continuing. Your company and report
+                selection will remain here.
               </AlertDescription>
             </Alert>
           ) : null}
-          <div className="flex flex-col gap-2" data-invalid={error ? true : undefined}>
-            <label className="text-sm font-medium text-content" htmlFor="checkout-email">
-              Report delivery email
-            </label>
-            <div className="relative">
-              <Mail
-                aria-hidden="true"
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-content-muted"
-              />
-              <Input
-                id="checkout-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                readOnly={buyer.emailReadOnly}
-                disabled={isRedirecting}
-                aria-disabled={isUnverified}
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? "checkout-email-error" : "checkout-email-help"}
-                className="pl-9"
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setError(undefined);
-                }}
-              />
+          {buyer.mode === "authenticated" ? (
+            <div className="rounded-lg border border-line bg-page p-4">
+              <p className="flex items-center gap-2 text-sm font-medium text-content">
+                <MailCheck aria-hidden="true" className="size-4" />
+                Verified report owner
+              </p>
+              <p className="mt-2 text-sm text-content-muted">{buyer.initialEmail}</p>
             </div>
-            {error ? (
-              <p id="checkout-email-error" className="text-sm text-critical" role="alert">
-                {error}
-              </p>
-            ) : (
-              <p id="checkout-email-help" className="text-sm text-content-muted">
-                {isAuthenticated
-                  ? "This verified account email will receive report updates."
-                  : "We will use this address for secure report delivery."}
-              </p>
-            )}
-          </div>
+          ) : null}
+          {error ? (
+            <p className="text-sm text-critical" role="alert">
+              {error}
+            </p>
+          ) : null}
 
           <Button
             type="submit"
             size="lg"
             variant="authoritative"
-            disabled={isRedirecting}
+            disabled={isRedirecting || isUnverified}
             aria-disabled={isUnverified}
             className="h-11 w-full justify-between"
           >

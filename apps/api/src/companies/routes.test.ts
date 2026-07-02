@@ -5,10 +5,7 @@ import test from "node:test";
 
 import {
   createProviderSuccess,
-  createProviderFailure,
   MockCompaniesHouseClient,
-  MockInsolvencyDisqualifiedOfficersClient,
-  MockLondonGazetteClient,
   type CompaniesHouseClient,
   type CompaniesHouseCompanyNumberInput,
   type CompaniesHouseCompanyProfile,
@@ -16,12 +13,6 @@ import {
   type CompaniesHouseRegisteredOfficeAddress,
   type CompaniesHouseSearchInput,
   type CompaniesHouseSearchResult,
-  type InsolvencyDisqualifiedOfficersClient,
-  type InsolvencyDisqualifiedOfficersFreePreviewFlags,
-  type InsolvencyDisqualifiedOfficersInput,
-  type LondonGazetteClient,
-  type LondonGazetteCompanyInput,
-  type LondonGazetteFreePreviewFlags,
   type ProviderMode,
   type ProviderResult,
 } from "@workspace/integrations";
@@ -43,6 +34,11 @@ import { CompanyService } from "./service.js";
 
 const testHashSecret = "invoiceguard-test-search-hash-secret-123456";
 const testProxySecret = "invoiceguard-test-proxy-shared-secret-123456";
+const openServers = new Set<Server>();
+
+test.afterEach(async () => {
+  await Promise.all(Array.from(openServers, closeServer));
+});
 
 function createTestIdentityResolver(
   webApiSharedSecret?: string,
@@ -95,16 +91,15 @@ void test("GET /companies/:companyNumber returns canonical company profile data"
   await close();
 });
 
-void test("GET /companies/:companyNumber/free-preview returns clean-path preview data", async () => {
+void test("GET /companies/:companyNumber/free-preview returns Companies House-only data", async () => {
   const { baseUrl, close } = await startTestServer();
 
   const response = await fetch(`${baseUrl}/companies/12345678/free-preview`);
   const body = (await response.json()) as {
     data: {
       preview: {
-        previewPath: string;
-        cleanReassurance: string;
-        adverseBanners: unknown[];
+        sourceStatuses: Array<{ provider: string; status: string; checkedAt: string }>;
+        notYetCheckedSources: Array<{ source: string; status: string }>;
         courtRecordsPrompt: { label: string };
         tierCards: unknown[];
         company: { companiesHouseNumber: string; activeDirectorCount: number };
@@ -114,120 +109,19 @@ void test("GET /companies/:companyNumber/free-preview returns clean-path preview
 
   assert.equal(response.status, 200);
   assert.equal(body.data.preview.company.companiesHouseNumber, "12345678");
-  assert.equal(body.data.preview.previewPath, "clean");
-  assert.equal(body.data.preview.adverseBanners.length, 0);
+  assert.equal(body.data.preview.sourceStatuses.length, 1);
+  assert.equal(body.data.preview.sourceStatuses[0]?.provider, "companies_house");
+  assert.equal(body.data.preview.sourceStatuses[0]?.status, "success");
   assert.equal(
-    body.data.preview.cleanReassurance,
-    "No insolvency events, director disqualifications, or gazette notices found on the free check.",
+    Number.isNaN(Date.parse(body.data.preview.sourceStatuses[0]?.checkedAt ?? "")),
+    false,
+  );
+  assert.deepEqual(
+    body.data.preview.notYetCheckedSources.map((source) => source.source),
+    ["london_gazette", "insolvency_disqualified_officers", "registry_trust", "ai_interpretation"],
   );
   assert.equal(body.data.preview.courtRecordsPrompt.label, "COURT RECORDS — NOT YET CHECKED");
   assert.equal(body.data.preview.tierCards.length, 3);
-
-  await close();
-});
-
-void test("GET /companies/:companyNumber/free-preview returns adverse banners", async () => {
-  const { baseUrl, close } = await startTestServer();
-
-  const response = await fetch(`${baseUrl}/companies/87654321/free-preview`);
-  const body = (await response.json()) as {
-    data: {
-      preview: {
-        previewPath: string;
-        freeSourceFlags: {
-          insolvencyFlag: boolean;
-          gazetteStrikeoffFlag: boolean;
-        };
-        adverseBanners: Array<{ flag: string }>;
-        courtRecordsPrompt: { button: string };
-      };
-    };
-  };
-
-  assert.equal(response.status, 200);
-  assert.equal(body.data.preview.previewPath, "adverse");
-  assert.equal(body.data.preview.freeSourceFlags.insolvencyFlag, true);
-  assert.equal(body.data.preview.freeSourceFlags.gazetteStrikeoffFlag, true);
-  assert.deepEqual(
-    body.data.preview.adverseBanners.map((banner) => banner.flag),
-    ["insolvency", "gazette_strikeoff"],
-  );
-  assert.equal(body.data.preview.courtRecordsPrompt.button, "Check the Court Records");
-
-  await close();
-});
-
-void test("free preview never represents a failed source as clean", async () => {
-  const companyService = new CompanyService({
-    companiesHouseClient: new MockCompaniesHouseClient(),
-    londonGazetteClient: new FailedLondonGazetteClient(),
-    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
-    companyRepository: new InMemoryCompanyRepository(),
-    searchLogRepository: new InMemorySearchLogRepository(),
-    reportProductRepository: new InMemoryReportProductRepository(),
-  });
-  const app = createApiApp({
-    companyService,
-    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
-    requestIdentityResolver: createTestIdentityResolver(),
-  });
-  const { baseUrl, close } = await listen(app);
-
-  const response = await fetch(`${baseUrl}/companies/12345678/free-preview`);
-  const body = (await response.json()) as {
-    data: {
-      preview: {
-        previewPath: string;
-        cleanReassurance?: string;
-        freeSourceFlags: { gazetteStrikeoffFlag: boolean | null };
-        sourceStatuses: Array<{ provider: string; status: string; message?: string }>;
-      };
-    };
-  };
-
-  assert.equal(response.status, 200);
-  assert.equal(body.data.preview.previewPath, "source_failed");
-  assert.equal(body.data.preview.cleanReassurance, undefined);
-  assert.equal(body.data.preview.freeSourceFlags.gazetteStrikeoffFlag, null);
-  assert.deepEqual(
-    body.data.preview.sourceStatuses.find((source) => source.provider === "london_gazette"),
-    {
-      provider: "london_gazette",
-      status: "failed",
-      checkedAt: "2026-01-01T00:00:00.000Z",
-      message: "Data could not be retrieved",
-    },
-  );
-
-  await close();
-});
-
-void test("adverse findings remain visible when another source fails", async () => {
-  const companyService = new CompanyService({
-    companiesHouseClient: new MockCompaniesHouseClient(),
-    londonGazetteClient: new FailedLondonGazetteClient(),
-    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
-    companyRepository: new InMemoryCompanyRepository(),
-    searchLogRepository: new InMemorySearchLogRepository(),
-    reportProductRepository: new InMemoryReportProductRepository(),
-  });
-  const app = createApiApp({
-    companyService,
-    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
-    requestIdentityResolver: createTestIdentityResolver(),
-  });
-  const { baseUrl, close } = await listen(app);
-
-  const response = await fetch(`${baseUrl}/companies/87654321/free-preview`);
-  const body = (await response.json()) as {
-    data: { preview: { previewPath: string; adverseBanners: Array<{ flag: string }> } };
-  };
-
-  assert.equal(body.data.preview.previewPath, "adverse");
-  assert.equal(
-    body.data.preview.adverseBanners.some((banner) => banner.flag === "insolvency"),
-    true,
-  );
 
   await close();
 });
@@ -244,53 +138,10 @@ void test("GET /companies/:companyNumber/free-preview validates company number",
   await close();
 });
 
-void test("free preview clean path is only used for active companies", async () => {
-  const searchLogRepository = new InMemorySearchLogRepository();
-  const companyService = new CompanyService({
-    companiesHouseClient: new SingleCompanyCompaniesHouseClient({
-      companiesHouseNumber: "ZZ000001",
-      companyName: "DORMANT EXAMPLE LIMITED",
-      companyStatus: "dissolved",
-      companyType: "ltd",
-      incorporationDate: "2020-01-01",
-      registeredOfficeAddress: {
-        locality: "Leeds",
-        region: "West Yorkshire",
-        country: "England",
-      },
-      sicCodes: ["62020"],
-      activeDirectorCount: 0,
-    }),
-    londonGazetteClient: new MockLondonGazetteClient(),
-    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
-    companyRepository: new InMemoryCompanyRepository(),
-    searchLogRepository,
-    reportProductRepository: new InMemoryReportProductRepository(),
-  });
-  const app = createApiApp({
-    companyService,
-    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
-    requestIdentityResolver: createTestIdentityResolver(),
-  });
-  const { baseUrl, close } = await listen(app);
-
-  const response = await fetch(`${baseUrl}/companies/ZZ000001/free-preview`);
-  const body = (await response.json()) as { data: { preview: { previewPath: string } } };
-
-  assert.equal(response.status, 200);
-  assert.equal(body.data.preview.previewPath, "standard");
-
-  await close();
-});
-
-void test("free preview calls only the three approved provider clients", async () => {
+void test("free preview calls only Companies House", async () => {
   const companiesHouseClient = new CountingCompaniesHouseClient();
-  const londonGazetteClient = new CountingLondonGazetteClient();
-  const insolvencyDisqualifiedOfficersClient = new CountingInsolvencyDisqualifiedOfficersClient();
   const companyService = new CompanyService({
     companiesHouseClient,
-    londonGazetteClient,
-    insolvencyDisqualifiedOfficersClient,
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository: new InMemorySearchLogRepository(),
     reportProductRepository: new InMemoryReportProductRepository(),
@@ -306,8 +157,6 @@ void test("free preview calls only the three approved provider clients", async (
 
   assert.equal(response.status, 200);
   assert.equal(companiesHouseClient.profileCalls, 1);
-  assert.equal(londonGazetteClient.noticeCalls, 1);
-  assert.equal(insolvencyDisqualifiedOfficersClient.checkCalls, 1);
 
   await close();
 });
@@ -359,8 +208,6 @@ void test("GET /companies/search bypasses anonymous rate limits for trusted auth
   const searchLogRepository = new InMemorySearchLogRepository();
   const companyService = new CompanyService({
     companiesHouseClient: new MockCompaniesHouseClient(),
-    londonGazetteClient: new MockLondonGazetteClient(),
-    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository,
     reportProductRepository: new InMemoryReportProductRepository(),
@@ -393,8 +240,6 @@ void test("GET /companies/search bypasses anonymous rate limits for trusted auth
 void test("forged forwarding headers cannot bypass anonymous rate limits", async () => {
   const companyService = new CompanyService({
     companiesHouseClient: new MockCompaniesHouseClient(),
-    londonGazetteClient: new MockLondonGazetteClient(),
-    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository: new InMemorySearchLogRepository(),
     reportProductRepository: new InMemoryReportProductRepository(),
@@ -422,8 +267,6 @@ void test("forged forwarding headers cannot bypass anonymous rate limits", async
 void test("valid signed proxy identities receive independent anonymous limits", async () => {
   const companyService = new CompanyService({
     companiesHouseClient: new MockCompaniesHouseClient(),
-    londonGazetteClient: new MockLondonGazetteClient(),
-    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository: new InMemorySearchLogRepository(),
     reportProductRepository: new InMemoryReportProductRepository(),
@@ -476,8 +319,6 @@ async function startTestServer(
 ): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   const companyService = new CompanyService({
     companiesHouseClient: new MockCompaniesHouseClient(),
-    londonGazetteClient: new MockLondonGazetteClient(),
-    insolvencyDisqualifiedOfficersClient: new MockInsolvencyDisqualifiedOfficersClient(),
     companyRepository: new InMemoryCompanyRepository(),
     searchLogRepository,
     reportProductRepository: new InMemoryReportProductRepository(),
@@ -590,49 +431,6 @@ class CountingCompaniesHouseClient extends SingleCompanyCompaniesHouseClient {
   }
 }
 
-class CountingLondonGazetteClient implements LondonGazetteClient {
-  readonly mode: ProviderMode = "mock";
-
-  readonly provider = "london_gazette" as const;
-
-  noticeCalls = 0;
-
-  checkCompanyNotices(
-    input: LondonGazetteCompanyInput,
-  ): Promise<ProviderResult<LondonGazetteFreePreviewFlags>> {
-    this.noticeCalls += 1;
-
-    return Promise.resolve(
-      createProviderSuccess(this.provider, {
-        companiesHouseNumber: input.companyNumber,
-        gazetteStrikeoffFlag: false,
-        gazetteWindingupFlag: false,
-        notices: [],
-      }),
-    );
-  }
-}
-
-class FailedLondonGazetteClient implements LondonGazetteClient {
-  readonly mode: ProviderMode = "mock";
-
-  readonly provider = "london_gazette" as const;
-
-  checkCompanyNotices(): Promise<ProviderResult<LondonGazetteFreePreviewFlags>> {
-    return Promise.resolve(
-      createProviderFailure(
-        this.provider,
-        {
-          code: "integration_timeout",
-          message: "London Gazette request timed out.",
-          retryable: true,
-        },
-        "2026-01-01T00:00:00.000Z",
-      ),
-    );
-  }
-}
-
 class FakeRedisRateLimitClient implements RedisRateLimitClient {
   readonly calls: Array<{ script: string; numberOfKeys: number; args: string[] }> = [];
 
@@ -643,34 +441,12 @@ class FakeRedisRateLimitClient implements RedisRateLimitClient {
   }
 }
 
-class CountingInsolvencyDisqualifiedOfficersClient implements InsolvencyDisqualifiedOfficersClient {
-  readonly mode: ProviderMode = "mock";
-
-  readonly provider = "insolvency_disqualified_officers" as const;
-
-  checkCalls = 0;
-
-  checkCompany(
-    input: InsolvencyDisqualifiedOfficersInput,
-  ): Promise<ProviderResult<InsolvencyDisqualifiedOfficersFreePreviewFlags>> {
-    this.checkCalls += 1;
-
-    return Promise.resolve(
-      createProviderSuccess(this.provider, {
-        companiesHouseNumber: input.companyNumber,
-        insolvencyFlag: false,
-        disqualifiedDirectorsFlag: false,
-        disqualifiedOfficers: [],
-      }),
-    );
-  }
-}
-
 async function listen(app: { listen: (port: number) => unknown }): Promise<{
   baseUrl: string;
   close: () => Promise<void>;
 }> {
   const server = app.listen(0) as Server;
+  openServers.add(server);
 
   await new Promise<void>((resolve) => {
     server.once("listening", resolve);
@@ -680,18 +456,22 @@ async function listen(app: { listen: (port: number) => unknown }): Promise<{
 
   return {
     baseUrl: `http://127.0.0.1:${address.port}`,
-    close: () =>
-      new Promise<void>((resolve, reject) => {
-        server.close((error) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-
-          resolve();
-        });
-      }),
+    close: () => closeServer(server),
   };
+}
+
+function closeServer(server: Server): Promise<void> {
+  if (!openServers.delete(server) || !server.listening) return Promise.resolve();
+
+  return new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
 }
 
 function toProxyHeaders(identity: {

@@ -11,6 +11,7 @@ export interface CheckoutSessionState {
   id: string;
   status: Stripe.Checkout.Session.Status | null;
   paymentStatus: Stripe.Checkout.Session.PaymentStatus;
+  clerkUserId: string | undefined;
 }
 
 export interface StripeGateway {
@@ -20,7 +21,7 @@ export interface StripeGateway {
     companyNumber: string;
     companyName: string;
     email: string;
-    clerkUserId?: string | undefined;
+    clerkUserId: string;
     pricePence: number;
     currency: string;
     tier: ReportTier;
@@ -42,7 +43,7 @@ export interface PaidReportEventInput {
   companyName: string;
   tier: ReportTier;
   email: string;
-  clerkUserId: string | undefined;
+  clerkUserId: string;
   amountPaidPence: number;
   currency: string;
   eventPayload: Record<string, unknown>;
@@ -54,7 +55,10 @@ export interface PaidReportEventResult {
 }
 
 export interface CheckoutRepository {
-  findReportBySessionId(sessionId: string): Promise<{ id: string } | undefined>;
+  findReportBySessionId(
+    sessionId: string,
+    clerkUserId: string,
+  ): Promise<{ id: string } | undefined>;
   recordHandledEvent(input: {
     eventId: string;
     eventType: string;
@@ -69,8 +73,10 @@ export interface CheckoutStatusResult {
 }
 
 export class CheckoutUnavailableError extends Error {}
+export class CheckoutAuthorizationError extends Error {}
 export class CheckoutValidationError extends Error {}
 
 export type AuthenticatedCreateCheckoutSessionInput = CreateCheckoutSessionInput & {
-  clerkUserId?: string | undefined;
+  clerkUserId: string;
+  verifiedEmail: string;
 };

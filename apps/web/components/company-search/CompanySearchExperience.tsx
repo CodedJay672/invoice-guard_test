@@ -3,14 +3,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
   ArrowRight,
-  BadgeCheck,
   Building2,
   CalendarDays,
   CircleAlert,
-  FileLock2,
   LockKeyhole,
   Search,
-  ShieldAlert,
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -29,7 +26,6 @@ import {
 } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { cn } from "@workspace/ui/lib/utils";
 import {
   apiErrorResponseSchema,
   companySearchApiResponseSchema,
@@ -346,7 +342,7 @@ function PreviewLoading() {
     <Card aria-busy="true">
       <CardHeader>
         <CardTitle>Loading free preview</CardTitle>
-        <CardDescription>Checking the three approved free sources.</CardDescription>
+        <CardDescription>Checking Companies House.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Skeleton className="h-5 w-2/3" />
@@ -362,8 +358,6 @@ type FreePreviewProps = {
 };
 
 function FreePreview({ preview }: FreePreviewProps) {
-  const failedSources = preview.sourceStatuses.filter((source) => source.status === "failed");
-
   return (
     <div className="flex flex-col gap-5">
       <Card className="shadow-md">
@@ -405,42 +399,7 @@ function FreePreview({ preview }: FreePreviewProps) {
       </Card>
 
       <SourceStatusList statuses={preview.sourceStatuses} />
-
-      {failedSources.length > 0 ? (
-        <Alert variant="caution">
-          <CircleAlert aria-hidden="true" />
-          <AlertTitle>Some source data could not be retrieved</AlertTitle>
-          <AlertDescription>
-            No clean conclusion has been made. Available source results remain visible below.
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      {preview.adverseBanners.map((banner) => (
-        <Alert key={banner.flag} variant="critical">
-          <ShieldAlert aria-hidden="true" />
-          <AlertTitle>Records found</AlertTitle>
-          <AlertDescription>{banner.message}</AlertDescription>
-        </Alert>
-      ))}
-
-      {preview.cleanReassurance ? (
-        <Alert variant="positive">
-          <BadgeCheck aria-hidden="true" />
-          <AlertTitle>No records found in checked sources</AlertTitle>
-          <AlertDescription>{preview.cleanReassurance}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      {preview.previewPath === "standard" ? (
-        <Alert variant="caution">
-          <CircleAlert aria-hidden="true" />
-          <AlertTitle>Registered company status: {preview.company.companyStatus}</AlertTitle>
-          <AlertDescription>
-            Review the factual company status and checked-source details before continuing.
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      <NotYetCheckedSourceList sources={preview.notYetCheckedSources} />
 
       <CourtRecordsCard prompt={preview.courtRecordsPrompt} />
 
@@ -452,6 +411,41 @@ function FreePreview({ preview }: FreePreviewProps) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function NotYetCheckedSourceList({
+  sources,
+}: {
+  sources: FreePreviewPayload["notYetCheckedSources"];
+}) {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle>
+          <h2>Not yet checked</h2>
+        </CardTitle>
+        <CardDescription>
+          These sources are not queried by the free Companies House preview.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="flex flex-col gap-3">
+          {sources.map((source) => (
+            <li
+              key={source.source}
+              className="flex flex-col gap-1 border-b border-line pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p className="text-sm font-medium text-content">{source.label}</p>
+                <p className="text-xs text-content-muted">{source.message}</p>
+              </div>
+              <Badge variant="outline">Not yet checked</Badge>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -545,14 +539,8 @@ type CuriosityCardProps = {
 };
 
 function CuriosityCard({ card }: CuriosityCardProps) {
-  const isPositive = card.kind === "full_clearance";
-
   return (
-    <Card
-      className={cn(isPositive && "md:col-span-2")}
-      size="sm"
-      tone={isPositive ? "positive" : "default"}
-    >
+    <Card size="sm">
       <CardHeader>
         <CardTitle>
           <h3>{card.heading ?? card.question}</h3>
@@ -573,15 +561,6 @@ function CuriosityCard({ card }: CuriosityCardProps) {
             </Badge>
           ) : null}
         </CardContent>
-      ) : null}
-      {card.button ? (
-        <CardFooter className="flex-col items-start gap-2">
-          <Button type="button" disabled variant="authoritative">
-            <FileLock2 data-icon="inline-start" />
-            {card.button}
-          </Button>
-          {card.smallText ? <p className="text-xs opacity-80">{card.smallText}</p> : null}
-        </CardFooter>
       ) : null}
     </Card>
   );
@@ -680,8 +659,6 @@ function formatCheckedAt(value: string): string {
 function providerLabel(provider: FreePreviewPayload["sourceStatuses"][number]["provider"]): string {
   const labels = {
     companies_house: "Companies House",
-    insolvency_disqualified_officers: "Insolvency and disqualified officers",
-    london_gazette: "London Gazette",
   } as const;
 
   return labels[provider];

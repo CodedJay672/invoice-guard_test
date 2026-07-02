@@ -25,10 +25,8 @@ export const searchFixtureNames = [
   "rate-limited",
   "provider-error",
   "preview-loading",
-  "clean",
-  "adverse",
+  "preview-ready",
   "standard",
-  "source-failed",
   "ready-cta",
 ] as const;
 
@@ -108,46 +106,51 @@ const tierCards: FreePreviewPayload["tierCards"] = [
   },
 ];
 
-const sourceStatuses: FreePreviewPayload["sourceStatuses"] = [
-  {
-    provider: "companies_house",
-    status: "success",
-    checkedAt: "2026-06-22T10:00:00.000Z",
-  },
-  {
-    provider: "insolvency_disqualified_officers",
-    status: "success",
-    checkedAt: "2026-06-22T10:00:01.000Z",
-  },
-  {
-    provider: "london_gazette",
-    status: "success",
-    checkedAt: "2026-06-22T10:00:02.000Z",
-  },
-];
-
 const basePreview: FreePreviewPayload = {
   company: {
     ...company,
     industryLabel: "Non-specialised wholesale trade",
     activeDirectorCount: 2,
-    lastFetchedAt: "2026-06-22T10:00:00.000Z",
+    lastFetchedAt: "2026-07-02T10:00:00.000Z",
   },
   companyAge: "8 years, 2 months old",
-  previewPath: "clean",
-  freeSourceFlags: {
-    insolvencyFlag: false,
-    disqualifiedDirectorsFlag: false,
-    gazetteStrikeoffFlag: false,
-    gazetteWindingupFlag: false,
-  },
-  adverseBanners: [],
-  cleanReassurance:
-    "No insolvency events, director disqualifications, or gazette notices found on the free check.",
+  sourceStatuses: [
+    {
+      provider: "companies_house",
+      status: "success",
+      checkedAt: "2026-07-02T10:00:00.000Z",
+    },
+  ],
+  notYetCheckedSources: [
+    {
+      source: "london_gazette",
+      label: "London Gazette notices",
+      status: "not_yet_checked",
+      message: "Available in paid reports when entitled.",
+    },
+    {
+      source: "insolvency_disqualified_officers",
+      label: "Insolvency and disqualified officers",
+      status: "not_yet_checked",
+      message: "Available in paid reports when entitled.",
+    },
+    {
+      source: "registry_trust",
+      label: "Registry Trust court records",
+      status: "not_yet_checked",
+      message: "Retrieved only after confirmed payment.",
+    },
+    {
+      source: "ai_interpretation",
+      label: "AI report interpretation",
+      status: "not_yet_checked",
+      message: "Generated only for paid reports.",
+    },
+  ],
   courtRecordsPrompt: {
     label: "COURT RECORDS — NOT YET CHECKED",
     heading: "Has this company ever been taken to court over an unpaid debt?",
-    body: "Court records are held separately and are not included in the free check. They are retrieved only after a paid report is purchased.",
+    body: "Court records are not included in the free Companies House preview. They are retrieved only after a paid report is purchased.",
     questionLine: "Find out whether this company has CCJs on record.",
     button: "Check the Court Records",
     smallText: "Included in all paid reports. Basic from £7.99.",
@@ -169,30 +172,6 @@ const basePreview: FreePreviewPayload = {
     },
   ],
   tierCards,
-  sourceStatuses,
-};
-
-const adversePreview: FreePreviewPayload = {
-  ...basePreview,
-  previewPath: "adverse",
-  cleanReassurance: undefined,
-  freeSourceFlags: {
-    insolvencyFlag: true,
-    disqualifiedDirectorsFlag: false,
-    gazetteStrikeoffFlag: true,
-    gazetteWindingupFlag: false,
-  },
-  adverseBanners: [
-    {
-      flag: "insolvency",
-      message: "Insolvency or administration records found in the checked source.",
-    },
-    {
-      flag: "gazette_strikeoff",
-      message: "A compulsory strike-off notice was found in the London Gazette.",
-    },
-  ],
-  curiosityCards: [],
 };
 
 const standardPreview: FreePreviewPayload = {
@@ -202,32 +181,6 @@ const standardPreview: FreePreviewPayload = {
     companyStatus: "dissolved",
     activeDirectorCount: 0,
   },
-  previewPath: "standard",
-  cleanReassurance: undefined,
-  curiosityCards: [],
-};
-
-const sourceFailedPreview: FreePreviewPayload = {
-  ...basePreview,
-  previewPath: "source_failed",
-  cleanReassurance: undefined,
-  freeSourceFlags: {
-    insolvencyFlag: false,
-    disqualifiedDirectorsFlag: false,
-    gazetteStrikeoffFlag: null,
-    gazetteWindingupFlag: null,
-  },
-  curiosityCards: [],
-  sourceStatuses: [
-    sourceStatuses[0]!,
-    sourceStatuses[1]!,
-    {
-      provider: "london_gazette",
-      status: "failed",
-      checkedAt: "2026-06-22T10:00:02.000Z",
-      message: "Data could not be retrieved",
-    },
-  ],
 };
 
 export function isSearchFixtureName(value: string | undefined): value is SearchFixtureName {
@@ -285,17 +238,23 @@ export function getSearchFixtureState(
         searchStatus: "results",
         previewStatus: "loading",
       };
-    case "clean":
-      return { ...base, preview: basePreview, previewStatus: "ready" };
-    case "adverse":
-      return { ...base, preview: adversePreview, previewStatus: "ready" };
+  }
+
+  const selectedCompanyBase: SearchFixtureState = {
+    ...base,
+    query: "acme",
+    matches: [company],
+    searchStatus: "results",
+  };
+
+  switch (fixtureName) {
+    case "preview-ready":
+      return { ...selectedCompanyBase, preview: basePreview, previewStatus: "ready" };
     case "standard":
-      return { ...base, preview: standardPreview, previewStatus: "ready" };
-    case "source-failed":
-      return { ...base, preview: sourceFailedPreview, previewStatus: "ready" };
+      return { ...selectedCompanyBase, preview: standardPreview, previewStatus: "ready" };
     case "ready-cta":
       return {
-        ...base,
+        ...selectedCompanyBase,
         preview: basePreview,
         previewStatus: "ready",
         tierCtasReady: true,

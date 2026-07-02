@@ -27,7 +27,7 @@ export function PublicSearchShell({ children }: PublicSearchShellProps) {
         <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 text-sm font-medium text-content-muted sm:grid-cols-3 sm:px-6 lg:px-8">
           <SourceTrustItem icon={Database} text="Companies House identity" />
           <SourceTrustItem icon={FileSearch} text="London Gazette notices" />
-          <SourceTrustItem icon={CheckCircle2} text="Free-source adverse checks" />
+          <SourceTrustItem icon={CheckCircle2} text="Companies House free preview" />
         </div>
       </section>
 

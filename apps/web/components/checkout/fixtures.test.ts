@@ -9,11 +9,14 @@ import {
   resolvePaymentStatusFixtureName,
 } from "./fixtures.js";
 
-void test("checkout buyer fixtures preserve guest editing and verified account identity", () => {
+void test("checkout buyer fixtures cover verified and verification-required identity", () => {
   assert.deepEqual(resolveCheckoutBuyerFixture(undefined), {
-    mode: "guest",
-    initialEmail: "",
-    emailReadOnly: false,
+    mode: "unverified",
+    clerkUserId: "user_unverified_fixture",
+  });
+  assert.deepEqual(resolveCheckoutBuyerFixture("unverified-email"), {
+    mode: "unverified",
+    clerkUserId: "user_unverified_fixture",
   });
   assert.deepEqual(resolveCheckoutBuyerFixture("authenticated-ready"), {
     mode: "authenticated",

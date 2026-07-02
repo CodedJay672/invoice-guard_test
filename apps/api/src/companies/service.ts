@@ -1,14 +1,11 @@
-import type { ProviderFailed, ProviderResult } from "@workspace/integrations";
+import type { ProviderFailed } from "@workspace/integrations";
 
 import type {
   CompanyPayload,
   CompanySearchResponsePayload,
   CompanyServiceDependencies,
-  FreePreviewAdverseFlag,
-  FreePreviewBannerPayload,
   FreePreviewCuriosityCardPayload,
   FreePreviewPayload,
-  FreePreviewSourceStatus,
 } from "./types.js";
 import { toSearchMatchPayload } from "./types.js";
 
@@ -49,11 +46,9 @@ export class CompanyService {
   }
 
   async getFreePreview(companyNumber: string): Promise<FreePreviewPayload> {
-    const [companyResult, londonGazetteResult, insolvencyResult] = await Promise.all([
-      this.dependencies.companiesHouseClient.getCompanyProfile({ companyNumber }),
-      this.dependencies.londonGazetteClient.checkCompanyNotices({ companyNumber }),
-      this.dependencies.insolvencyDisqualifiedOfficersClient.checkCompany({ companyNumber }),
-    ]);
+    const companyResult = await this.dependencies.companiesHouseClient.getCompanyProfile({
+      companyNumber,
+    });
 
     if (companyResult.status === "failed") {
       throw new CompanyProviderError(companyResult);
@@ -61,53 +56,36 @@ export class CompanyService {
 
     const company = await this.dependencies.companyRepository.upsertCompany(companyResult.data);
     const reportProducts = await this.dependencies.reportProductRepository.listActive();
-    const freeSourceFlags = {
-      insolvencyFlag:
-        insolvencyResult.status === "success" ? insolvencyResult.data.insolvencyFlag : null,
-      disqualifiedDirectorsFlag:
-        insolvencyResult.status === "success"
-          ? insolvencyResult.data.disqualifiedDirectorsFlag
-          : null,
-      gazetteStrikeoffFlag:
-        londonGazetteResult.status === "success"
-          ? londonGazetteResult.data.gazetteStrikeoffFlag
-          : null,
-      gazetteWindingupFlag:
-        londonGazetteResult.status === "success"
-          ? londonGazetteResult.data.gazetteWindingupFlag
-          : null,
-    };
-    const adverseBanners = buildAdverseBanners(freeSourceFlags);
-    const sourceStatuses = [
-      toFreePreviewSourceStatus(companyResult),
-      toFreePreviewSourceStatus(insolvencyResult),
-      toFreePreviewSourceStatus(londonGazetteResult),
-    ];
-    const hasSourceFailure = sourceStatuses.some((source) => source.status === "failed");
-    const allFreeSourceFlagsAreFalse = Object.values(freeSourceFlags).every(
-      (flag) => flag === false,
-    );
-    const isClean =
-      !hasSourceFailure &&
-      allFreeSourceFlagsAreFalse &&
-      company.companyStatus.trim().toLowerCase() === "active";
 
     return {
       company,
       companyAge: describeCompanyAge(company.incorporationDate),
-      previewPath:
-        adverseBanners.length > 0
-          ? "adverse"
-          : hasSourceFailure
-            ? "source_failed"
-            : isClean
-              ? "clean"
-              : "standard",
-      freeSourceFlags,
-      adverseBanners,
-      cleanReassurance: isClean
-        ? "No insolvency events, director disqualifications, or gazette notices found on the free check."
-        : undefined,
+      notYetCheckedSources: [
+        {
+          source: "london_gazette",
+          label: "London Gazette notices",
+          status: "not_yet_checked",
+          message: "Available in paid reports when entitled.",
+        },
+        {
+          source: "insolvency_disqualified_officers",
+          label: "Insolvency and disqualified officers",
+          status: "not_yet_checked",
+          message: "Available in paid reports when entitled.",
+        },
+        {
+          source: "registry_trust",
+          label: "Registry Trust court records",
+          status: "not_yet_checked",
+          message: "Retrieved only after confirmed payment.",
+        },
+        {
+          source: "ai_interpretation",
+          label: "AI report interpretation",
+          status: "not_yet_checked",
+          message: "Generated only for paid reports.",
+        },
+      ],
       courtRecordsPrompt: {
         label: "COURT RECORDS — NOT YET CHECKED",
         heading: "Has this company ever been taken to court over an unpaid debt?",
@@ -116,7 +94,7 @@ export class CompanyService {
         button: "Check the Court Records",
         smallText: "Included in all paid reports. Basic from £7.99.",
       },
-      curiosityCards: isClean ? buildCuriosityCards(company.activeDirectorCount) : [],
+      curiosityCards: buildCuriosityCards(company.activeDirectorCount),
       tierCards: reportProducts.map((product) => ({
         tier: product.tier,
         name: product.name,
@@ -125,7 +103,13 @@ export class CompanyService {
         includedItems: product.includedItems,
         cta: `Unlock ${product.name} Report`,
       })),
-      sourceStatuses,
+      sourceStatuses: [
+        {
+          provider: "companies_house",
+          status: "success",
+          checkedAt: companyResult.checkedAt,
+        },
+      ],
     };
   }
 
@@ -138,60 +122,6 @@ export class CompanyService {
   }): Promise<void> {
     await this.dependencies.searchLogRepository.recordSearch(input);
   }
-}
-
-function buildAdverseBanners(flags: {
-  insolvencyFlag: boolean | null;
-  disqualifiedDirectorsFlag: boolean | null;
-  gazetteStrikeoffFlag: boolean | null;
-  gazetteWindingupFlag: boolean | null;
-}): FreePreviewBannerPayload[] {
-  const banners: FreePreviewBannerPayload[] = [];
-  const copy: Record<FreePreviewAdverseFlag, string> = {
-    insolvency:
-      "Insolvency or administration records found on this company in the Insolvency Service register. Unlock a paid report to see the full detail.",
-    disqualified_director:
-      "A director disqualification was found connected to this company. Unlock a paid report to see which director and when.",
-    gazette_strikeoff:
-      "A compulsory strike-off notice was found for this company in the London Gazette. Unlock a paid report to see the full detail.",
-    gazette_windingup:
-      "A winding-up petition notice was found for this company in the London Gazette. Unlock a paid report to see the full detail.",
-  };
-
-  if (flags.insolvencyFlag) {
-    banners.push({ flag: "insolvency", message: copy.insolvency });
-  }
-
-  if (flags.disqualifiedDirectorsFlag) {
-    banners.push({ flag: "disqualified_director", message: copy.disqualified_director });
-  }
-
-  if (flags.gazetteStrikeoffFlag) {
-    banners.push({ flag: "gazette_strikeoff", message: copy.gazette_strikeoff });
-  }
-
-  if (flags.gazetteWindingupFlag) {
-    banners.push({ flag: "gazette_windingup", message: copy.gazette_windingup });
-  }
-
-  return banners;
-}
-
-function toFreePreviewSourceStatus(result: ProviderResult<unknown>): FreePreviewSourceStatus {
-  if (result.status === "failed") {
-    return {
-      provider: result.provider,
-      status: "failed",
-      checkedAt: result.checkedAt,
-      message: "Data could not be retrieved",
-    };
-  }
-
-  return {
-    provider: result.provider,
-    status: "success",
-    checkedAt: result.checkedAt,
-  };
 }
 
 function buildCuriosityCards(
@@ -219,16 +149,6 @@ function buildCuriosityCards(
       body: "Covers director appointments, resignations, address changes, new charges registered, and account submissions.",
       button: undefined,
       smallText: undefined,
-    },
-    {
-      kind: "full_clearance" as const,
-      heading: "Everything looks clean so far.",
-      question: undefined,
-      blurredAnswer: undefined,
-      lockTag: undefined,
-      body: "The free check covers company status and the most visible public records. The full report confirms there is nothing in the detail. Court records from Registry Trust. Director disqualification check. Insolvency history. Charges registered against company assets. Filing compliance across the last three years. A complete clearance you can keep on file as proof of due diligence.",
-      button: "Get Full Clearance Report — Premium",
-      smallText: "Includes branded PDF report and timestamped reference number.",
     },
   ];
 }

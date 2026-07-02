@@ -65,7 +65,7 @@ export default async function Page({ searchParams }: PageProps) {
 
 function authPanelState(fixture: AuthFixtureName): AuthPanelState {
   if (fixture === "signed-out") return "sign-in";
-  if (fixture === "owner-access" || fixture === "non-owner-access" || fixture === "guest-access") {
+  if (fixture === "owner-access" || fixture === "non-owner-access") {
     return "sign-in";
   }
   return fixture;
@@ -77,8 +77,6 @@ function accessProps(fixture: AuthFixtureName) {
   if (fixture === "non-owner-access") {
     return { identity: "signed-in" as const, outcome: "non-owner" as const };
   }
-  if (fixture === "guest-access")
-    return { identity: "signed-out" as const, outcome: "guest" as const };
   return undefined;
 }
 

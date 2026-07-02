@@ -173,6 +173,8 @@ Depends on: **AUTH-A — UI/Mock Verified** and **13B — Logic/Data complete**.
 
 Depends on: **AUTH-B — Logic/Data complete**.
 
+Status: **Complete 2026-07-02**.
+
 - Remove guest email entry and every guest Checkout creation path from UI, validation, API, webhook ownership, fixtures, and tests.
 - Preserve selected company, tier, and a safe return path through registration/sign-in.
 - Require an authenticated Clerk user with a verified primary email before Stripe Checkout is created.

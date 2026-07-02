@@ -41,13 +41,17 @@ const productRepository: ReportProductRepository = {
 
 class MemoryCheckoutRepository implements CheckoutRepository {
   report: { id: string } | undefined;
+  reportOwner = "user_owner_123";
   handledEvents: string[] = [];
   prepared: PaidReportEventInput[] = [];
   processedEvents: string[] = [];
   alreadyProcessed = false;
 
-  findReportBySessionId(): Promise<{ id: string } | undefined> {
-    return Promise.resolve(this.report);
+  findReportBySessionId(
+    _sessionId: string,
+    clerkUserId: string,
+  ): Promise<{ id: string } | undefined> {
+    return Promise.resolve(clerkUserId === this.reportOwner ? this.report : undefined);
   }
   recordHandledEvent(input: { eventId: string }): Promise<void> {
     this.handledEvents.push(input.eventId);
@@ -71,7 +75,7 @@ class FakeStripeGateway implements StripeGateway {
 
   createSession(input: {
     pricePence: number;
-    clerkUserId?: string | undefined;
+    clerkUserId: string;
   }): Promise<CheckoutSessionResult> {
     this.createdPrice = input.pricePence;
     this.createdClerkUserId = input.clerkUserId;
@@ -82,6 +86,7 @@ class FakeStripeGateway implements StripeGateway {
       id: "cs_test_one",
       status: this.status,
       paymentStatus: this.paymentStatus,
+      clerkUserId: "user_owner_123",
     });
   }
   constructEvent(): Stripe.Event {
@@ -120,7 +125,8 @@ void test("checkout creation uses the trusted active product price", async () =>
   const result = await harness.service.createSession({
     companyNumber: "12345678",
     tier: "basic",
-    email: "buyer@example.com",
+    verifiedEmail: "buyer@example.com",
+    clerkUserId: "user_owner_123",
     attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
   });
   assert.equal(result.sessionId, "cs_test_one");
@@ -132,7 +138,7 @@ void test("verified checkout ownership is carried into Stripe by the service", a
   await harness.service.createSession({
     companyNumber: "12345678",
     tier: "basic",
-    email: "owner@example.com",
+    verifiedEmail: "owner@example.com",
     attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
     clerkUserId: "user_owner_123",
   });
@@ -163,6 +169,16 @@ void test("paid completion preserves server-created Clerk ownership metadata", a
   assert.equal(harness.repository.prepared[0]?.clerkUserId, "user_owner_123");
 });
 
+void test("paid completion rejects missing Clerk ownership metadata", async () => {
+  const harness = createHarness();
+  await assert.rejects(
+    harness.service.processEvent(checkoutEvent("checkout.session.completed", "paid", null)),
+    /metadata is invalid/,
+  );
+  assert.equal(harness.repository.prepared.length, 0);
+  assert.deepEqual(harness.enqueued, []);
+});
+
 void test("processed replay does not enqueue a duplicate generation job", async () => {
   const harness = createHarness();
   harness.repository.alreadyProcessed = true;
@@ -175,9 +191,17 @@ void test("processed replay does not enqueue a duplicate generation job", async 
 
 void test("status is paid only after the pending report exists", async () => {
   const harness = createHarness();
-  assert.deepEqual(await harness.service.getStatus("cs_test_one"), { status: "confirming" });
+  assert.deepEqual(await harness.service.getStatus("cs_test_one", "user_owner_123"), {
+    status: "confirming",
+  });
   harness.repository.report = { id: "report-1" };
-  assert.deepEqual(await harness.service.getStatus("cs_test_one"), { status: "paid_pending" });
+  assert.deepEqual(await harness.service.getStatus("cs_test_one", "user_owner_123"), {
+    status: "paid_pending",
+  });
+  await assert.rejects(
+    harness.service.getStatus("cs_test_one", "user_other"),
+    /owner does not match/,
+  );
 });
 
 function checkoutEvent(
@@ -186,7 +210,7 @@ function checkoutEvent(
     | "checkout.session.async_payment_succeeded"
     | "checkout.session.async_payment_failed",
   paymentStatus: Stripe.Checkout.Session.PaymentStatus,
-  clerkUserId?: string,
+  clerkUserId: string | null = "user_owner_123",
 ): Stripe.Event {
   return {
     id: "evt_one",

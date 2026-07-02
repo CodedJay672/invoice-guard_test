@@ -2,9 +2,6 @@ import type {
   CompaniesHouseClient,
   CompaniesHouseCompanyProfile,
   CompaniesHouseCompanySummary,
-  InsolvencyDisqualifiedOfficersClient,
-  LondonGazetteClient,
-  ProviderName,
 } from "@workspace/integrations";
 
 import type { ReportProductRepository } from "../report-products/repository.js";
@@ -42,36 +39,27 @@ export interface CompanySearchResponsePayload {
   matches: CompanySearchMatchPayload[];
 }
 
-export type FreePreviewPath = "adverse" | "clean" | "source_failed" | "standard";
-
-export type FreePreviewAdverseFlag =
-  | "insolvency"
-  | "disqualified_director"
-  | "gazette_strikeoff"
-  | "gazette_windingup";
-
 export type FreePreviewSourceStatus =
   | {
-      provider: ProviderName;
+      provider: "companies_house";
       status: "success";
       checkedAt: string;
     }
   | {
-      provider: ProviderName;
+      provider: "companies_house";
       status: "failed";
       checkedAt: string;
       message: "Data could not be retrieved";
     };
 
-export interface FreePreviewFlagsPayload {
-  insolvencyFlag: boolean | null;
-  disqualifiedDirectorsFlag: boolean | null;
-  gazetteStrikeoffFlag: boolean | null;
-  gazetteWindingupFlag: boolean | null;
-}
-
-export interface FreePreviewBannerPayload {
-  flag: FreePreviewAdverseFlag;
+export interface FreePreviewNotYetCheckedSource {
+  source:
+    | "london_gazette"
+    | "insolvency_disqualified_officers"
+    | "registry_trust"
+    | "ai_interpretation";
+  label: string;
+  status: "not_yet_checked";
   message: string;
 }
 
@@ -85,7 +73,7 @@ export interface FreePreviewCourtRecordsPromptPayload {
 }
 
 export interface FreePreviewCuriosityCardPayload {
-  kind: "director_network" | "recent_activity" | "full_clearance";
+  kind: "director_network" | "recent_activity";
   heading: string | undefined;
   question: string | undefined;
   blurredAnswer: string | undefined;
@@ -107,10 +95,7 @@ export interface FreePreviewTierCardPayload {
 export interface FreePreviewPayload {
   company: CompanyPayload;
   companyAge: string | undefined;
-  previewPath: FreePreviewPath;
-  freeSourceFlags: FreePreviewFlagsPayload;
-  adverseBanners: FreePreviewBannerPayload[];
-  cleanReassurance: string | undefined;
+  notYetCheckedSources: FreePreviewNotYetCheckedSource[];
   courtRecordsPrompt: FreePreviewCourtRecordsPromptPayload;
   curiosityCards: FreePreviewCuriosityCardPayload[];
   tierCards: FreePreviewTierCardPayload[];
@@ -135,8 +120,6 @@ export interface SearchLogRepository {
 
 export interface CompanyServiceDependencies {
   companiesHouseClient: CompaniesHouseClient;
-  londonGazetteClient: LondonGazetteClient;
-  insolvencyDisqualifiedOfficersClient: InsolvencyDisqualifiedOfficersClient;
   companyRepository: CompanyRepository;
   searchLogRepository: SearchLogRepository;
   reportProductRepository: ReportProductRepository;

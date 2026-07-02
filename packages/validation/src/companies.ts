@@ -34,11 +34,7 @@ export const companyPayloadSchema = companySearchMatchPayloadSchema.extend({
   lastFetchedAt: z.string().optional(),
 });
 
-const freePreviewProviderSchema = z.enum([
-  "companies_house",
-  "london_gazette",
-  "insolvency_disqualified_officers",
-]);
+const freePreviewProviderSchema = z.literal("companies_house");
 
 export const freePreviewSourceStatusSchema = z.discriminatedUnion("status", [
   z.object({
@@ -57,25 +53,19 @@ export const freePreviewSourceStatusSchema = z.discriminatedUnion("status", [
 export const freePreviewPayloadSchema = z.object({
   company: companyPayloadSchema,
   companyAge: z.string().optional(),
-  previewPath: z.enum(["adverse", "clean", "source_failed", "standard"]),
-  freeSourceFlags: z.object({
-    insolvencyFlag: z.boolean().nullable(),
-    disqualifiedDirectorsFlag: z.boolean().nullable(),
-    gazetteStrikeoffFlag: z.boolean().nullable(),
-    gazetteWindingupFlag: z.boolean().nullable(),
-  }),
-  adverseBanners: z.array(
+  notYetCheckedSources: z.array(
     z.object({
-      flag: z.enum([
-        "insolvency",
-        "disqualified_director",
-        "gazette_strikeoff",
-        "gazette_windingup",
+      source: z.enum([
+        "london_gazette",
+        "insolvency_disqualified_officers",
+        "registry_trust",
+        "ai_interpretation",
       ]),
+      label: z.string(),
+      status: z.literal("not_yet_checked"),
       message: z.string(),
     }),
   ),
-  cleanReassurance: z.string().optional(),
   courtRecordsPrompt: z.object({
     label: z.string(),
     heading: z.string(),
@@ -86,7 +76,7 @@ export const freePreviewPayloadSchema = z.object({
   }),
   curiosityCards: z.array(
     z.object({
-      kind: z.enum(["director_network", "recent_activity", "full_clearance"]),
+      kind: z.enum(["director_network", "recent_activity"]),
       heading: z.string().optional(),
       question: z.string().optional(),
       blurredAnswer: z.string().optional(),

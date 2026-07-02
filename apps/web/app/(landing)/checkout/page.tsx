@@ -9,15 +9,18 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { CheckoutShell } from "@/components/checkout/CheckoutShell";
 import {
+  buildCheckoutHref,
   reportProductFixtures,
   resolveCheckoutBuyerFixture,
   resolveCheckoutFixtureName,
   resolveCheckoutSelection,
 } from "@/components/checkout/fixtures";
+import { authHref } from "@/components/auth/fixtures";
 import { resolveAuthIdentity } from "@/lib/auth/identity";
 
 type PageProps = {
@@ -42,6 +45,9 @@ export default async function Page({ searchParams }: PageProps) {
   }
 
   const identity = await resolveAuthIdentity();
+  if (!fixtureName && identity.state === "signed-out") {
+    redirect(authHref("/sign-up", buildCheckoutHref(selection)));
+  }
   const buyer = fixtureName
     ? resolveCheckoutBuyerFixture(fixtureName)
     : identity.state === "verified"
@@ -51,8 +57,8 @@ export default async function Page({ searchParams }: PageProps) {
           emailReadOnly: true as const,
         }
       : identity.state === "unverified"
-        ? { mode: "unverified" as const, initialEmail: "" as const, emailReadOnly: true as const }
-        : { mode: "guest" as const, initialEmail: "", emailReadOnly: false as const };
+        ? { mode: "unverified" as const, clerkUserId: identity.clerkUserId }
+        : resolveCheckoutBuyerFixture("unverified-email");
 
   const statusParams = new URLSearchParams({
     companyNumber: selection.companyNumber,

@@ -41,3 +41,17 @@ void test("context compliance migration guards destructive enum conversion", asy
   assert.match(migration, /1499/);
   assert.match(migration, /2700/);
 });
+
+void test("AUTH-C migration refuses ownerless reports before retiring guest columns", async () => {
+  const migration = await readFile(
+    new URL("../../drizzle/0003_wandering_punisher.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(migration, /WHERE "clerk_user_id" IS NULL/);
+  assert.match(migration, /AUTH-C migration blocked/);
+  assert.match(migration, /ALTER COLUMN "clerk_user_id" SET NOT NULL/);
+  assert.match(migration, /DROP COLUMN "guest_email"/);
+  assert.equal("guestEmail" in purchasedReports, false);
+  assert.equal("guestAccessTokenHash" in purchasedReports, false);
+});
