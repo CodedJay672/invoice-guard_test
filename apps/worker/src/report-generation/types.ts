@@ -9,8 +9,18 @@ export type PersistedReportStatus =
 
 export type ReportGenerationOutcome = "ready" | "partial" | "refund_required";
 
+export interface ReportGenerationResult {
+  outcome: ReportGenerationOutcome;
+  reportData?: Record<string, unknown> | undefined;
+  providerStatuses?: Record<string, unknown> | undefined;
+}
+
 export interface ReportGenerationHandler {
-  generate(reportId: string): Promise<ReportGenerationOutcome>;
+  generate(reportId: string): Promise<ReportGenerationResult>;
+  recoverTerminalFailure?(
+    reportId: string,
+    error: unknown,
+  ): Promise<ReportGenerationResult | undefined>;
 }
 
 export type ReportClaimResult =
@@ -22,7 +32,7 @@ export interface ReportGenerationRepository {
   claimPending(reportId: string): Promise<ReportClaimResult>;
   complete(
     reportId: string,
-    outcome: ReportGenerationOutcome,
+    result: ReportGenerationResult,
   ): Promise<PersistedReportStatus | undefined>;
   fail(reportId: string): Promise<PersistedReportStatus | undefined>;
   findDelayed(cutoff: Date): Promise<DelayedReport[]>;

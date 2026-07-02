@@ -13,6 +13,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import type { PaidReportEntitlements } from "@workspace/validation/paid-report";
 
 export type JsonRecord = Record<string, unknown>;
 
@@ -70,7 +71,10 @@ export const companyDataSnapshots = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     companiesHouseNumber: varchar("companies_house_number", { length: 16 }).notNull(),
+    reportId: uuid("report_id"),
     provider: varchar("provider", { length: 80 }).notNull(),
+    operation: varchar("operation", { length: 120 }).notNull().default("legacy"),
+    attempt: integer("attempt").notNull().default(1),
     sourceContext: snapshotSourceContextEnum("source_context").notNull(),
     reportTier: reportTierEnum("report_tier"),
     snapshotData: jsonb("snapshot_data")
@@ -81,6 +85,7 @@ export const companyDataSnapshots = pgTable(
     status: providerStatusEnum("status").notNull(),
     errorCode: varchar("error_code", { length: 120 }),
     errorMessage: text("error_message"),
+    retryable: boolean("retryable").notNull().default(false),
     fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -89,6 +94,10 @@ export const companyDataSnapshots = pgTable(
       table.fetchedAt,
     ),
     providerIndex: index("company_data_snapshots_provider_idx").on(table.provider),
+    reportIndex: index("company_data_snapshots_report_idx").on(table.reportId),
+    reportOperationAttemptUnique: uniqueIndex(
+      "company_data_snapshots_report_provider_operation_attempt_unique",
+    ).on(table.reportId, table.provider, table.operation, table.attempt),
     snapshotHashIndex: index("company_data_snapshots_hash_idx").on(table.snapshotHash),
   }),
 );
@@ -145,6 +154,7 @@ export const purchasedReports = pgTable(
     companiesHouseNumber: varchar("companies_house_number", { length: 16 }).notNull(),
     companyName: text("company_name").notNull(),
     reportTier: reportTierEnum("report_tier").notNull(),
+    entitlements: jsonb("entitlements").$type<PaidReportEntitlements>().notNull(),
     stripePaymentId: varchar("stripe_payment_id", { length: 128 }),
     stripeCheckoutSessionId: varchar("stripe_checkout_session_id", { length: 128 }),
     amountPaidPence: integer("amount_paid_pence").notNull(),
@@ -171,6 +181,22 @@ export const purchasedReports = pgTable(
     ),
     companyIndex: index("purchased_reports_company_idx").on(table.companiesHouseNumber),
     statusIndex: index("purchased_reports_status_idx").on(table.status),
+  }),
+);
+
+export const fairPaymentCodeStatuses = pgTable(
+  "fair_payment_code_statuses",
+  {
+    companiesHouseNumber: varchar("companies_house_number", { length: 16 }).primaryKey(),
+    statusLabel: text("status_label").notNull(),
+    awardLevel: text("award_level"),
+    sourceReference: text("source_reference"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    verifiedAtIndex: index("fair_payment_code_statuses_verified_at_idx").on(table.verifiedAt),
   }),
 );
 

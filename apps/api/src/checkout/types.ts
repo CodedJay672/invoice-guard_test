@@ -1,6 +1,11 @@
 import type Stripe from "stripe";
 
-import type { CheckoutStatus, CreateCheckoutSessionInput, ReportTier } from "@workspace/validation";
+import type {
+  CheckoutStatus,
+  CreateCheckoutSessionInput,
+  PaidReportEntitlements,
+  ReportTier,
+} from "@workspace/validation";
 
 export interface CheckoutSessionResult {
   sessionId: string;
@@ -46,6 +51,7 @@ export interface PaidReportEventInput {
   clerkUserId: string;
   amountPaidPence: number;
   currency: string;
+  entitlements: PaidReportEntitlements;
   eventPayload: Record<string, unknown>;
 }
 

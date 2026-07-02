@@ -7,9 +7,11 @@ import {
   createProviderSuccess,
   MockCompaniesHouseClient,
   type CompaniesHouseClient,
+  type CompaniesHouseAddressHistory,
   type CompaniesHouseCompanyNumberInput,
   type CompaniesHouseCompanyProfile,
   type CompaniesHouseInsolvencyFoundation,
+  type CompaniesHouseOfficers,
   type CompaniesHouseRegisteredOfficeAddress,
   type CompaniesHouseSearchInput,
   type CompaniesHouseSearchResult,
@@ -368,6 +370,25 @@ class SingleCompanyCompaniesHouseClient implements CompaniesHouseClient {
   getRegisteredOfficeAddress(): Promise<ProviderResult<CompaniesHouseRegisteredOfficeAddress>> {
     return Promise.resolve(
       createProviderSuccess(this.provider, this.company.registeredOfficeAddress),
+    );
+  }
+
+  getRegisteredOfficeAddressHistory(): Promise<ProviderResult<CompaniesHouseAddressHistory>> {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: this.company.companiesHouseNumber,
+        currentAddress: this.company.registeredOfficeAddress,
+        changeFilings: [],
+      }),
+    );
+  }
+
+  getOfficers(): Promise<ProviderResult<CompaniesHouseOfficers>> {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: this.company.companiesHouseNumber,
+        officers: [],
+      }),
     );
   }
 

@@ -12,6 +12,8 @@ import type {
   CompaniesHouseCompanyProfile,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
+  CompaniesHouseOfficers,
+  CompaniesHouseAddressHistory,
   CompaniesHouseInsolvencyFoundation,
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
@@ -102,6 +104,36 @@ export class MockCompaniesHouseClient implements CompaniesHouseClient {
       createProviderSuccess(this.provider, {
         companiesHouseNumber: company.companiesHouseNumber,
         activeDirectorCount: company.activeDirectorCount ?? 0,
+      }),
+    );
+  }
+
+  getOfficers(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseOfficers>> {
+    const company = findMockCompany(input.companyNumber);
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: company.companiesHouseNumber,
+        officers: Array.from({ length: company.activeDirectorCount ?? 0 }, (_, index) => ({
+          name: `MOCK DIRECTOR ${index + 1}`,
+          role: "director",
+          appointedOn: "2020-01-01",
+          resignedOn: undefined,
+        })),
+      }),
+    );
+  }
+
+  getRegisteredOfficeAddressHistory(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseAddressHistory>> {
+    const company = findMockCompany(input.companyNumber);
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: company.companiesHouseNumber,
+        currentAddress: company.registeredOfficeAddress,
+        changeFilings: [],
       }),
     );
   }

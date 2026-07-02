@@ -51,6 +51,29 @@ export interface CompaniesHouseOfficerCount {
   activeDirectorCount: number;
 }
 
+export interface CompaniesHouseOfficer {
+  name: string;
+  role: string | undefined;
+  appointedOn: string | undefined;
+  resignedOn: string | undefined;
+}
+
+export interface CompaniesHouseOfficers {
+  companiesHouseNumber: string;
+  officers: CompaniesHouseOfficer[];
+}
+
+export interface CompaniesHouseAddressHistoryEntry {
+  filedAt: string | undefined;
+  description: string | undefined;
+}
+
+export interface CompaniesHouseAddressHistory {
+  companiesHouseNumber: string;
+  currentAddress: CompaniesHouseRegisteredOfficeAddress;
+  changeFilings: CompaniesHouseAddressHistoryEntry[];
+}
+
 export interface CompaniesHouseFilingHistoryFoundation {
   companiesHouseNumber: string;
   filings: unknown[];
@@ -74,6 +97,12 @@ export interface CompaniesHouseClient {
   getActiveOfficerCount(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseOfficerCount>>;
+  getOfficers(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseOfficers>>;
+  getRegisteredOfficeAddressHistory(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseAddressHistory>>;
   getFilingHistory(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseFilingHistoryFoundation>>;

@@ -153,6 +153,7 @@ export class CheckoutService {
       clerkUserId,
       amountPaidPence,
       currency,
+      entitlements: product.entitlements,
       eventPayload: {
         ...payload,
         checkoutSessionId: session.id,

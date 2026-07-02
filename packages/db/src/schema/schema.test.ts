@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
+  companyDataSnapshots,
+  fairPaymentCodeStatuses,
   providerUsageLogs,
   purchasedReports,
   purchasedReportStatusEnum,
@@ -54,4 +56,21 @@ void test("AUTH-C migration refuses ownerless reports before retiring guest colu
   assert.match(migration, /DROP COLUMN "guest_email"/);
   assert.equal("guestEmail" in purchasedReports, false);
   assert.equal("guestAccessTokenHash" in purchasedReports, false);
+});
+
+void test("15B migration freezes entitlements and links immutable paid snapshots", async () => {
+  assert.equal("entitlements" in purchasedReports, true);
+  assert.equal("reportId" in companyDataSnapshots, true);
+  assert.equal("operation" in companyDataSnapshots, true);
+  assert.equal("attempt" in companyDataSnapshots, true);
+  assert.equal("companiesHouseNumber" in fairPaymentCodeStatuses, true);
+
+  const migration = await readFile(
+    new URL("../../drizzle/0004_daily_zombie.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /UPDATE "purchased_reports"/);
+  assert.match(migration, /ALTER COLUMN "entitlements" SET NOT NULL/);
+  assert.match(migration, /jsonb_set/);
+  assert.match(migration, /fair_payment_code_statuses/);
 });

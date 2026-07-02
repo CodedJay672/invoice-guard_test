@@ -74,6 +74,7 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
             stripeCheckoutSessionId: input.checkoutSessionId,
             amountPaidPence: input.amountPaidPence,
             currency: input.currency,
+            entitlements: input.entitlements,
             status: "pending",
           })
           .onConflictDoNothing({ target: schema.purchasedReports.stripeCheckoutSessionId })

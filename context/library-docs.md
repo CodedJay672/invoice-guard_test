@@ -524,7 +524,8 @@ Live endpoint behavior, rate limits, response shape, attribution, and terms requ
 
 ## Registry Trust
 
-- Planned and paid-only.
+- Paid-only normalized mock boundary is implemented; live mode fails closed until the verified
+  production contract, credentials, pricing, and response schema are supplied.
 - Runs only from paid-report generation after confirmed payment.
 - Log every query and preserve failure/recheck rules.
 - Load current official integration docs before implementation.
@@ -533,11 +534,16 @@ Every call records operation, company number, report, estimated cost, status, an
 
 ## Anthropic Paid-Report Interpretation
 
+- The worker integration uses the official `@anthropic-ai/sdk`; no Anthropic dependency is exposed
+  to the web or API runtime.
 - This integration is mandatory Phase A work for every paid report tier.
 - Use exactly `claude-haiku-4-5-20251001` and set `max_tokens` to `1500` on every interpretation request.
 - Invoke Anthropic only in the paid report worker after webhook-confirmed payment, authenticated ownership, entitled source collection, and frozen factual assembly. Free-tier search/preview must have no Anthropic dependency.
 - The model receives only tier-entitled facts and explicit source statuses. Prompts require factual attribution, uncertainty for missing sources, and no invented data, legal/financial advice, credit decisions, risk scores, or safety verdicts.
 - Persist model ID, prompt/template version, generation timestamp, status, and output with the immutable report artifact. Use explicit timeout, bounded retry, idempotency, and visible failure behavior.
+- The v1 implementation uses `output_config.format` with JSON Schema, an explicit 30-second
+  request timeout, SDK retries disabled, and BullMQ as the single retry layer. Runtime Zod and
+  safety checks still validate the returned text before persistence.
 - Before implementation, install/load an Anthropic skill if available and read the current official SDK/API documentation; do not infer SDK syntax from memory.
 
 ---
@@ -592,16 +598,10 @@ Evaluate server-runtime compatibility, deterministic pagination, font embedding,
 
 ## Environment Configuration
 
-Existing config covers app URL/API port, database, Redis, Clerk, Stripe, Postmark, admin emails, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Phase A AI implementation must add validated server-only Anthropic credentials plus fixed model/token configuration without exposing them through `NEXT_PUBLIC_*`. Add variables only through the validated config package and document which runtime requires them.
+Existing config covers app URL/API port, database, Redis, Clerk, Stripe, Postmark, admin emails, provider modes/base URLs/timeouts/credentials, `ANTHROPIC_API_KEY`, and `ENABLE_FLAG_SUMMARY`. `ANTHROPIC_API_KEY` is validated server-only worker configuration and is required for the production worker; the model and token limit are fixed code constants rather than environment-controlled values.
 
 Mock provider mode is the local/test default. Production activation requires credentials and explicit live-mode verification; absence of optional future credentials must not block unrelated Phase A development.
 
 ---
-
-## Figma Complete-System Design
-
-`https://www.figma.com/design/KgnaNquB0qRPbTrJLD2BDQ/Untitled?node-id=58-176`
-
-Phase A extracts logo/navigation, search hero, source trust, factual company snapshot, one-off pricing, cards, CTA, report, and footer patterns.
 
 Invoice/accounting integrations, recovery, statutory interest, demand letters, subscriptions, and dashboard concepts are future reference. The depicted risk score conflicts with confirmed product rules and is not implemented unless those rules formally change.

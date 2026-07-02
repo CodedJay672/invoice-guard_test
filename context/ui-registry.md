@@ -222,6 +222,12 @@ lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
 
 ## Known Drift
 
+- 2026-07-02 15B completion changed worker, provider, persistence, and entitlement contracts only.
+  Existing paid-report source, interpretation, recovery, and refund-required UI patterns remain
+  canonical and required no visual changes.
+- 2026-07-02 15B Claude sub-slice changed worker/data contracts only. The registered Paid AI
+  Interpretation Block remains the canonical presentation and required no visual or token changes.
+
 - No known token, dark-mode, raw-colour, gradient, fixed-content-width, or page-level Client Component drift in the landing/search experience.
 - Checkout and payment-status UI are `UI/Mock Verified` through automated state and contract coverage;
   user manual QA is non-blocking.
@@ -325,15 +331,71 @@ Last updated: 2026-06-29
 Owner, signed-out, verification-required, and non-owner outcomes are the only report-access patterns.
 Authorization is server-side before report or checkout-status data is returned.
 
-### Paid AI Interpretation Block (Planned in 15A)
+### Paid Source Status and Fact Sections
 
-- Required states: loading, ready, partial-source, unavailable/failed, and safety fallback.
-- Required metadata: clear `AI interpretation` label and factual source-status context; model/internal
-  prompt details need not be exposed in the primary UI.
-- Facts remain visually primary and independently readable. Interpretation cannot hide provider
-  failures, imply unchecked sources were checked, or render legal/financial advice, credit decisions,
-  risk scores, or safe/unsafe verdicts.
-- Applies to Basic, Standard, and Premium in Phase A.
+File: `apps/web/components/paid-report/PaidReportSections.tsx`
+Last updated: 2026-07-02 (15A)
+
+| Property           | Class/pattern                                                              |
+| ------------------ | -------------------------------------------------------------------------- |
+| Background         | shared Card `bg-surface`; fact cells `bg-surface-subtle`                   |
+| Border             | shared `border-line`; semantic Alert and Badge variants for source state   |
+| Border radius      | shared Card/Alert `rounded-lg`; fact cells `rounded-md`                    |
+| Text — primary     | `text-brand-navy`, `text-content`                                          |
+| Text — secondary   | `text-content-muted`                                                       |
+| Spacing            | page `gap-6`; cards and grids `gap-3`/`gap-4`; fact cells `p-3`            |
+| Interactive states | fixture links and recovery actions use shared semantic focus-ring patterns |
+| Shadow             | shared Card subtle elevation                                               |
+| Accent usage       | positive/caution/critical communicate factual source or operation state    |
+
+**Pattern notes:** Source success, failed, unavailable, stale, pending, and not-entitled states
+always combine an icon, Badge text, detail, and timestamp where available. Tier-entitled factual
+sections are omitted when unavailable or not included; paid reports never use blurred teaser data.
+Companies House failure suppresses every factual section and enters the refund-required presentation.
+
+### Paid AI Interpretation Block
+
+File: `apps/web/components/paid-report/PaidReportSections.tsx`
+Last updated: 2026-07-02 (15A)
+
+| Property           | Class/pattern                                                        |
+| ------------------ | -------------------------------------------------------------------- |
+| Background         | shared Card `bg-surface`                                              |
+| Border             | `border-brand-teal` on the containing Card                            |
+| Border radius      | shared Card/Alert `rounded-lg`                                        |
+| Text — primary     | `text-brand-navy`, `text-content`                                     |
+| Text — secondary   | `text-content-muted`                                                  |
+| Spacing            | Card composition with `gap-3`/`gap-4`; interpretation copy `leading-6` |
+| Interactive states | none; interpretation is read-only                                     |
+| Shadow             | shared Card subtle elevation                                          |
+| Accent usage       | teal border/label; caution Alert for partial, unavailable, or withheld |
+
+**Pattern notes:** Loading, ready, partial-source, unavailable/failed, and safety-fallback states
+share one stable block. The screenshot reference contributes the labelled inset hierarchy only;
+canonical InvoiceGuard tokens replace its blue treatment. Facts remain independently readable and
+visually primary. Unavailable sources are named, and unsafe generated wording is withheld rather
+than displayed.
+
+### Registry Trust Recovery Action
+
+File: `apps/web/components/paid-report/RecoveryAction.tsx`
+Last updated: 2026-07-02 (15A)
+
+| Property           | Class/pattern                                           |
+| ------------------ | ------------------------------------------------------- |
+| Background         | shared outline Button `bg-surface`                      |
+| Border             | `border-line` through the shared Button                 |
+| Border radius      | shared Button `rounded-md`                              |
+| Text — primary     | shared Button `text-content`                            |
+| Text — secondary   | helper copy `text-xs text-content-muted`                |
+| Spacing            | `gap-2` between action and durable result copy          |
+| Interactive states | shared hover/focus patterns; result announced politely  |
+| Shadow             | shared outline Button subtle shadow                     |
+| Accent usage       | caution parent Alert owns the operational-state colour |
+
+**Pattern notes:** Basic/Standard offer a free-recheck action and Premium offers issue escalation.
+The 15A fixture action is explicitly non-destructive and reports that no request was sent; 15B may
+replace the handler without changing this presentation contract.
 
 ### Live Clerk Authentication Surface
 
@@ -391,3 +453,32 @@ refund-processing, and refunded states share one stable status card. Every state
 badge, heading, icon, Alert copy, and live progress text. Actions stack on mobile and become a row from
 `sm`; checking status is explicitly idempotent and never suggests starting another purchase. Fixture
 query values and automated transitions are development/test-only.
+
+---
+
+## Browser Reports
+
+### Paid Browser Report Shell
+
+File: `apps/web/components/browser-report/BrowserReport.tsx`
+Last updated: 2026-07-02 (16A)
+
+| Property           | Class/pattern                                                                 |
+| ------------------ | ----------------------------------------------------------------------------- |
+| Background         | page `bg-page`; masthead/panels `bg-surface`; metadata `bg-surface-subtle/40` |
+| Border             | structural `border-line`; active navigation `border-brand-teal`              |
+| Border radius      | shared Card `rounded-lg`; facts and controls `rounded-md`                     |
+| Text — primary     | headings `text-brand-navy`; facts `text-content`                              |
+| Text — secondary   | `text-content-muted`; metadata `text-content-subtle`                          |
+| Spacing            | shell `px-4 sm:px-6 lg:px-8`; masthead `py-8`; panels `gap-4`                 |
+| Interactive states | semantic hover plus `focus-visible:ring-2 focus-visible:ring-focus`           |
+| Shadow             | shared Card subtle elevation                                                  |
+| Accent usage       | teal active section; semantic badges/alerts for explicit source state         |
+
+**Pattern notes:** Paid browser reports use a compact company masthead followed by one desktop tab
+row and a labelled native section selector below `md`. Tabs support arrow, Home, and End navigation.
+Screen presentation shows one section; print hides controls and expands every entitled section with
+page-break protection. Status always repeats in text/icon form, unavailable sources never imply a
+clean result, and Premium alone exposes the on-demand PDF action. The dark report footer contains
+the provisional disclaimer, immutable identifiers, and issue link; print returns it to a light,
+ink-friendly surface.

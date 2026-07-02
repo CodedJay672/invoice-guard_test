@@ -5,8 +5,11 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./ai-interpretation": "./src/ai-interpretation.ts",
     "./checkout": "./src/checkout.ts",
-    "./companies": "./src/companies.ts"
+    "./companies": "./src/companies.ts",
+    "./paid-report": "./src/paid-report.ts",
+    "./report-delivery": "./src/report-delivery.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

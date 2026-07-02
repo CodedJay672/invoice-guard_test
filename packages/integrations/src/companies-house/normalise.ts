@@ -6,6 +6,7 @@ import type {
   CompaniesHouseCompanySummary,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
+  CompaniesHouseOfficers,
   CompaniesHouseInsolvencyFoundation,
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchResult,
@@ -42,6 +43,13 @@ interface RawCompaniesHouseProfile {
 interface RawCompaniesHouseOfficerResponse {
   active_count?: unknown;
   items?: unknown;
+}
+
+interface RawCompaniesHouseOfficer {
+  name?: unknown;
+  officer_role?: unknown;
+  appointed_on?: unknown;
+  resigned_on?: unknown;
 }
 
 interface RawCompaniesHouseListResponse {
@@ -220,6 +228,32 @@ export function normaliseCompaniesHouseOfficerCountResponse(
     code: "integration_invalid_response",
     message: "Companies House officers response did not include an active officer count.",
     retryable: false,
+  });
+}
+
+export function normaliseCompaniesHouseOfficersResponse(
+  companyNumber: string,
+  payload: unknown,
+): ProviderResult<CompaniesHouseOfficers> {
+  const items = (payload as RawCompaniesHouseOfficerResponse).items;
+  if (!Array.isArray(items)) {
+    return createProviderFailure(provider, {
+      code: "integration_invalid_response",
+      message: "Companies House officers response did not include an items array.",
+      retryable: false,
+    });
+  }
+  return createProviderSuccess(provider, {
+    companiesHouseNumber: companyNumber,
+    officers: items
+      .map((item) => item as RawCompaniesHouseOfficer)
+      .filter((item) => asString(item.name) !== undefined)
+      .map((item) => ({
+        name: asString(item.name)!,
+        role: asString(item.officer_role),
+        appointedOn: asString(item.appointed_on),
+        resignedOn: asString(item.resigned_on),
+      })),
   });
 }
 

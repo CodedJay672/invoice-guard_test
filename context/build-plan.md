@@ -233,6 +233,8 @@ Depends on: **15A — UI/Mock Verified**.
 
 ### 16A — UI/Mock: Browser Reports
 
+Status: **UI/Mock Verified 2026-07-02**.
+
 - Complete and partial Basic, Standard, and Premium report pages.
 - Header, company identity, reference, timestamp, tier, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and PDF action.
 - Loading, access-denied, not-ready, not-found, and provider-failure states.
@@ -297,6 +299,9 @@ Verification: automated report/admin state coverage and factual copy review; use
 ### 19B — Logic/Data: Fair Payment Code Refresh
 
 Depends on: **19A — UI/Mock Verified**.
+
+The internal Fair Payment Code status table and paid-report lookup moved into 15B. This unit now
+owns only verified refresh/import automation, freshness operations, and maintenance scheduling.
 
 - Implement seven-day refresh, persistence, Premium consumption, and visible failure status.
 

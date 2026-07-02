@@ -8,13 +8,13 @@ Update after every completed feature. Record actual state only.
 
 **Product phase:** Phase A — Company Search and Paid Reports
 
-**Build-plan phase:** Phase 3 — Paid Generation
+**Build-plan phase:** Phase 4 — Delivery
 
-**Last completed:** AUTH-C — Registration Before Payment Retrofit
+**Last completed:** 16A — UI/Mock: Browser Reports
 
-**Next:** 15A — UI/Mock: Paid Source, Tier, and AI Interpretation Sections
+**Next:** 16B — Logic/Data: Secure Report Delivery (A20)
 
-**Status:** AUTH-C complete; 15A is unblocked
+**Status:** 16A UI/Mock verified; secure owner-authorized delivery remains behind 16B
 
 **Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
 is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
@@ -22,10 +22,10 @@ assets are now authoritative implementation references.
 
 ### Current Unit Scope
 
-AUTH-C requires verified Clerk ownership before payment, creates only owner-bound reports, scopes
-checkout status to the owner, removes guest persistence/contracts, and limits free preview to
-Companies House with explicit not-yet-checked paid sources. The generation lifecycle remains ready
-for 15B's paid-provider and AI interpretation handler.
+16A establishes the responsive paid browser-report shell: company masthead, tier-safe section
+navigation, source statuses, bounded AI interpretation, provisional compliance/issue copy,
+Premium-only on-demand PDF states, and expanded print output. The real route remains fixture-only
+outside production until 16B supplies authenticated-owner lookup and frozen display payloads.
 
 ---
 
@@ -57,9 +57,9 @@ for 15B's paid-provider and AI interpretation handler.
 - [x] 14A UI/Mock: Report Generation Lifecycle — `UI/Mock Verified` 2026-06-30
 - [x] 14B Logic/Data: Generation Queue (A16)
 - [x] AUTH-C Client-Decision Retrofit: Registration Before Payment — complete 2026-07-02
-- [ ] 15A UI/Mock: Paid Source and Tier Sections
-- [ ] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
-- [ ] 16A UI/Mock: Browser Reports
+- [x] 15A UI/Mock: Paid Source and Tier Sections — `UI/Mock Verified` 2026-07-02
+- [x] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
+- [x] 16A UI/Mock: Browser Reports — `UI/Mock Verified` 2026-07-02
 - [ ] 16B Logic/Data: Secure Report Delivery (A20)
 - [ ] 17A UI/Mock: Authenticated Report Notification Outcomes
 - [ ] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
@@ -105,6 +105,19 @@ for 15B's paid-provider and AI interpretation handler.
   verified-email checkout enforcement, HMAC-signed internal principals, and webhook-owned reports.
 - Typed BullMQ report-generation processor factory with guarded Drizzle lifecycle transitions,
   retryable/terminal failure handling, deterministic job validation, and delayed-report queries.
+- Development/test-only `/reports/preview` with deterministic Basic, Standard, and Premium complete,
+  partial, source-state, refund-required, Registry Trust recovery, and AI interpretation fixtures.
+- Reusable paid source-status, tier-entitled fact, AI interpretation, and recovery-action components;
+  production hides the preview route with `notFound()`.
+- Responsive fixture-driven `/reports/[reportReference]` browser report with desktop tabs, mobile
+  section selector, expanded print document, complete/partial/access/not-ready/not-found/provider
+  states, provisional issue/disclaimer copy, and Premium-only PDF UI states; production fails closed
+  until 16B.
+- Worker-only Claude Haiku 4.5 interpretation adapter with fixed 1,500-token output limit,
+  prompt/schema locking, nullable source mirroring, and validated frozen artifact metadata.
+- Frozen paid entitlements, report-linked immutable source snapshots, tier-aware paid generation,
+  Registry Trust mock boundary, internal Fair Payment Code lookup, recovery policy metadata,
+  provider alerts, and production worker composition.
 
 ---
 
@@ -153,16 +166,17 @@ Free preview is architecturally isolated from every source except Companies Hous
 ### Open Questions
 
 - Final mandatory disclaimer text and approved issue-report address.
-- Registry Trust production contract/credentials and exact failure/refund operations.
+- Registry Trust production contract and credentials; mock behavior and failure/refund operations
+  are implemented, while live mode intentionally fails closed.
 - PDF rendering and object-storage provider selection.
-- Anthropic SDK/credential setup and current official API verification for the fixed model.
+- A production Anthropic credential is still required; SDK/API integration is implemented and
+  verified against the current structured-output contract.
 - Production hosting choices for API/worker/PostgreSQL/Redis.
 
 ---
 
 ## Known Debt
 
-- Paid-provider generation handler and production worker composition remain 15B work.
 - Live-shaped insolvency endpoint requires production verification for paid reports; it is no longer a free-tier dependency.
 
 ---
@@ -170,6 +184,13 @@ Free preview is architecturally isolated from every source except Companies Hous
 ## Verification Baseline
 
 Feature 12 physical verification passed on 2026-06-22 for desktop clean/adverse/source-failure states, exact 390px rate-limit layout, focus order, and live/alert semantics.
+
+2026-07-02 Feature 15B verification: repository typecheck, lint, full tests, changed-file
+formatting, and the serial production build passed. Coverage includes frozen entitlement matrices,
+safe migration backfill, paid-only Registry Trust mock/fail-closed live mode, tier-safe provider
+selection, 24-hour successful-snapshot reuse, Companies House refund-required behavior, Registry
+Trust recovery metadata, Premium Fair Payment Code lookup/evidence coverage, Claude composition,
+atomic finalization, and live worker composition.
 
 Final uncached gates passed on 2026-06-22: formatting, typecheck (12 tasks), lint (14 tasks), tests (11 workspace tasks; 33 executable assertions), and production build (12 tasks). The migration guard smoke tests passed without applying changes to a live database. Production `npm audit` reports no high-severity findings; two moderate PostCSS advisories remain inside pinned Next.js 16.2.6, and npm offers only an invalid breaking downgrade.
 
@@ -243,6 +264,21 @@ passed 12 tasks, and the production build passed 12 tasks with Next.js compiling
 Coverage includes signed-out checkout rejection, trusted verified ownership, owner-scoped status,
 missing webhook-owner rejection, migration safety, and Companies House-only free-preview isolation.
 
+2026-07-02 Feature 15A checks: focused web typecheck and lint passed; all 24 web assertions passed,
+including complete and partial fixtures for every paid tier, all six source states, all five AI states,
+Companies House refund-required behavior, entitlement-safe section omission, tier-specific Registry
+Trust recovery, production preview guards, semantic-token use, and accessible status contracts.
+Focused Prettier checks passed. The Next.js production build passed and emitted the dynamic
+`/reports/preview` route, whose Server Component returns `notFound()` in production. User manual QA
+is non-blocking under the project-wide automated gate policy.
+
+2026-07-02 Feature 16A checks: focused web TypeScript and lint passed; all 30 web assertions passed,
+including complete and partial reports for every tier, entitlement-safe navigation, access/not-ready/
+not-found/provider states, all four Premium PDF states, provisional compliance and issue contracts,
+semantic-token enforcement, accessible tabs/mobile selection, and expanded print behavior. Focused
+formatting passed. The Next.js 16.2.6 production build compiled successfully and emitted dynamic
+`/reports/[reportReference]`; production fixture access remains closed with `notFound()` until 16B.
+
 ### Coverage Tracking
 
 | System                                    | Current state                                                          |
@@ -254,13 +290,13 @@ missing webhook-owner rejection, migration safety, and Companies House-only free
 | All non-Companies-House free-tier isolation | Covered: excluded from the free-preview dependency graph             |
 | Stripe/webhook/pending-report lifecycle   | Covered for checkout, paid/unpaid events, replay, queueing, and status |
 | Worker generation lifecycle               | Covered for claim, retry, terminal convergence, failure, and delay     |
-| Paid provider/partial/refund outcomes     | Handler contract ready; provider implementation remains 15B            |
-| AI interpretation                         | Required in Phase A; planned in 15A/15B                                |
+| Paid provider/partial/refund outcomes     | Covered by tier, snapshot reuse, recovery, and refund tests              |
+| AI interpretation                         | Composed into frozen paid generation with terminal fallback             |
 | Owner notification/PDF/admin/maintenance  | Not implemented                                                        |
 
 ### Environment Variables in Scope
 
-Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, `REPORT_GENERATION_STUCK_AFTER_MS`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, and `ENABLE_FLAG_SUMMARY`. Phase A 15B must add a server-only Anthropic credential and lock interpretation to model `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Secrets remain server-only.
+Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, `REPORT_GENERATION_STUCK_AFTER_MS`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, server-only `ANTHROPIC_API_KEY`, and `ENABLE_FLAG_SUMMARY`. Interpretation is locked in code to model `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Secrets remain server-only.
 
 ---
 

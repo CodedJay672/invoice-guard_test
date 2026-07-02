@@ -5,6 +5,7 @@ import express, { type Express, type NextFunction, type Request, type Response }
 import { registerCompanyRoutes } from "./companies/routes.js";
 import { registerCheckoutRoutes, registerStripeWebhookRoute } from "./checkout/routes.js";
 import { createApiDependencies, type ApiDependencies } from "./dependencies.js";
+import { registerReportDeliveryRoutes } from "./report-delivery/routes.js";
 
 const config = loadAppConfig();
 const logger = createLogger({
@@ -39,6 +40,13 @@ export function createApiApp(
   });
   if (dependencies.checkoutService) {
     registerCheckoutRoutes(app, dependencies.checkoutService, dependencies.requestIdentityResolver);
+  }
+  if (dependencies.reportDeliveryService) {
+    registerReportDeliveryRoutes(
+      app,
+      dependencies.reportDeliveryService,
+      dependencies.requestIdentityResolver,
+    );
   }
 
   app.use((error: unknown, _request: Request, response: Response, _next: NextFunction) => {

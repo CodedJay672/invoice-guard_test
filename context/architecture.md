@@ -144,7 +144,9 @@ type ProviderResult<T> =
     };
 ```
 
-Current adapters: Companies House, London Gazette, and insolvency/disqualified officers. Registry Trust and Fair Payment Code are reserved but not implemented.
+Current adapters: Companies House, London Gazette, insolvency/disqualified officers, Registry Trust
+mock, and repository-backed Fair Payment Code. Registry Trust live mode is intentionally unavailable
+until its verified production contract is supplied.
 
 ---
 

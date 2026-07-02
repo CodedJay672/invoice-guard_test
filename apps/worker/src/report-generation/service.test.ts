@@ -9,7 +9,7 @@ import type {
   PersistedReportStatus,
   ReportClaimResult,
   ReportGenerationHandler,
-  ReportGenerationOutcome,
+  ReportGenerationResult,
   ReportGenerationRepository,
 } from "./types.js";
 import { ReportGenerationError } from "./types.js";
@@ -18,7 +18,9 @@ const REPORT_ID = "123e4567-e89b-42d3-a456-426614174000";
 
 void test("pending reports are claimed and completed with every supported outcome", async () => {
   for (const outcome of ["ready", "partial", "refund_required"] as const) {
-    const harness = createHarness("pending", { generate: () => Promise.resolve(outcome) });
+    const harness = createHarness("pending", {
+      generate: () => Promise.resolve({ outcome }),
+    });
     const result = await harness.service.process(input());
 
     assert.deepEqual(result, { state: "completed", status: outcome });
@@ -26,6 +28,22 @@ void test("pending reports are claimed and completed with every supported outcom
     assert.equal(harness.repository.claimCount, 1);
     assert.equal(harness.handlerCalls(), 1);
   }
+});
+
+void test("frozen report data is handed to the terminal transition atomically", async () => {
+  const reportData = { facts: { overview: { companyName: "ACME LIMITED" } } };
+  const providerStatuses = { companies_house: "success" };
+  const harness = createHarness("pending", {
+    generate: () => Promise.resolve({ outcome: "ready", reportData, providerStatuses }),
+  });
+
+  await harness.service.process(input());
+
+  assert.deepEqual(harness.repository.completedResult, {
+    outcome: "ready",
+    reportData,
+    providerStatuses,
+  });
 });
 
 void test("generation-terminal reports converge as no-ops", async () => {
@@ -82,6 +100,23 @@ void test("non-retryable failures become failed immediately", async () => {
   assert.equal(harness.repository.status, "failed");
 });
 
+void test("an exhausted AI transport failure can freeze a partial factual fallback", async () => {
+  const artifact = {
+    facts: { overview: { companyName: "ACME LIMITED" } },
+    interpretation: { status: "unavailable", reason: "unavailable" },
+  };
+  const harness = createHarness("generating", {
+    generate: () => Promise.reject(new ReportGenerationError("Anthropic unavailable", true)),
+    recoverTerminalFailure: () => Promise.resolve({ outcome: "partial", reportData: artifact }),
+  });
+
+  assert.deepEqual(await harness.service.process(input({ attempt: 3 })), {
+    state: "completed",
+    status: "partial",
+  });
+  assert.deepEqual(harness.repository.completedResult?.reportData, artifact);
+});
+
 void test("missing reports do not mutate or invoke generation", async () => {
   const harness = createHarness(undefined);
   assert.deepEqual(await harness.service.process(input()), { state: "noop", status: "missing" });
@@ -93,7 +128,7 @@ void test("a concurrent terminal transition cannot be overwritten", async () => 
   const harness = createHarness("pending", {
     generate: () => {
       harness.repository.status = "refunded";
-      return Promise.resolve("ready");
+      return Promise.resolve({ outcome: "ready" });
     },
   });
   assert.deepEqual(await harness.service.process(input()), {
@@ -116,7 +151,9 @@ function input(
 
 function createHarness(
   status: PersistedReportStatus | undefined,
-  handler: ReportGenerationHandler = { generate: () => Promise.resolve("ready") },
+  handler: ReportGenerationHandler = {
+    generate: () => Promise.resolve({ outcome: "ready" }),
+  },
 ): {
   repository: InMemoryReportGenerationRepository;
   service: ReportGenerationService;
@@ -129,6 +166,9 @@ function createHarness(
       calls += 1;
       return handler.generate(reportId);
     },
+    recoverTerminalFailure(reportId, error) {
+      return handler.recoverTerminalFailure?.(reportId, error) ?? Promise.resolve(undefined);
+    },
   };
   const logger: GenerationLogger = { info() {}, warn() {}, error() {} };
   return {
@@ -140,6 +180,7 @@ function createHarness(
 
 class InMemoryReportGenerationRepository implements ReportGenerationRepository {
   claimCount = 0;
+  completedResult: ReportGenerationResult | undefined;
 
   constructor(public status: PersistedReportStatus | undefined) {}
 
@@ -155,9 +196,10 @@ class InMemoryReportGenerationRepository implements ReportGenerationRepository {
 
   complete(
     _reportId: string,
-    outcome: ReportGenerationOutcome,
+    result: ReportGenerationResult,
   ): Promise<PersistedReportStatus | undefined> {
-    if (this.status === "generating") this.status = outcome;
+    this.completedResult = result;
+    if (this.status === "generating") this.status = result.outcome;
     return Promise.resolve(this.status);
   }
 

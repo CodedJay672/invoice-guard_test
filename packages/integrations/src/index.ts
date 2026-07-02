@@ -5,5 +5,6 @@ export * from "./http.js";
 export * from "./insolvency-disqualified-officers/index.js";
 export * from "./london-gazette/index.js";
 export * from "./provider.js";
+export * from "./registry-trust/index.js";
 export * from "./result.js";
 export * from "./retry.js";

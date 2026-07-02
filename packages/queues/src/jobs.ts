@@ -18,7 +18,7 @@ export interface SendOwnerReportNotificationJobData {
   reportId: string;
 }
 
-export interface SendAdminAlertJobData {
+export interface SendAdminAlertJobData extends Record<string, unknown> {
   subject: string;
   message: string;
   reportId?: string;

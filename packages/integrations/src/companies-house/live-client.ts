@@ -5,6 +5,7 @@ import {
   normaliseCompaniesHouseFilingHistoryResponse,
   normaliseCompaniesHouseInsolvencyResponse,
   normaliseCompaniesHouseOfficerCountResponse,
+  normaliseCompaniesHouseOfficersResponse,
   normaliseCompaniesHouseProfileResponse,
   normaliseCompaniesHouseRegisteredOfficeAddressResponse,
   normaliseCompaniesHouseSearchResponse,
@@ -17,6 +18,8 @@ import type {
   CompaniesHouseCompanyProfile,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
+  CompaniesHouseOfficers,
+  CompaniesHouseAddressHistory,
   CompaniesHouseInsolvencyFoundation,
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
@@ -104,6 +107,50 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
     }
 
     return normaliseCompaniesHouseOfficerCountResponse(input.companyNumber, payload.data);
+  }
+
+  async getOfficers(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseOfficers>> {
+    const payload = await this.request(
+      `/company/${encodeURIComponent(input.companyNumber)}/officers?items_per_page=100`,
+    );
+    return payload.status === "failed"
+      ? payload
+      : normaliseCompaniesHouseOfficersResponse(input.companyNumber, payload.data);
+  }
+
+  async getRegisteredOfficeAddressHistory(
+    input: CompaniesHouseCompanyNumberInput,
+  ): Promise<ProviderResult<CompaniesHouseAddressHistory>> {
+    const [address, filings] = await Promise.all([
+      this.getRegisteredOfficeAddress(input),
+      this.request(
+        `/company/${encodeURIComponent(input.companyNumber)}/filing-history?category=address&items_per_page=100`,
+      ),
+    ]);
+    if (address.status === "failed") return address;
+    if (filings.status === "failed") return filings;
+    const items = (filings.data as { items?: unknown }).items;
+    return {
+      provider,
+      status: "success",
+      checkedAt: new Date().toISOString(),
+      data: {
+        companiesHouseNumber: input.companyNumber,
+        currentAddress: address.data,
+        changeFilings: Array.isArray(items)
+          ? items.map((item) => {
+              const filing = item as { date?: unknown; description?: unknown };
+              return {
+                filedAt: typeof filing.date === "string" ? filing.date : undefined,
+                description:
+                  typeof filing.description === "string" ? filing.description : undefined,
+              };
+            })
+          : [],
+      },
+    };
   }
 
   async getFilingHistory(

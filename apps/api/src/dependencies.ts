@@ -24,6 +24,8 @@ import { DrizzleCheckoutRepository } from "./checkout/repository.js";
 import { CheckoutService } from "./checkout/service.js";
 import { StripeSdkGateway } from "./checkout/stripe-gateway.js";
 import { createRequestIdentityResolver, type RequestIdentityResolver } from "./request-context.js";
+import { DrizzleReportDeliveryRepository } from "./report-delivery/repository.js";
+import { ReportDeliveryService } from "./report-delivery/service.js";
 import {
   DrizzleReportProductRepository,
   InMemoryReportProductRepository,
@@ -34,6 +36,7 @@ export interface ApiDependencies {
   anonymousSearchRateLimiter: InMemoryAnonymousSearchRateLimiter | RedisAnonymousSearchRateLimiter;
   requestIdentityResolver: RequestIdentityResolver;
   checkoutService?: CheckoutService | undefined;
+  reportDeliveryService?: ReportDeliveryService | undefined;
 }
 
 export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiDependencies {
@@ -67,6 +70,7 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
         searchIpHashSecret: config.searchIpHashSecret,
       }),
       checkoutService,
+      reportDeliveryService: new ReportDeliveryService(new DrizzleReportDeliveryRepository(db)),
     };
   }
 

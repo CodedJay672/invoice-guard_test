@@ -16,6 +16,7 @@ const appConfigSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   POSTMARK_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
   ADMIN_ALERT_EMAIL: z.string().email().optional(),
   COMPANIES_HOUSE_PROVIDER_MODE: z.enum(["mock", "live"]).default("mock"),
   COMPANIES_HOUSE_BASE_URL: z
@@ -36,6 +37,7 @@ const appConfigSchema = z.object({
     .url()
     .default("https://api.company-information.service.gov.uk/free-preview-adverse-checks"),
   INSOLVENCY_DISQUALIFIED_OFFICERS_TIMEOUT_MS: z.coerce.number().int().positive().default(8000),
+  REGISTRY_TRUST_PROVIDER_MODE: z.enum(["mock", "live"]).default("mock"),
   REPORT_GENERATION_STUCK_AFTER_MS: z.coerce
     .number()
     .int()
@@ -59,6 +61,7 @@ export interface AppConfig {
   stripeSecretKey: string | undefined;
   stripeWebhookSecret: string | undefined;
   postmarkApiKey: string | undefined;
+  anthropicApiKey: string | undefined;
   companiesHouseProviderMode: "mock" | "live";
   companiesHouseBaseUrl: string;
   companiesHouseApiKey: string | undefined;
@@ -69,6 +72,7 @@ export interface AppConfig {
   insolvencyDisqualifiedOfficersProviderMode: "mock" | "live";
   insolvencyDisqualifiedOfficersBaseUrl: string;
   insolvencyDisqualifiedOfficersTimeoutMs: number;
+  registryTrustProviderMode: "mock" | "live";
   reportGenerationStuckAfterMs: number;
   enableFlagSummary: boolean;
 }
@@ -91,6 +95,7 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     stripeSecretKey: parsed.STRIPE_SECRET_KEY,
     stripeWebhookSecret: parsed.STRIPE_WEBHOOK_SECRET,
     postmarkApiKey: parsed.POSTMARK_API_KEY,
+    anthropicApiKey: parsed.ANTHROPIC_API_KEY,
     companiesHouseProviderMode: parsed.COMPANIES_HOUSE_PROVIDER_MODE,
     companiesHouseBaseUrl: parsed.COMPANIES_HOUSE_BASE_URL,
     companiesHouseApiKey: parsed.COMPANIES_HOUSE_API_KEY,
@@ -102,6 +107,7 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
       parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_PROVIDER_MODE,
     insolvencyDisqualifiedOfficersBaseUrl: parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_BASE_URL,
     insolvencyDisqualifiedOfficersTimeoutMs: parsed.INSOLVENCY_DISQUALIFIED_OFFICERS_TIMEOUT_MS,
+    registryTrustProviderMode: parsed.REGISTRY_TRUST_PROVIDER_MODE,
     reportGenerationStuckAfterMs: parsed.REPORT_GENERATION_STUCK_AFTER_MS,
     enableFlagSummary: readBooleanFlag(parsed.ENABLE_FLAG_SUMMARY, false),
   };
@@ -140,12 +146,17 @@ export function assertWorkerProductionConfig(config: AppConfig): void {
   const missing = [
     ["DATABASE_URL", config.databaseUrl],
     ["REDIS_URL", config.redisUrl],
+    ["ANTHROPIC_API_KEY", config.anthropicApiKey],
   ]
     .filter((entry) => !entry[1])
     .map((entry) => entry[0]);
 
   if (missing.length > 0) {
     throw new Error(`Missing production worker configuration: ${missing.join(", ")}.`);
+  }
+
+  if (config.registryTrustProviderMode !== "live") {
+    throw new Error("Production worker requires Registry Trust live mode.");
   }
 }
 

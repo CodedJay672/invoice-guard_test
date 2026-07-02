@@ -3,6 +3,8 @@ import test from "node:test";
 
 import type Stripe from "stripe";
 
+import { entitlementsForTier } from "@workspace/validation/paid-report";
+
 import type { CompanyService } from "../companies/service.js";
 import type { ReportProductRepository } from "../report-products/repository.js";
 import { CheckoutService } from "./service.js";
@@ -36,6 +38,7 @@ const productRepository: ReportProductRepository = {
       pricePence: 799,
       includesPdf: false,
       includedItems: [],
+      entitlements: entitlementsForTier(tier),
     }),
 };
 

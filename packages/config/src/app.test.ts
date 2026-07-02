@@ -9,6 +9,18 @@ void test("production API configuration fails closed without durable infrastruct
 
   assert.throws(() => assertApiProductionConfig(config), /DATABASE_URL/);
   assert.throws(() => assertWorkerProductionConfig(config), /REDIS_URL/);
+  assert.throws(() => assertWorkerProductionConfig(config), /ANTHROPIC_API_KEY/);
+});
+
+void test("production worker fails closed until Registry Trust live mode is configured", () => {
+  const config = loadAppConfig({
+    NODE_ENV: "production",
+    DATABASE_URL: "postgres://invoiceguard:test@localhost/invoiceguard",
+    REDIS_URL: "redis://localhost:6379",
+    ANTHROPIC_API_KEY: "sk-ant-test",
+  });
+
+  assert.throws(() => assertWorkerProductionConfig(config), /Registry Trust live mode/);
 });
 
 void test("production API configuration accepts required infrastructure and secrets", () => {

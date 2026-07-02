@@ -12,10 +12,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.109.1",
     "@workspace/config": "*",
     "@workspace/db": "*",
     "@workspace/logger": "*",
     "@workspace/queues": "*",
+    "@workspace/validation": "*",
     "bullmq": "^5.77.3",
     "drizzle-orm": "^0.45.2"
   },

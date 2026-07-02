@@ -6,7 +6,7 @@ import type {
   DelayedReport,
   PersistedReportStatus,
   ReportClaimResult,
-  ReportGenerationOutcome,
+  ReportGenerationResult,
   ReportGenerationRepository,
 } from "./types.js";
 
@@ -46,11 +46,16 @@ export class DrizzleReportGenerationRepository implements ReportGenerationReposi
 
   async complete(
     reportId: string,
-    outcome: ReportGenerationOutcome,
+    result: ReportGenerationResult,
   ): Promise<PersistedReportStatus | undefined> {
     const completed = await this.db
       .update(schema.purchasedReports)
-      .set({ status: outcome, updatedAt: new Date() })
+      .set({
+        status: result.outcome,
+        reportData: result.reportData,
+        providerStatuses: result.providerStatuses,
+        updatedAt: new Date(),
+      })
       .where(
         and(
           eq(schema.purchasedReports.id, reportId),

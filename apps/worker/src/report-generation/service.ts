@@ -52,9 +52,9 @@ export class ReportGenerationService {
     }
 
     try {
-      const outcome = await this.handler.generate(input.reportId);
-      const persistedStatus = await this.repository.complete(input.reportId, outcome);
-      const status = persistedStatus ?? outcome;
+      const result = await this.handler.generate(input.reportId);
+      const persistedStatus = await this.repository.complete(input.reportId, result);
+      const status = persistedStatus ?? result.outcome;
       this.logger.info({ ...context, status }, "Report generation completed");
       return { state: "completed", status };
     } catch (error) {
@@ -66,6 +66,23 @@ export class ReportGenerationService {
         throw error;
       }
 
+      try {
+        const recovery = await this.handler.recoverTerminalFailure?.(input.reportId, error);
+        if (recovery) {
+          const persistedStatus = await this.repository.complete(input.reportId, recovery);
+          const status = persistedStatus ?? recovery.outcome;
+          this.logger.warn(
+            { ...context, status },
+            "Report generation delivered a frozen fallback after terminal failure",
+          );
+          return { state: "completed", status };
+        }
+      } catch (recoveryError) {
+        this.logger.error(
+          { ...context, recoveryError },
+          "Terminal-failure recovery itself failed; marking report failed",
+        );
+      }
       const status = (await this.repository.fail(input.reportId)) ?? "failed";
       this.logger.error({ ...context, status }, "Report generation reached a terminal failure");
       return { state: "completed", status };

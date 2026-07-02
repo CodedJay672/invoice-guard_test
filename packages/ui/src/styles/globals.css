@@ -110,3 +110,17 @@
 .cl-formButtonPrimary {
   color: var(--ig-content-inverse);
 }
+
+@media print {
+  @page {
+    margin: 16mm;
+  }
+
+  .report-panel[hidden] {
+    display: block;
+  }
+
+  .report-panel:first-child {
+    break-before: auto;
+  }
+}

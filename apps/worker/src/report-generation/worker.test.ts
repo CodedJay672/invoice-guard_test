@@ -56,7 +56,7 @@ void test("malformed report jobs are unrecoverable and never touch persistence",
   } satisfies ReportGenerationRepository;
   const service = new ReportGenerationService(
     repository,
-    { generate: () => Promise.resolve("ready") },
+    { generate: () => Promise.resolve({ outcome: "ready" }) },
     logger,
   );
   const process = createReportGenerationProcessor(service);
@@ -74,8 +74,8 @@ void test("malformed report jobs are unrecoverable and never touch persistence",
   assert.equal(touched, false);
 });
 
-void test("production bootstrap does not register a placeholder report consumer", () => {
+void test("production bootstrap composes the paid report consumer", () => {
   const source = readFileSync(new URL("../index.ts", import.meta.url), "utf8");
-  assert.doesNotMatch(source, /createReportGenerationWorker\s*\(/);
-  assert.match(source, /awaits the 15B handler/);
+  assert.match(source, /new PaidReportGenerationHandler\s*\(/);
+  assert.match(source, /createReportGenerationWorker\s*\(/);
 });

@@ -1,4 +1,9 @@
 import { schema, type Database } from "@workspace/db";
+import {
+  entitlementsForTier,
+  paidReportEntitlementsSchema,
+  type PaidReportEntitlements,
+} from "@workspace/validation/paid-report";
 import { and, asc, eq } from "drizzle-orm";
 
 export type ReportProductTier = "basic" | "standard" | "premium";
@@ -9,6 +14,7 @@ export interface ReportProductSummary {
   pricePence: number;
   includesPdf: boolean;
   includedItems: string[];
+  entitlements: PaidReportEntitlements;
 }
 
 export interface ReportProductRepository {
@@ -27,6 +33,7 @@ export const canonicalReportProducts: readonly ReportProductSummary[] = [
       "Director names and appointment dates",
       "Registered address history",
     ],
+    entitlements: entitlementsForTier("basic"),
   },
   {
     tier: "standard",
@@ -38,6 +45,7 @@ export const canonicalReportProducts: readonly ReportProductSummary[] = [
       "CCJ amounts and satisfaction status",
       "Recent filings and registered charges",
     ],
+    entitlements: entitlementsForTier("standard"),
   },
   {
     tier: "premium",
@@ -49,6 +57,7 @@ export const canonicalReportProducts: readonly ReportProductSummary[] = [
       "Director and insolvency depth checks",
       "Branded PDF and timestamped reference",
     ],
+    entitlements: entitlementsForTier("premium"),
   },
 ];
 
@@ -79,6 +88,7 @@ export class DrizzleReportProductRepository implements ReportProductRepository {
       pricePence: row.pricePence,
       includesPdf: row.includesPdf,
       includedItems: readIncludedItems(row.entitlements),
+      entitlements: readEntitlements(row.entitlements, row.tier),
     }));
   }
 
@@ -96,9 +106,18 @@ export class DrizzleReportProductRepository implements ReportProductRepository {
           pricePence: row.pricePence,
           includesPdf: row.includesPdf,
           includedItems: readIncludedItems(row.entitlements),
+          entitlements: readEntitlements(row.entitlements, row.tier),
         }
       : undefined;
   }
+}
+
+function readEntitlements(
+  value: Record<string, unknown>,
+  tier: ReportProductTier,
+): PaidReportEntitlements {
+  const parsed = paidReportEntitlementsSchema.safeParse(value["paidReport"]);
+  return parsed.success ? parsed.data : entitlementsForTier(tier);
 }
 
 function readIncludedItems(entitlements: Record<string, unknown>): string[] {
