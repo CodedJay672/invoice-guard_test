@@ -18,6 +18,10 @@ export interface DeliverableReportRecord {
   reportData: unknown;
   providerStatuses: unknown;
   pdfStorageUrl: string | null;
+  pdfArtifact?: {
+    status: "queued" | "generating" | "ready" | "failed";
+    objectKey: string | null;
+  } | null;
   notification?: {
     status: "queued" | "sending" | "sent" | "failed";
     attemptCount: number;

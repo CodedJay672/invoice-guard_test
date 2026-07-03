@@ -17,12 +17,18 @@ export class DrizzleReportDeliveryRepository implements ReportDeliveryRepository
         reportData: schema.purchasedReports.reportData,
         providerStatuses: schema.purchasedReports.providerStatuses,
         pdfStorageUrl: schema.purchasedReports.pdfStorageUrl,
+        pdfStatus: schema.reportPdfArtifacts.status,
+        pdfObjectKey: schema.reportPdfArtifacts.objectKey,
         notificationStatus: schema.reportNotifications.status,
         notificationAttemptCount: schema.reportNotifications.attemptCount,
         notificationFailureKind: schema.reportNotifications.failureKind,
         notificationUpdatedAt: schema.reportNotifications.updatedAt,
       })
       .from(schema.purchasedReports)
+      .leftJoin(
+        schema.reportPdfArtifacts,
+        eq(schema.reportPdfArtifacts.reportId, schema.purchasedReports.id),
+      )
       .leftJoin(
         schema.reportNotifications,
         and(
@@ -40,10 +46,13 @@ export class DrizzleReportDeliveryRepository implements ReportDeliveryRepository
       notificationAttemptCount,
       notificationFailureKind,
       notificationUpdatedAt,
+      pdfStatus,
+      pdfObjectKey,
       ...report
     } = row;
     return {
       ...report,
+      pdfArtifact: pdfStatus ? { status: pdfStatus, objectKey: pdfObjectKey } : null,
       notification:
         notificationStatus && notificationAttemptCount !== null && notificationUpdatedAt
           ? {

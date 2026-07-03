@@ -10,11 +10,11 @@ Update after every completed feature. Record actual state only.
 
 **Build-plan phase:** Phase 5 — PDF and Compliance
 
-**Last completed:** 18A — UI/Mock: Premium PDF and Compliance Blocks
+**Last completed:** 18B — Logic/Data: PDF, Storage, Disclaimer, and Templates
 
-**Next:** 18B — Logic/Data: PDF, Storage, Disclaimer, and Templates
+**Next:** 19A — UI/Mock: Fair Payment Code States
 
-**Status:** 18A UI/Mock Verified; the Premium document, compliance, print, long-content, partial-source, and flag-summary contracts are ready for 18B logic
+**Status:** 18B complete; Premium PDF generation, private R2 storage, durable artifact state, secure owner download, and retry/reconciliation are implemented. Production PDF consumption remains fail-closed until approved compliance copy and R2 configuration are supplied.
 
 **Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
 is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
@@ -22,9 +22,8 @@ assets are now authoritative implementation references.
 
 ### Current Unit Scope
 
-18B selects the PDF and object-storage implementation, generates Premium documents from frozen report
-data, persists delivery state, and replaces provisional compliance/template fixtures with approved
-exact copy while preserving `ENABLE_FLAG_SUMMARY=false` by default.
+19A defines the present, absent, stale, refreshing, and source-failed Premium Fair Payment Code
+presentation states without changing the completed 18B PDF delivery contract.
 
 ---
 
@@ -63,7 +62,7 @@ exact copy while preserving `ENABLE_FLAG_SUMMARY=false` by default.
 - [x] 17A UI/Mock: Authenticated Report Notification Outcomes — `UI/Mock Verified` 2026-07-03
 - [x] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
 - [x] 18A UI/Mock: Premium PDF and Compliance Blocks — `UI/Mock Verified` 2026-07-03
-- [ ] 18B Logic/Data: PDF, Storage, and Templates (A23-A25)
+- [x] 18B Logic/Data: PDF, Storage, and Templates (A23-A25)
 - [ ] 19A UI/Mock: Fair Payment Code States
 - [ ] 19B Logic/Data: Fair Payment Code Refresh (A26)
 - [ ] 20A UI/Mock: Admin Dashboard
@@ -323,6 +322,16 @@ production build passed 12 tasks with `/reports/preview/pdf` emitted as a dynami
 `notFound()` in production. User manual document/print QA remains non-blocking under the automated
 gate policy.
 
+2026-07-03 Feature 18B checks: installed Playwright and AWS S3-compatible SDK support; generated and
+reviewed `0006_fresh_naoko.sql`; real headless Chromium produced a tagged A4 PDF with a valid `%PDF`
+signature (48,310 bytes). Repository typecheck passed 13 tasks, lint passed 15 tasks, tests passed 13
+tasks, and the production build passed 13 tasks. Coverage includes shared escaped document HTML,
+deterministic object keys/checksums, transient and terminal generation failure, durable one-to-one
+artifact state with cascade deletion, trusted-owner download/retry, private object existence checks,
+automatic Premium-only publication, startup reconciliation, and the dynamic same-origin PDF route.
+Production PDF consumption intentionally remains idle until R2 configuration and approved code-owned
+compliance copy exist; `ENABLE_FLAG_SUMMARY=false` remains canonical.
+
 ### Coverage Tracking
 
 | System                                    | Current state                                                          |
@@ -338,11 +347,11 @@ gate policy.
 | AI interpretation                         | Composed into frozen paid generation with terminal fallback             |
 | Secure browser report delivery            | Covered for ownership, concealment, lifecycle, validation, and tiers     |
 | Owner notifications                       | Covered for ownership, durable state, retries, ambiguity, and live UI projection |
-| PDF/admin/maintenance                     | 18A PDF/compliance UI verified; PDF logic, admin, maintenance pending   |
+| PDF/admin/maintenance                     | 18B PDF delivery covered; admin and maintenance pending                 |
 
 ### Environment Variables in Scope
 
-Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, `REPORT_GENERATION_STUCK_AFTER_MS`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, server-only `ANTHROPIC_API_KEY`, and `ENABLE_FLAG_SUMMARY`. Interpretation is locked in code to model `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Secrets remain server-only.
+Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_TIMEOUT_MS`, `DATABASE_URL`, `REDIS_URL`, `WEB_API_SHARED_SECRET`, `SEARCH_IP_HASH_SECRET`, `TRUSTED_CLIENT_IP_HEADER`, `ADMIN_EMAIL`, `ADMIN_ALERT_EMAIL`, `REPORT_GENERATION_STUCK_AFTER_MS`, Clerk/Stripe/Postmark secrets, provider modes/base URLs/timeouts/credentials, server-only `ANTHROPIC_API_KEY`, `ENABLE_FLAG_SUMMARY`, `R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `PDF_COMPLIANCE_VERSION`. Interpretation is locked in code to model `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Secrets remain server-only.
 
 ---
 

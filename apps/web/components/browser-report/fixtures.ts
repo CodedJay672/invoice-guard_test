@@ -56,6 +56,7 @@ export interface BrowserReportFixture {
   issueHref: string;
   issueDisplayUrl: string;
   pdfPreviewHref?: string;
+  pdfDownloadHref?: string;
   pdfState?: PdfFixtureState;
   unavailableReason?: BrowserReportUnavailableReason;
   notification?: ReportNotificationFixture;

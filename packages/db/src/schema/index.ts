@@ -42,6 +42,13 @@ export const reportNotificationTypeEnum = pgEnum("report_notification_type", [
   "owner_report_ready",
 ]);
 
+export const reportPdfStatusEnum = pgEnum("report_pdf_status", [
+  "queued",
+  "generating",
+  "ready",
+  "failed",
+]);
+
 export const snapshotSourceContextEnum = pgEnum("snapshot_source_context", [
   "free_preview",
   "paid_report",
@@ -221,6 +228,33 @@ export const reportNotifications = pgTable(
       table.type,
     ),
     statusIndex: index("report_notifications_status_idx").on(table.status),
+  }),
+);
+
+export const reportPdfArtifacts = pgTable(
+  "report_pdf_artifacts",
+  {
+    reportId: uuid("report_id")
+      .primaryKey()
+      .references(() => purchasedReports.id, { onDelete: "cascade" }),
+    status: reportPdfStatusEnum("status").notNull().default("queued"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    objectKey: text("object_key"),
+    sha256: varchar("sha256", { length: 64 }),
+    byteSize: integer("byte_size"),
+    templateVersion: varchar("template_version", { length: 64 }).notNull(),
+    complianceVersion: varchar("compliance_version", { length: 64 }).notNull(),
+    failureCode: varchar("failure_code", { length: 80 }),
+    failureMessage: text("failure_message"),
+    generationStartedAt: timestamp("generation_started_at", { withTimezone: true }),
+    generatedAt: timestamp("generated_at", { withTimezone: true }),
+    failedAt: timestamp("failed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    statusIndex: index("report_pdf_artifacts_status_idx").on(table.status),
+    objectKeyUnique: uniqueIndex("report_pdf_artifacts_object_key_unique").on(table.objectKey),
   }),
 );
 

@@ -13,11 +13,19 @@ import {
   createQueue,
   QUEUE_NAMES,
   type SendAdminAlertJobData,
+  type GenerateReportPdfJobData,
   type SendOwnerReportNotificationJobData,
 } from "@workspace/queues";
 
 import { AnthropicAiInterpretationClient } from "./ai-interpretation/client.js";
 import { PaidReportGenerationHandler } from "./paid-generation/handler.js";
+import { PDF_TEMPLATE_VERSION, resolveComplianceContent } from "./pdf-generation/compliance.js";
+import { PdfPublisher } from "./pdf-generation/publisher.js";
+import { PlaywrightPdfRenderer } from "./pdf-generation/renderer.js";
+import { DrizzlePdfArtifactRepository } from "./pdf-generation/repository.js";
+import { PdfGenerationService } from "./pdf-generation/service.js";
+import { R2PdfObjectStore } from "./pdf-generation/storage.js";
+import { createPdfGenerationWorker } from "./pdf-generation/worker.js";
 import { DrizzlePaidGenerationRepository } from "./paid-generation/repository.js";
 import { DrizzleReportGenerationRepository } from "./report-generation/repository.js";
 import { ReportGenerationService } from "./report-generation/service.js";
@@ -46,6 +54,17 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
   });
   const notificationPublisher = new OwnerNotificationPublisher(notificationRepository, emailQueue);
   const paidRepository = new DrizzlePaidGenerationRepository(db);
+  const pdfRepository = new DrizzlePdfArtifactRepository(db);
+  const pdfQueue = createQueue<GenerateReportPdfJobData, void, string>({
+    name: QUEUE_NAMES.pdfGeneration,
+    connectionString: config.redisUrl,
+  });
+  const compliance = resolveComplianceContent({
+    environment: config.environment,
+    version: config.pdfComplianceVersion,
+    enableFlagSummary: config.enableFlagSummary,
+  });
+  let pdfPublisher: PdfPublisher | undefined;
   const alertQueue = createQueue<SendAdminAlertJobData, void, string>({
     name: QUEUE_NAMES.providerAlert,
     connectionString: config.redisUrl,
@@ -93,6 +112,7 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
     handler,
     logger,
     notificationPublisher,
+    pdfPublisher,
   );
   createReportGenerationWorker({ connectionString: config.redisUrl, service, logger });
   try {
@@ -100,6 +120,45 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
     logger.info({ reconciledNotifications }, "Queued owner notifications reconciled");
   } catch (error) {
     logger.error({ error }, "Failed to reconcile queued owner notifications at startup");
+  }
+  if (
+    compliance &&
+    config.r2Endpoint &&
+    config.r2Bucket &&
+    config.r2AccessKeyId &&
+    config.r2SecretAccessKey
+  ) {
+    pdfPublisher = new PdfPublisher(
+      pdfRepository,
+      pdfQueue,
+      PDF_TEMPLATE_VERSION,
+      compliance.version,
+    );
+    createPdfGenerationWorker({
+      connectionString: config.redisUrl,
+      service: new PdfGenerationService(
+        pdfRepository,
+        new PlaywrightPdfRenderer(),
+        new R2PdfObjectStore(config.r2Bucket, {
+          endpoint: config.r2Endpoint,
+          accessKeyId: config.r2AccessKeyId,
+          secretAccessKey: config.r2SecretAccessKey,
+        }),
+        compliance,
+        logger,
+      ),
+      logger,
+    });
+    try {
+      const reconciledPdfs = await pdfPublisher.reconcileQueued();
+      logger.info({ reconciledPdfs }, "Queued Premium PDFs reconciled");
+    } catch (error) {
+      logger.error({ error }, "Failed to reconcile queued Premium PDFs at startup");
+    }
+  } else {
+    logger.info(
+      "Premium PDF consumer is idle until R2 and approved compliance copy are configured",
+    );
   }
   if (config.clerkSecretKey && config.postmarkApiKey && config.postmarkFromEmail) {
     const notificationService = new OwnerReportNotificationService(

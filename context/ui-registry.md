@@ -461,7 +461,7 @@ query values and automated transitions are development/test-only.
 ### Paid Browser Report Shell
 
 File: `apps/web/components/browser-report/BrowserReport.tsx`
-Last updated: 2026-07-03 (16B)
+Last updated: 2026-07-03 (18B)
 
 | Property           | Class/pattern                                                                 |
 | ------------------ | ----------------------------------------------------------------------------- |
@@ -489,6 +489,13 @@ states use the existing semantic critical variants and explicitly state that no 
 data was delivered. Real report sections are projected from the frozen artifact and reuse the 16A
 navigation, source-status, AI interpretation, responsive, and print patterns without new colours,
 spacing, radii, or elevation.
+
+**18B PDF action contract:** Premium PDF generation is automatic. `available` is a disabled queued
+fallback, `generating` remains disabled with live text, `ready` uses the existing primary Button to a
+same-origin owner-authorized download route, and `failed` uses the same Button pattern for an
+idempotent retry. Signed provider URLs and storage keys never enter the report payload. The helper
+caption remains `text-xs text-content-subtle`; no new colour, radius, shadow, or spacing pattern was
+introduced.
 
 ## Authenticated Report Notifications
 
@@ -552,7 +559,7 @@ the content stacks naturally on mobile before using a two-column metadata grid a
 ### Premium PDF Page Sheet
 
 File: `apps/web/components/premium-pdf/PremiumPdfDocument.tsx`
-Last updated: 2026-07-03 (18A)
+Last updated: 2026-07-03 (18B)
 
 | Property           | Class/pattern                                                                    |
 | ------------------ | -------------------------------------------------------------------------------- |
@@ -571,6 +578,12 @@ breaks. Preview chrome, sheet radius, borders, shadows, and page background disa
 Page one always carries immutable identity, source status, the provisional disclaimer, and the
 printed fixture issue URL. Long content and factual cards avoid internal print breaks where safe.
 Basic and Standard never enter this document surface.
+
+**18B renderer contract:** The preview and worker invoke the shared
+`@workspace/report-document` static HTML/CSS renderer. Production output uses worker-hosted Chromium,
+tagged A4 pages, CSS page sizing, print backgrounds, immutable identity, textual source status, and
+versioned compliance content. System colour keywords keep the standalone renderer free of hardcoded
+hex values and raw Tailwind colours.
 
 ### Report Compliance Block
 

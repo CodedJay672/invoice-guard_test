@@ -585,7 +585,8 @@ Report-ready and admin-alert messages are distinct templates. Email jobs load re
 
 ## PDF and Object Storage
 
-Provider not selected. Choose it only when the Premium PDF slice starts.
+Selected for 18B: worker-hosted Playwright Chromium and private Cloudflare R2 through its
+S3-compatible API.
 
 - Generate from frozen browser-report data.
 - Store files in object storage and only references in PostgreSQL.
@@ -593,6 +594,15 @@ Provider not selected. Choose it only when the Premium PDF slice starts.
 - Do not copy the template project's PDF library choice automatically.
 
 Evaluate server-runtime compatibility, deterministic pagination, font embedding, accessibility/print needs, storage lifecycle, signed/public access, and retry behavior before selection.
+
+- Render only validated frozen Premium report data through the shared `@workspace/report-document`
+  HTML/CSS contract.
+- Use tagged A4 output with CSS page sizing and print backgrounds.
+- Store deterministic private object keys, SHA-256, byte size, and template/compliance versions in
+  `report_pdf_artifacts`; never persist signed URLs.
+- Owner-authorized downloads check object existence and receive a fresh 60-second presigned GET URL.
+- Production PDF consumption stays idle until R2 credentials and an approved code-owned compliance
+  version exist. This must not stop browser report generation or email delivery.
 
 ---
 

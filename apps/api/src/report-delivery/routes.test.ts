@@ -8,6 +8,7 @@ import express from "express";
 import type { RequestIdentityResolver } from "../request-context.js";
 import { registerReportDeliveryRoutes } from "./routes.js";
 import type { ReportDeliveryService } from "./service.js";
+import type { PdfAccessService } from "./pdf-access.js";
 import { ReportNotFoundError } from "./types.js";
 
 const servers = new Set<Server>();
@@ -48,6 +49,47 @@ void test("missing and non-owner responses share the 404 status", async () => {
     const payload = (await response.json()) as { error?: { code?: string } };
     assert.equal(payload.error?.code, accessDenied ? "report_access_denied" : "report_not_found");
   }
+});
+
+void test("PDF download and retry use the trusted owner without exposing storage keys", async () => {
+  const calls: string[] = [];
+  const identity: RequestIdentityResolver = () => ({
+    clerkUserId: "user_owner",
+    verifiedEmail: "owner@example.com",
+    ipHash: undefined,
+  });
+  const app = express();
+  registerReportDeliveryRoutes(
+    app,
+    {
+      getOwnedReport: () => Promise.reject(new Error("not used")),
+    } as unknown as ReportDeliveryService,
+    identity,
+    {
+      createDownloadUrl(reference: string, owner: string) {
+        calls.push(`download:${reference}:${owner}`);
+        return Promise.resolve("https://private.example/signed");
+      },
+      retry(reference: string, owner: string) {
+        calls.push(`retry:${reference}:${owner}`);
+        return Promise.resolve("queued" as const);
+      },
+    } as PdfAccessService,
+  );
+  const server = app.listen(0) as Server;
+  servers.add(server);
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address() as AddressInfo;
+  const base = `http://127.0.0.1:${address.port}/reports/IG-2026-A1B2C3D4E5F6/pdf`;
+  const download = (await (await fetch(base)).json()) as { data: { url: string } };
+  assert.equal(download.data.url, "https://private.example/signed");
+  assert.deepEqual(await (await fetch(`${base}/retry`, { method: "POST" })).json(), {
+    data: { state: "queued" },
+  });
+  assert.deepEqual(calls, [
+    "download:IG-2026-A1B2C3D4E5F6:user_owner",
+    "retry:IG-2026-A1B2C3D4E5F6:user_owner",
+  ]);
 });
 
 async function createHarness(

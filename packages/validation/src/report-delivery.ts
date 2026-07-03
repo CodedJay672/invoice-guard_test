@@ -214,6 +214,7 @@ export const browserReportPayloadSchema = z
     disclaimer: z.string(),
     issueHref: z.string(),
     pdfState: z.enum(["available", "generating", "ready", "failed"]).optional(),
+    pdfDownloadHref: z.string().startsWith("/").optional(),
     notification: reportNotificationSchema.optional(),
   })
   .strict();

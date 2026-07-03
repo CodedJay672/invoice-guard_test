@@ -172,7 +172,12 @@ function CompanyMasthead({ report }: { report: BrowserReportFixture }) {
           </div>
           <p className="text-sm text-content-subtle">{report.industry}</p>
           {report.pdfState ? (
-            <PdfAction state={report.pdfState} previewHref={report.pdfPreviewHref} />
+            <PdfAction
+              state={report.pdfState}
+              href={report.pdfDownloadHref ?? report.pdfPreviewHref}
+              preview={Boolean(report.pdfPreviewHref && !report.pdfDownloadHref)}
+              reportReference={report.reportReference}
+            />
           ) : null}
         </div>
       </div>
@@ -198,17 +203,22 @@ function CompanyMasthead({ report }: { report: BrowserReportFixture }) {
 
 function PdfAction({
   state,
-  previewHref,
+  href,
+  preview,
+  reportReference,
 }: {
   state: PdfFixtureState;
-  previewHref: string | undefined;
+  href: string | undefined;
+  preview: boolean;
+  reportReference: string;
 }) {
+  const [currentState, setCurrentState] = useState(state);
   const content = {
-    available: { label: "Generate PDF", icon: FileText, disabled: false },
+    available: { label: "PDF queued", icon: FileText, disabled: true },
     generating: { label: "Generating PDF", icon: Clock3, disabled: true },
     ready: { label: "Download PDF", icon: Download, disabled: false },
     failed: { label: "Retry PDF", icon: CircleAlert, disabled: false },
-  }[state];
+  }[currentState];
   const Icon = content.icon;
   return (
     <div
@@ -216,20 +226,38 @@ function PdfAction({
       role="status"
       aria-live="polite"
     >
-      {state === "ready" && previewHref ? (
+      {currentState === "ready" && href ? (
         <Button asChild>
-          <a href={previewHref}>
+          <a href={href}>
             <Icon data-icon="inline-start" />
-            Preview PDF
+            {preview ? "Preview PDF" : "Download PDF"}
           </a>
         </Button>
       ) : (
-        <Button type="button" disabled={content.disabled} onClick={() => undefined}>
+        <Button
+          type="button"
+          disabled={content.disabled}
+          onClick={() => {
+            if (currentState !== "failed") return;
+            setCurrentState("generating");
+            void fetch(`/api/reports/${encodeURIComponent(reportReference)}/pdf`, {
+              method: "POST",
+            })
+              .then((response) => {
+                if (!response.ok) setCurrentState("failed");
+              })
+              .catch(() => setCurrentState("failed"));
+          }}
+        >
           <Icon data-icon="inline-start" />
           {content.label}
         </Button>
       )}
-      <p className="text-xs text-content-subtle">Preview only — no PDF request is sent.</p>
+      <p className="text-xs text-content-subtle">
+        {preview
+          ? "Preview only — no PDF request is sent."
+          : "Downloads use a short-lived secure link."}
+      </p>
     </div>
   );
 }

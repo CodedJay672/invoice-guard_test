@@ -43,6 +43,13 @@
       "when": 1783055014979,
       "tag": "0005_glorious_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783077207774,
+      "tag": "0006_fresh_naoko",
+      "breakpoints": true
     }
   ]
 }

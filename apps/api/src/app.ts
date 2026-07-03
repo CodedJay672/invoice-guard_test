@@ -46,6 +46,7 @@ export function createApiApp(
       app,
       dependencies.reportDeliveryService,
       dependencies.requestIdentityResolver,
+      dependencies.pdfAccessService,
     );
   }
 

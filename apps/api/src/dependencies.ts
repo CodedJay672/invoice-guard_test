@@ -7,6 +7,7 @@ import {
   QUEUE_JOB_NAMES,
   QUEUE_NAMES,
   type GeneratePaidReportJobData,
+  type GenerateReportPdfJobData,
 } from "@workspace/queues";
 
 import {
@@ -26,10 +27,17 @@ import { StripeSdkGateway } from "./checkout/stripe-gateway.js";
 import { createRequestIdentityResolver, type RequestIdentityResolver } from "./request-context.js";
 import { DrizzleReportDeliveryRepository } from "./report-delivery/repository.js";
 import { ReportDeliveryService } from "./report-delivery/service.js";
+import { PdfAccessService } from "./report-delivery/pdf-access.js";
 import {
   DrizzleReportProductRepository,
   InMemoryReportProductRepository,
 } from "./report-products/repository.js";
+
+function isPdfComplianceResolved(config: AppConfig): boolean {
+  if (config.environment === "production") return false;
+  if (config.pdfComplianceVersion && config.pdfComplianceVersion !== "fixture-v1") return false;
+  return true;
+}
 
 export interface ApiDependencies {
   companyService: CompanyService;
@@ -37,6 +45,7 @@ export interface ApiDependencies {
   requestIdentityResolver: RequestIdentityResolver;
   checkoutService?: CheckoutService | undefined;
   reportDeliveryService?: ReportDeliveryService | undefined;
+  pdfAccessService?: PdfAccessService | undefined;
 }
 
 export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiDependencies {
@@ -62,6 +71,27 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
         ? createCheckoutService(config, db, companyService, reportProductRepository)
         : undefined;
 
+    const pdfAccessService =
+      isPdfComplianceResolved(config) &&
+      config.redisUrl &&
+      config.r2Endpoint &&
+      config.r2Bucket &&
+      config.r2AccessKeyId &&
+      config.r2SecretAccessKey
+        ? new PdfAccessService(
+            db,
+            createQueue<GenerateReportPdfJobData, void, string>({
+              name: QUEUE_NAMES.pdfGeneration,
+              connectionString: config.redisUrl,
+            }),
+            config.r2Bucket,
+            {
+              endpoint: config.r2Endpoint,
+              accessKeyId: config.r2AccessKeyId,
+              secretAccessKey: config.r2SecretAccessKey,
+            },
+          )
+        : undefined;
     return {
       companyService,
       anonymousSearchRateLimiter: createAnonymousSearchRateLimiter(config),
@@ -71,6 +101,7 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
       }),
       checkoutService,
       reportDeliveryService: new ReportDeliveryService(new DrizzleReportDeliveryRepository(db)),
+      pdfAccessService,
     };
   }
 

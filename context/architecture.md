@@ -16,7 +16,7 @@
 | Email | Postmark | Planned |
 | UI | Tailwind CSS 4 + shadcn/ui/Radix | Foundation implemented |
 | Logging/validation | Pino + Zod | Implemented |
-| PDF/storage | To be selected | Planned |
+| PDF/storage | Playwright Chromium + private Cloudflare R2 | Implemented; production copy/config gated |
 | AI report interpreter | Anthropic `claude-haiku-4-5-20251001`, `max_tokens: 1500` | Phase A planned |
 
 ---

@@ -57,7 +57,7 @@ export class ReportDeliveryService {
       statuses.data,
       storedEntitlements.data,
       row.status,
-      row.pdfStorageUrl,
+      row.pdfArtifact,
       row.notification,
     );
     return { state: "report", report: browserReportPayloadSchema.parse(report) };
@@ -69,7 +69,7 @@ function buildBrowserPayload(
   statuses: FrozenProviderStatuses,
   entitlements: PaidReportEntitlements,
   status: "ready" | "partial",
-  pdfStorageUrl: string | null,
+  pdfArtifact: DeliverableReportRecord["pdfArtifact"],
   notification: DeliverableReportRecord["notification"],
 ): BrowserReportPayload {
   const overview = artifact.facts.overview ?? {};
@@ -96,7 +96,21 @@ function buildBrowserPayload(
     disclaimer: DISCLAIMER,
     issueHref: `mailto:hello@invoiceguard.co.uk?subject=${encodeURIComponent(`Issue with report ${artifact.reportReference}`)}`,
     ...(artifact.tier === "premium"
-      ? { pdfState: pdfStorageUrl ? ("ready" as const) : ("available" as const) }
+      ? {
+          pdfState:
+            pdfArtifact?.status === "ready"
+              ? ("ready" as const)
+              : pdfArtifact?.status === "failed"
+                ? ("failed" as const)
+                : pdfArtifact
+                  ? ("generating" as const)
+                  : ("available" as const),
+          ...(pdfArtifact?.status === "ready" && pdfArtifact.objectKey
+            ? {
+                pdfDownloadHref: `/api/reports/${encodeURIComponent(artifact.reportReference)}/pdf`,
+              }
+            : {}),
+        }
       : {}),
     ...(notification
       ? {

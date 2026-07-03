@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { assertApiProductionConfig, assertWorkerProductionConfig, loadAppConfig } from "./app.js";
+import {
+  assertApiProductionConfig,
+  assertWorkerProductionConfig,
+  isPdfProductionReady,
+  loadAppConfig,
+} from "./app.js";
 import { assertWebProxyProductionConfig, loadWebProxyConfig } from "./web.js";
 
 void test("production API configuration fails closed without durable infrastructure", () => {
@@ -78,4 +83,28 @@ void test("report generation uses a validated fifteen-minute stuck threshold", (
     120_000,
   );
   assert.throws(() => loadAppConfig({ NODE_ENV: "test", REPORT_GENERATION_STUCK_AFTER_MS: "0" }));
+});
+
+void test("PDF production readiness requires private R2 and non-fixture approved copy", () => {
+  assert.equal(isPdfProductionReady(loadAppConfig({ NODE_ENV: "production" })), false);
+  const configured = {
+    NODE_ENV: "production",
+    R2_ENDPOINT: "https://account.r2.cloudflarestorage.com",
+    R2_BUCKET: "invoiceguard-reports",
+    R2_ACCESS_KEY_ID: "access-key",
+    R2_SECRET_ACCESS_KEY: "secret-key",
+  };
+  assert.equal(
+    isPdfProductionReady(loadAppConfig({ ...configured, PDF_COMPLIANCE_VERSION: "fixture-v1" })),
+    false,
+  );
+  assert.equal(
+    isPdfProductionReady(
+      loadAppConfig({
+        ...configured,
+        PDF_COMPLIANCE_VERSION: "approved-v1",
+      }),
+    ),
+    true,
+  );
 });

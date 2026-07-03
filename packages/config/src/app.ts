@@ -46,6 +46,11 @@ const appConfigSchema = z.object({
     .positive()
     .default(15 * 60 * 1000),
   ENABLE_FLAG_SUMMARY: z.string().optional(),
+  R2_ENDPOINT: z.string().url().optional(),
+  R2_BUCKET: z.string().min(1).optional(),
+  R2_ACCESS_KEY_ID: z.string().min(1).optional(),
+  R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  PDF_COMPLIANCE_VERSION: z.string().min(1).optional(),
 });
 
 export interface AppConfig {
@@ -79,6 +84,11 @@ export interface AppConfig {
   registryTrustProviderMode: "mock" | "live";
   reportGenerationStuckAfterMs: number;
   enableFlagSummary: boolean;
+  r2Endpoint: string | undefined;
+  r2Bucket: string | undefined;
+  r2AccessKeyId: string | undefined;
+  r2SecretAccessKey: string | undefined;
+  pdfComplianceVersion: string | undefined;
 }
 
 export function loadAppConfig(env: Record<string, string | undefined> = process.env): AppConfig {
@@ -116,7 +126,23 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     registryTrustProviderMode: parsed.REGISTRY_TRUST_PROVIDER_MODE,
     reportGenerationStuckAfterMs: parsed.REPORT_GENERATION_STUCK_AFTER_MS,
     enableFlagSummary: readBooleanFlag(parsed.ENABLE_FLAG_SUMMARY, false),
+    r2Endpoint: parsed.R2_ENDPOINT,
+    r2Bucket: parsed.R2_BUCKET,
+    r2AccessKeyId: parsed.R2_ACCESS_KEY_ID,
+    r2SecretAccessKey: parsed.R2_SECRET_ACCESS_KEY,
+    pdfComplianceVersion: parsed.PDF_COMPLIANCE_VERSION,
   };
+}
+
+export function isPdfProductionReady(config: AppConfig): boolean {
+  return Boolean(
+    config.r2Endpoint &&
+    config.r2Bucket &&
+    config.r2AccessKeyId &&
+    config.r2SecretAccessKey &&
+    config.pdfComplianceVersion &&
+    config.pdfComplianceVersion !== "fixture-v1",
+  );
 }
 
 export function assertApiProductionConfig(config: AppConfig): void {

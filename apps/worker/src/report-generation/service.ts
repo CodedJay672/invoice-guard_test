@@ -4,6 +4,7 @@ import type {
   ReportGenerationHandler,
   ReportGenerationRepository,
   OwnerNotificationPublisher,
+  PdfPublisher,
 } from "./types.js";
 import { ReportGenerationError } from "./types.js";
 
@@ -24,6 +25,7 @@ export class ReportGenerationService {
     private readonly handler: ReportGenerationHandler,
     private readonly logger: GenerationLogger,
     private readonly ownerNotifications?: OwnerNotificationPublisher,
+    private readonly pdfPublisher?: PdfPublisher,
   ) {}
 
   async process(input: ProcessReportGenerationInput): Promise<ProcessReportGenerationResult> {
@@ -43,6 +45,7 @@ export class ReportGenerationService {
     if (claim.state === "existing" && claim.status !== "generating") {
       if (claim.status === "ready" || claim.status === "partial") {
         await this.publishOwnerNotification(input.reportId, context);
+        await this.publishPdf(input.reportId, context);
       }
       this.logger.info(
         { ...context, status: claim.status },
@@ -63,6 +66,7 @@ export class ReportGenerationService {
       this.logger.info({ ...context, status }, "Report generation completed");
       if (status === "ready" || status === "partial") {
         await this.publishOwnerNotification(input.reportId, context);
+        await this.publishPdf(input.reportId, context);
       }
       return { state: "completed", status };
     } catch (error) {
@@ -107,6 +111,17 @@ export class ReportGenerationService {
       this.logger.error(
         { ...context, error },
         "Owner notification enqueue failed; startup reconciliation will retry it",
+      );
+    }
+  }
+
+  private async publishPdf(reportId: string, context: Record<string, unknown>): Promise<void> {
+    try {
+      await this.pdfPublisher?.publish(reportId);
+    } catch (error) {
+      this.logger.error(
+        { ...context, error },
+        "PDF enqueue failed; startup reconciliation will retry it",
       );
     }
   }

@@ -9,6 +9,8 @@ import {
   purchasedReports,
   purchasedReportStatusEnum,
   reportNotifications,
+  reportPdfArtifacts,
+  reportPdfStatusEnum,
   snapshotSourceContextEnum,
 } from "./index.js";
 
@@ -17,6 +19,20 @@ void test("Phase A report and snapshot enums contain only approved lifecycle val
   assert.deepEqual(snapshotSourceContextEnum.enumValues, ["free_preview", "paid_report"]);
   assert.equal("reportTier" in providerUsageLogs, true);
   assert.equal("subscriptionTier" in providerUsageLogs, false);
+});
+
+void test("18B migration creates one durable PDF artifact per report", async () => {
+  assert.deepEqual(reportPdfStatusEnum.enumValues, ["queued", "generating", "ready", "failed"]);
+  assert.equal("objectKey" in reportPdfArtifacts, true);
+  assert.equal("sha256" in reportPdfArtifacts, true);
+  assert.equal("complianceVersion" in reportPdfArtifacts, true);
+  const migration = await readFile(
+    new URL("../../drizzle/0006_fresh_naoko.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /report_pdf_artifacts/);
+  assert.match(migration, /ON DELETE cascade/);
+  assert.match(migration, /object_key_unique/);
 });
 
 void test("17B migration persists one owner-ready notification per report", async () => {

@@ -65,20 +65,25 @@ void test("implements document, compliance, print, and production-guard contract
     new URL("../../../../packages/ui/src/styles/globals.css", import.meta.url),
     "utf8",
   );
+  const sharedRenderer = readFileSync(
+    new URL("../../../../packages/report-document/src/index.ts", import.meta.url),
+    "utf8",
+  );
 
-  assert.match(document, /data-document-page={page}/);
-  assert.match(document, /premium-pdf-page-one/);
-  assert.match(document, /ReportComplianceBlock content={report} variant="document"/);
-  assert.match(document, /Source status/);
-  assert.match(document, /AI interpretation/);
+  assert.match(document, /renderPremiumDocumentHtml/);
+  assert.match(document, /srcDoc={sharedDocument}/);
+  assert.match(sharedRenderer, /premium-pdf-page-one/);
+  assert.match(sharedRenderer, /Source status/);
+  assert.match(sharedRenderer, /AI interpretation/);
+  assert.match(sharedRenderer, /Report an issue:/);
   assert.match(compliance, /Report an issue:/);
   assert.match(styles, /\.premium-pdf-page/);
   assert.match(styles, /break-after: page/);
   assert.match(page, /environment === "production"/);
   assert.match(page, /notFound\(\)/);
   assert.doesNotMatch(
-    document + compliance + page,
+    document + compliance + page + sharedRenderer,
     /(?:bg|text|border)-(?:red|green|blue|slate|amber|purple)-/,
   );
-  assert.doesNotMatch(document + compliance + page, /#[0-9a-fA-F]{3,8}/);
+  assert.doesNotMatch(document + compliance + page + sharedRenderer, /#[0-9a-fA-F]{3,8}/);
 });

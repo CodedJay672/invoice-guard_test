@@ -63,13 +63,14 @@ export default async function Page({ params, searchParams }: PageProps) {
 }
 
 function toBrowserReport(report: BrowserReportPayload): BrowserReportFixture {
-  const { notification, pdfState, ...payload } = report;
+  const { notification, pdfState, pdfDownloadHref, ...payload } = report;
   return {
     viewState: "report",
     ...payload,
     issueDisplayUrl: `https://invoiceguard.co.uk/report-an-issue?reference=${encodeURIComponent(report.reportReference)}`,
     navigation: navigationForSections(report.tier, report.sections),
     ...(pdfState ? { pdfState } : {}),
+    ...(pdfDownloadHref ? { pdfDownloadHref } : {}),
     ...(notification ? { notification } : {}),
   };
 }

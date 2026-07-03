@@ -286,6 +286,9 @@ Verification: document/PDF inspection, print testing, copy review, and compariso
 
 Depends on: **18A — UI/Mock Verified** and approved disclaimer/template copy where required.
 
+Status: **Logic/Data complete 2026-07-03**. Production PDF consumption remains deliberately gated
+until approved compliance copy and R2 deployment configuration are supplied.
+
 - Select/document PDF and object-storage implementation.
 - Generate Premium PDF from frozen report data.
 - Persist object reference, surface failure, and retry safely.

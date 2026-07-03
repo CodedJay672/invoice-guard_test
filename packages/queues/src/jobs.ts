@@ -8,10 +8,11 @@ export interface GeneratePaidReportJobData extends Record<string, unknown> {
 
 export const QUEUE_JOB_NAMES = {
   generatePaidReport: "generate-paid-report",
+  generateReportPdf: "generate-report-pdf",
   sendOwnerReportReady: "send-owner-report-ready",
 } as const;
 
-export interface GenerateReportPdfJobData {
+export interface GenerateReportPdfJobData extends Record<string, unknown> {
   reportId: string;
 }
 

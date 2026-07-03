@@ -13,14 +13,18 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.1",
+    "@aws-sdk/client-s3": "^3.1079.0",
+    "@aws-sdk/s3-request-presigner": "^3.1079.0",
     "@clerk/backend": "^3.8.4",
     "@workspace/config": "*",
     "@workspace/db": "*",
     "@workspace/logger": "*",
     "@workspace/queues": "*",
+    "@workspace/report-document": "*",
     "@workspace/validation": "*",
     "bullmq": "^5.77.3",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "playwright": "^1.61.1"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"
