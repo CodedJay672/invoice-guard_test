@@ -10,11 +10,11 @@ Update after every completed feature. Record actual state only.
 
 **Build-plan phase:** Phase 4 — Delivery
 
-**Last completed:** 16A — UI/Mock: Browser Reports
+**Last completed:** 16B — Logic/Data: Secure Report Delivery (A20)
 
-**Next:** 16B — Logic/Data: Secure Report Delivery (A20)
+**Next:** 17A — UI/Mock: Authenticated Report Notification Outcomes
 
-**Status:** 16A UI/Mock verified; secure owner-authorized delivery remains behind 16B
+**Status:** 16B complete; browser reports are owner-authorized and delivered from frozen data
 
 **Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
 is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
@@ -22,10 +22,10 @@ assets are now authoritative implementation references.
 
 ### Current Unit Scope
 
-16A establishes the responsive paid browser-report shell: company masthead, tier-safe section
-navigation, source statuses, bounded AI interpretation, provisional compliance/issue copy,
-Premium-only on-demand PDF states, and expanded print output. The real route remains fixture-only
-outside production until 16B supplies authenticated-owner lookup and frozen display payloads.
+16B wires the verified browser-report shell to an authenticated owner-only Express lookup. Ready
+and partial reports are validated and projected from immutable `paid-report-v1` artifacts; pending
+and terminal states expose lifecycle metadata only. Development query fixtures remain available,
+while production uses the signed Clerk principal and uncached server-only DAL.
 
 ---
 
@@ -60,7 +60,7 @@ outside production until 16B supplies authenticated-owner lookup and frozen disp
 - [x] 15A UI/Mock: Paid Source and Tier Sections — `UI/Mock Verified` 2026-07-02
 - [x] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
 - [x] 16A UI/Mock: Browser Reports — `UI/Mock Verified` 2026-07-02
-- [ ] 16B Logic/Data: Secure Report Delivery (A20)
+- [x] 16B Logic/Data: Secure Report Delivery (A20)
 - [ ] 17A UI/Mock: Authenticated Report Notification Outcomes
 - [ ] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
 - [ ] 18A UI/Mock: Premium PDF and Compliance Blocks
@@ -111,8 +111,10 @@ outside production until 16B supplies authenticated-owner lookup and frozen disp
   production hides the preview route with `notFound()`.
 - Responsive fixture-driven `/reports/[reportReference]` browser report with desktop tabs, mobile
   section selector, expanded print document, complete/partial/access/not-ready/not-found/provider
-  states, provisional issue/disclaimer copy, and Premium-only PDF UI states; production fails closed
-  until 16B.
+  states, provisional issue/disclaimer copy, and Premium-only PDF UI states.
+- Secure browser delivery with verified Clerk-owner authorization, concealed missing/non-owner
+  responses, strict frozen-artifact and response schemas, entitlement-safe DTO projection, uncached
+  server-only DAL access, lifecycle-only non-deliverable states, and development-only fixtures.
 - Worker-only Claude Haiku 4.5 interpretation adapter with fixed 1,500-token output limit,
   prompt/schema locking, nullable source mirroring, and validated frozen artifact metadata.
 - Frozen paid entitlements, report-linked immutable source snapshots, tier-aware paid generation,
@@ -279,6 +281,13 @@ semantic-token enforcement, accessible tabs/mobile selection, and expanded print
 formatting passed. The Next.js 16.2.6 production build compiled successfully and emitted dynamic
 `/reports/[reportReference]`; production fixture access remains closed with `notFound()` until 16B.
 
+2026-07-03 Feature 16B checks: focused report-delivery tests passed 8 assertions and the full API
+suite passed 33 assertions, covering unsigned access, trusted ownership, concealed missing/non-owner
+responses, lifecycle data withholding, malformed-artifact failure, and the Basic/Standard/Premium
+entitlement-leakage matrix. The web suite passed 30 assertions. Repository typecheck passed 12 tasks,
+lint passed 14 tasks, tests passed 12 tasks, and the production build passed 12 tasks. Next.js 16.2.6
+emitted dynamic `/reports/[reportReference]` with production owner-authorized frozen delivery.
+
 ### Coverage Tracking
 
 | System                                    | Current state                                                          |
@@ -292,6 +301,7 @@ formatting passed. The Next.js 16.2.6 production build compiled successfully and
 | Worker generation lifecycle               | Covered for claim, retry, terminal convergence, failure, and delay     |
 | Paid provider/partial/refund outcomes     | Covered by tier, snapshot reuse, recovery, and refund tests              |
 | AI interpretation                         | Composed into frozen paid generation with terminal fallback             |
+| Secure browser report delivery            | Covered for ownership, concealment, lifecycle, validation, and tiers     |
 | Owner notification/PDF/admin/maintenance  | Not implemented                                                        |
 
 ### Environment Variables in Scope

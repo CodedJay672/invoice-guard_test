@@ -1,10 +1,59 @@
 import { z } from "zod";
 
-import {
-  aiInterpretationInputSchema,
-  aiInterpretationOutputSchema,
-} from "@workspace/validation/ai-interpretation";
-import { paidReportEntitlementsSchema } from "@workspace/validation/paid-report";
+const deliveryEntitlementsSchema = z
+  .object({
+    companiesHouse: z
+      .object({
+        profile: z.literal(true),
+        addressHistory: z.boolean(),
+        officers: z.boolean(),
+        filingHistory: z.boolean(),
+        charges: z.boolean(),
+        insolvency: z.boolean(),
+      })
+      .strict(),
+    registryTrust: z
+      .object({
+        enabled: z.boolean(),
+        includeAmounts: z.boolean(),
+        includeSatisfaction: z.boolean(),
+      })
+      .strict(),
+    londonGazette: z.boolean(),
+    insolvencyDisqualifiedOfficers: z.boolean(),
+    fairPaymentCode: z.boolean(),
+    evidenceCoverage: z.boolean(),
+    relatedCompanies: z.literal(false),
+    aiInterpretation: z.literal(true),
+  })
+  .strict();
+
+const nullableFactsSchema = z.record(z.unknown()).nullable();
+const deliveryAiInputSchema = z
+  .object({
+    overview: nullableFactsSchema,
+    charges: nullableFactsSchema,
+    insolvency: nullableFactsSchema,
+    officers: nullableFactsSchema,
+    filing_history: nullableFactsSchema,
+    ccj: nullableFactsSchema,
+    fair_payment_code: nullableFactsSchema,
+  })
+  .strict();
+
+const nullableInterpretationSchema = z.string().min(1).nullable();
+const deliveryAiOutputSchema = z
+  .object({
+    summary: z.string().min(1),
+    overview: nullableInterpretationSchema,
+    charges: nullableInterpretationSchema,
+    insolvency: nullableInterpretationSchema,
+    officers: nullableInterpretationSchema,
+    filing_history: nullableInterpretationSchema,
+    ccj: nullableInterpretationSchema,
+    fair_payment_code: nullableInterpretationSchema,
+  })
+  .strict();
 
 export const reportReferenceSchema = z
   .string()
@@ -22,7 +71,7 @@ const aiArtifactBaseSchema = z.object({
 const aiArtifactSchema = z.discriminatedUnion("status", [
   aiArtifactBaseSchema.extend({
     status: z.literal("ready"),
-    output: aiInterpretationOutputSchema,
+    output: deliveryAiOutputSchema,
   }),
   aiArtifactBaseSchema.extend({
     status: z.enum(["unavailable", "safety_fallback"]),
@@ -44,9 +93,9 @@ export const frozenPaidReportSchema = z
     companyNumber: z.string().min(1).max(16),
     companyName: z.string().min(1),
     tier: z.enum(["basic", "standard", "premium"]),
-    entitlements: paidReportEntitlementsSchema,
+    entitlements: deliveryEntitlementsSchema,
     generatedAt: z.string().datetime(),
-    facts: aiInterpretationInputSchema,
+    facts: deliveryAiInputSchema,
     interpretation: aiArtifactSchema.nullable(),
     relatedCompanies: z
       .object({

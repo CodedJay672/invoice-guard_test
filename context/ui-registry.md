@@ -461,7 +461,7 @@ query values and automated transitions are development/test-only.
 ### Paid Browser Report Shell
 
 File: `apps/web/components/browser-report/BrowserReport.tsx`
-Last updated: 2026-07-02 (16A)
+Last updated: 2026-07-03 (16B)
 
 | Property           | Class/pattern                                                                 |
 | ------------------ | ----------------------------------------------------------------------------- |
@@ -482,3 +482,10 @@ page-break protection. Status always repeats in text/icon form, unavailable sour
 clean result, and Premium alone exposes the on-demand PDF action. The dark report footer contains
 the provisional disclaimer, immutable identifiers, and issue link; print returns it to a light,
 ink-friendly surface.
+
+**16B real-data contract:** The same Card/Badge/Alert pattern now represents owner denial,
+pending generation, terminal failure/refund states, and delivery-validation failure. Critical
+states use the existing semantic critical variants and explicitly state that no incomplete report
+data was delivered. Real report sections are projected from the frozen artifact and reuse the 16A
+navigation, source-status, AI interpretation, responsive, and print patterns without new colours,
+spacing, radii, or elevation.
