@@ -107,6 +107,7 @@ void test("implements accessible screen, mobile, print, and secure delivery cont
   assert.match(component, /aria-selected=/);
   assert.match(component, /<select/);
   assert.match(component, /aria-live="polite"/);
+  assert.match(component, /ReportNotificationStatus/);
   assert.match(component, /print:hidden/);
   assert.match(component, /print:block/);
   assert.match(styles, /\.report-panel\[hidden\]/);

@@ -10,11 +10,11 @@ Update after every completed feature. Record actual state only.
 
 **Build-plan phase:** Phase 4 — Delivery
 
-**Last completed:** 16B — Logic/Data: Secure Report Delivery (A20)
+**Last completed:** 17B — Logic/Data: Owner Notifications and Postmark
 
-**Next:** 17A — UI/Mock: Authenticated Report Notification Outcomes
+**Next:** 18A — UI/Mock: Premium PDF and Compliance Blocks
 
-**Status:** 16B complete; browser reports are owner-authorized and delivered from frozen data
+**Status:** 17B complete; durable owner-ready notifications are wired through Clerk, BullMQ, Postmark, and secure report delivery
 
 **Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
 is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
@@ -22,10 +22,9 @@ assets are now authoritative implementation references.
 
 ### Current Unit Scope
 
-16B wires the verified browser-report shell to an authenticated owner-only Express lookup. Ready
-and partial reports are validated and projected from immutable `paid-report-v1` artifacts; pending
-and terminal states expose lifecycle metadata only. Development query fixtures remain available,
-while production uses the signed Clerk principal and uncached server-only DAL.
+18A builds the Premium PDF and compliance presentation contract before PDF/storage logic. It covers
+multi-page, long-content, partial-source, print, disclaimer, issue-link, and flag-summary states while
+preserving the frozen-report hierarchy and Premium-only entitlement.
 
 ---
 
@@ -61,8 +60,8 @@ while production uses the signed Clerk principal and uncached server-only DAL.
 - [x] 15B Logic/Data: Providers and Frozen Snapshots (A17-A19)
 - [x] 16A UI/Mock: Browser Reports — `UI/Mock Verified` 2026-07-02
 - [x] 16B Logic/Data: Secure Report Delivery (A20)
-- [ ] 17A UI/Mock: Authenticated Report Notification Outcomes
-- [ ] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
+- [x] 17A UI/Mock: Authenticated Report Notification Outcomes — `UI/Mock Verified` 2026-07-03
+- [x] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
 - [ ] 18A UI/Mock: Premium PDF and Compliance Blocks
 - [ ] 18B Logic/Data: PDF, Storage, and Templates (A23-A25)
 - [ ] 19A UI/Mock: Fair Payment Code States
@@ -115,6 +114,13 @@ while production uses the signed Clerk principal and uncached server-only DAL.
 - Secure browser delivery with verified Clerk-owner authorization, concealed missing/non-owner
   responses, strict frozen-artifact and response schemas, entitlement-safe DTO projection, uncached
   server-only DAL access, lifecycle-only non-deliverable states, and development-only fixtures.
+- Owner-visible report-ready email status fixtures for sending, sent, delayed, and failed delivery;
+  delayed/failed email never blocks a completed report or suggests repurchase/regeneration.
+- Production-gated compact report-ready email preview with company/tier/reference/time metadata,
+  canonical authenticated report link, sign-in guidance, and no findings, personal data, or token.
+- Durable owner-ready notification records created with ready/partial report finalization, deterministic
+  BullMQ jobs, startup reconciliation, current verified-primary Clerk lookup, code-owned multipart
+  templates, and at-most-once Postmark submission with explicit ambiguous-delivery visibility.
 - Worker-only Claude Haiku 4.5 interpretation adapter with fixed 1,500-token output limit,
   prompt/schema locking, nullable source mirroring, and validated frozen artifact metadata.
 - Frozen paid entitlements, report-linked immutable source snapshots, tier-aware paid generation,
@@ -288,6 +294,20 @@ entitlement-leakage matrix. The web suite passed 30 assertions. Repository typec
 lint passed 14 tasks, tests passed 12 tasks, and the production build passed 12 tasks. Next.js 16.2.6
 emitted dynamic `/reports/[reportReference]` with production owner-authorized frozen delivery.
 
+2026-07-03 Feature 17A checks: focused web typecheck and lint passed; all 34 web assertions passed,
+including every notification outcome across complete/partial report fixtures, safe canonical email
+links, production preview guards, existing signed-out redirect and owner lookup contracts, semantic
+tokens, mobile/desktop email structure, and accessible live status. The Next.js 16.2.6 production
+build compiled successfully and emitted dynamic `/reports/preview/email`; the route calls
+`notFound()` in production. User manual QA remains non-blocking under the automated gate policy.
+
+2026-07-03 Feature 17B checks: generated and reviewed `0005_glorious_old_lace.sql`; focused worker,
+API, database, configuration, and web tests passed. Coverage includes unique durable notifications,
+deterministic startup reconciliation, verified-primary Clerk resolution, accepted/rejected/ambiguous
+Postmark outcomes, at-most-once resubmission guards, escaped multipart templates, canonical secure
+links, live owner-authorized status projection, and recipient privacy. Focused worker/API/web
+typechecks and worker/API lint passed before the repository-wide completion gates.
+
 ### Coverage Tracking
 
 | System                                    | Current state                                                          |
@@ -302,7 +322,8 @@ emitted dynamic `/reports/[reportReference]` with production owner-authorized fr
 | Paid provider/partial/refund outcomes     | Covered by tier, snapshot reuse, recovery, and refund tests              |
 | AI interpretation                         | Composed into frozen paid generation with terminal fallback             |
 | Secure browser report delivery            | Covered for ownership, concealment, lifecycle, validation, and tiers     |
-| Owner notification/PDF/admin/maintenance  | Not implemented                                                        |
+| Owner notifications                       | Covered for ownership, durable state, retries, ambiguity, and live UI projection |
+| PDF/admin/maintenance                     | Not implemented                                                        |
 
 ### Environment Variables in Scope
 

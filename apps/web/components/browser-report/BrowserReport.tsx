@@ -29,6 +29,7 @@ import type {
   PaidReportSection,
   PaidSourceStatus,
 } from "../paid-report/fixtures";
+import { ReportNotificationStatus } from "../report-notification/ReportNotificationStatus";
 
 export function BrowserReport({ report }: { report: BrowserReportFixture }) {
   const [activeSection, setActiveSection] = useState(report.navigation[0]?.id ?? "overview");
@@ -110,6 +111,9 @@ export function BrowserReport({ report }: { report: BrowserReportFixture }) {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 print:max-w-none print:px-0 print:py-4">
+        {report.notification ? (
+          <ReportNotificationStatus notification={report.notification} />
+        ) : null}
         {report.outcome === "partial" ? (
           <Alert variant="caution" className="mb-6 print:break-inside-avoid">
             <CircleAlert aria-hidden="true" />

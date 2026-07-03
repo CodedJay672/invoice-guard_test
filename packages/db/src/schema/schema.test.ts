@@ -8,6 +8,7 @@ import {
   providerUsageLogs,
   purchasedReports,
   purchasedReportStatusEnum,
+  reportNotifications,
   snapshotSourceContextEnum,
 } from "./index.js";
 
@@ -16,6 +17,18 @@ void test("Phase A report and snapshot enums contain only approved lifecycle val
   assert.deepEqual(snapshotSourceContextEnum.enumValues, ["free_preview", "paid_report"]);
   assert.equal("reportTier" in providerUsageLogs, true);
   assert.equal("subscriptionTier" in providerUsageLogs, false);
+});
+
+void test("17B migration persists one owner-ready notification per report", async () => {
+  assert.equal("postmarkMessageId" in reportNotifications, true);
+  assert.equal("failureKind" in reportNotifications, true);
+  const migration = await readFile(
+    new URL("../../drizzle/0005_glorious_old_lace.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /report_notification_status/);
+  assert.match(migration, /report_notifications_report_type_unique/);
+  assert.match(migration, /FOREIGN KEY \("report_id"\)/);
 });
 
 void test("purchased reports freeze the Stripe-confirmed financial values", async () => {

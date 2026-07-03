@@ -13,5 +13,8 @@
     "lint": "eslint .",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
   }
 }

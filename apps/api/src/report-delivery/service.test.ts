@@ -20,6 +20,31 @@ void test("owner receives a validated ready report", async () => {
   assert.equal(result.report.pdfState, undefined);
 });
 
+void test("durable notification states project without exposing the owner email", async () => {
+  const cases = [
+    ["queued", 0, "sending"],
+    ["queued", 1, "delayed"],
+    ["sending", 1, "sending"],
+    ["sent", 1, "sent"],
+    ["failed", 1, "failed"],
+  ] as const;
+  for (const [status, attemptCount, expected] of cases) {
+    const row = reportRow("basic");
+    row.notification = {
+      status,
+      attemptCount,
+      failureKind: status === "failed" ? "ambiguous_submission" : null,
+      updatedAt: new Date("2026-07-03T09:44:00.000Z"),
+    };
+    const result = await serviceFor(row).getOwnedReport(row.reportReference, "user_owner");
+    assert.equal(result.state, "report");
+    if (result.state !== "report") continue;
+    assert.equal(result.report.notification?.state, expected);
+    assert.equal(result.report.notification?.destinationLabel, "your verified account email");
+    assert.equal(JSON.stringify(result).includes("owner@example.com"), false);
+  }
+});
+
 void test("non-owner and missing reports are both concealed as not found", async () => {
   await assert.rejects(
     serviceFor(reportRow("basic")).getOwnedReport("IG-2026-A1B2C3D4E5F6", "user_attacker"),

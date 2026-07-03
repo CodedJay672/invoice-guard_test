@@ -186,6 +186,14 @@ const sectionSchema = z
   })
   .strict();
 
+export const reportNotificationSchema = z
+  .object({
+    state: z.enum(["sending", "sent", "delayed", "failed"]),
+    destinationLabel: z.literal("your verified account email"),
+    updatedAt: z.string(),
+  })
+  .strict();
+
 export const browserReportPayloadSchema = z
   .object({
     tier: z.enum(["basic", "standard", "premium"]),
@@ -206,6 +214,7 @@ export const browserReportPayloadSchema = z
     disclaimer: z.string(),
     issueHref: z.string(),
     pdfState: z.enum(["available", "generating", "ready", "failed"]).optional(),
+    notification: reportNotificationSchema.optional(),
   })
   .strict();
 

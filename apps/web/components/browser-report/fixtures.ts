@@ -6,6 +6,7 @@ import {
   type PaidReportTier,
   type PaidSourceStatus,
 } from "../paid-report/fixtures";
+import type { ReportNotificationFixture } from "../report-notification/fixtures";
 
 export const browserReportFixtureNames = [
   "complete",
@@ -55,6 +56,7 @@ export interface BrowserReportFixture {
   issueHref: string;
   pdfState?: PdfFixtureState;
   unavailableReason?: BrowserReportUnavailableReason;
+  notification?: ReportNotificationFixture;
 }
 
 const reportReference = "IG-2026-000000000184";

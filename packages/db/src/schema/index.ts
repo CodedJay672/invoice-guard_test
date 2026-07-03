@@ -31,6 +31,17 @@ export const purchasedReportStatusEnum = pgEnum("purchased_report_status", [
 
 export const providerStatusEnum = pgEnum("provider_status", ["success", "failed"]);
 
+export const reportNotificationStatusEnum = pgEnum("report_notification_status", [
+  "queued",
+  "sending",
+  "sent",
+  "failed",
+]);
+
+export const reportNotificationTypeEnum = pgEnum("report_notification_type", [
+  "owner_report_ready",
+]);
+
 export const snapshotSourceContextEnum = pgEnum("snapshot_source_context", [
   "free_preview",
   "paid_report",
@@ -181,6 +192,35 @@ export const purchasedReports = pgTable(
     ),
     companyIndex: index("purchased_reports_company_idx").on(table.companiesHouseNumber),
     statusIndex: index("purchased_reports_status_idx").on(table.status),
+  }),
+);
+
+export const reportNotifications = pgTable(
+  "report_notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    reportId: uuid("report_id")
+      .notNull()
+      .references(() => purchasedReports.id, { onDelete: "cascade" }),
+    type: reportNotificationTypeEnum("type").notNull(),
+    status: reportNotificationStatusEnum("status").notNull().default("queued"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    postmarkMessageId: varchar("postmark_message_id", { length: 128 }),
+    failureCode: varchar("failure_code", { length: 80 }),
+    failureKind: varchar("failure_kind", { length: 40 }),
+    queuedAt: timestamp("queued_at", { withTimezone: true }).notNull().defaultNow(),
+    submissionStartedAt: timestamp("submission_started_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    failedAt: timestamp("failed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    reportTypeUnique: uniqueIndex("report_notifications_report_type_unique").on(
+      table.reportId,
+      table.type,
+    ),
+    statusIndex: index("report_notifications_status_idx").on(table.status),
   }),
 );
 

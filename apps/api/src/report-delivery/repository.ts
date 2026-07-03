@@ -1,5 +1,5 @@
 import { schema, type Database } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import type { DeliverableReportRecord, ReportDeliveryRepository } from "./types.js";
 
@@ -17,11 +17,42 @@ export class DrizzleReportDeliveryRepository implements ReportDeliveryRepository
         reportData: schema.purchasedReports.reportData,
         providerStatuses: schema.purchasedReports.providerStatuses,
         pdfStorageUrl: schema.purchasedReports.pdfStorageUrl,
+        notificationStatus: schema.reportNotifications.status,
+        notificationAttemptCount: schema.reportNotifications.attemptCount,
+        notificationFailureKind: schema.reportNotifications.failureKind,
+        notificationUpdatedAt: schema.reportNotifications.updatedAt,
       })
       .from(schema.purchasedReports)
+      .leftJoin(
+        schema.reportNotifications,
+        and(
+          eq(schema.reportNotifications.reportId, schema.purchasedReports.id),
+          eq(schema.reportNotifications.type, "owner_report_ready"),
+        ),
+      )
       .where(eq(schema.purchasedReports.reportReference, reportReference))
       .limit(1);
 
-    return rows[0];
+    const row = rows[0];
+    if (!row) return undefined;
+    const {
+      notificationStatus,
+      notificationAttemptCount,
+      notificationFailureKind,
+      notificationUpdatedAt,
+      ...report
+    } = row;
+    return {
+      ...report,
+      notification:
+        notificationStatus && notificationAttemptCount !== null && notificationUpdatedAt
+          ? {
+              status: notificationStatus,
+              attemptCount: notificationAttemptCount,
+              failureKind: notificationFailureKind,
+              updatedAt: notificationUpdatedAt,
+            }
+          : null,
+    };
   }
 }

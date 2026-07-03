@@ -16,6 +16,8 @@ const appConfigSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   POSTMARK_API_KEY: z.string().min(1).optional(),
+  POSTMARK_FROM_EMAIL: z.string().email().optional(),
+  POSTMARK_MESSAGE_STREAM: z.string().min(1).default("outbound"),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   ADMIN_ALERT_EMAIL: z.string().email().optional(),
   COMPANIES_HOUSE_PROVIDER_MODE: z.enum(["mock", "live"]).default("mock"),
@@ -61,6 +63,8 @@ export interface AppConfig {
   stripeSecretKey: string | undefined;
   stripeWebhookSecret: string | undefined;
   postmarkApiKey: string | undefined;
+  postmarkFromEmail: string | undefined;
+  postmarkMessageStream: string;
   anthropicApiKey: string | undefined;
   companiesHouseProviderMode: "mock" | "live";
   companiesHouseBaseUrl: string;
@@ -95,6 +99,8 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     stripeSecretKey: parsed.STRIPE_SECRET_KEY,
     stripeWebhookSecret: parsed.STRIPE_WEBHOOK_SECRET,
     postmarkApiKey: parsed.POSTMARK_API_KEY,
+    postmarkFromEmail: parsed.POSTMARK_FROM_EMAIL,
+    postmarkMessageStream: parsed.POSTMARK_MESSAGE_STREAM,
     anthropicApiKey: parsed.ANTHROPIC_API_KEY,
     companiesHouseProviderMode: parsed.COMPANIES_HOUSE_PROVIDER_MODE,
     companiesHouseBaseUrl: parsed.COMPANIES_HOUSE_BASE_URL,
@@ -147,6 +153,9 @@ export function assertWorkerProductionConfig(config: AppConfig): void {
     ["DATABASE_URL", config.databaseUrl],
     ["REDIS_URL", config.redisUrl],
     ["ANTHROPIC_API_KEY", config.anthropicApiKey],
+    ["CLERK_SECRET_KEY", config.clerkSecretKey],
+    ["POSTMARK_API_KEY", config.postmarkApiKey],
+    ["POSTMARK_FROM_EMAIL", config.postmarkFromEmail],
   ]
     .filter((entry) => !entry[1])
     .map((entry) => entry[0]);

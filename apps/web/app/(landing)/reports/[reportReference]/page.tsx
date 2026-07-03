@@ -17,6 +17,11 @@ import {
 } from "@/components/browser-report/fixtures";
 import { paidReportTiers, resolvePaidReportTier } from "@/components/paid-report/fixtures";
 import { normaliseReportReference } from "@/components/report-lifecycle/fixtures";
+import {
+  getReportNotificationFixture,
+  reportNotificationStates,
+  resolveReportNotificationState,
+} from "@/components/report-notification/fixtures";
 import { resolveAuthIdentity } from "@/lib/auth/identity";
 import { loadOwnedReport } from "@/lib/data/report-delivery";
 
@@ -58,12 +63,13 @@ export default async function Page({ params, searchParams }: PageProps) {
 }
 
 function toBrowserReport(report: BrowserReportPayload): BrowserReportFixture {
-  const { pdfState, ...payload } = report;
+  const { notification, pdfState, ...payload } = report;
   return {
     viewState: "report",
     ...payload,
     navigation: navigationForSections(report.tier, report.sections),
     ...(pdfState ? { pdfState } : {}),
+    ...(notification ? { notification } : {}),
   };
 }
 
@@ -91,7 +97,10 @@ function renderFixture(
   if (fixtureName === "not-found") notFound();
   const tier = resolvePaidReportTier(singleValue(query.tier));
   const pdfState = resolvePdfFixtureState(singleValue(query.pdf));
+  const notificationState = resolveReportNotificationState(singleValue(query.notification));
   const report = getBrowserReportFixture(tier, fixtureName, pdfState);
+  const notification =
+    report.viewState === "report" ? getReportNotificationFixture(notificationState) : undefined;
   return (
     <>
       <PreviewFixtureNav
@@ -99,14 +108,22 @@ function renderFixture(
         tier={tier}
         fixture={fixtureName}
         pdf={pdfState}
+        notification={notificationState}
       />
-      <BrowserReport report={{ ...report, reportReference }} />
+      <BrowserReport
+        report={{ ...report, reportReference, ...(notification ? { notification } : {}) }}
+      />
     </>
   );
 }
 
 function hasFixtureQuery(query: Record<string, string | string[] | undefined>): boolean {
-  return Boolean(singleValue(query.fixture) || singleValue(query.tier) || singleValue(query.pdf));
+  return Boolean(
+    singleValue(query.fixture) ||
+    singleValue(query.tier) ||
+    singleValue(query.pdf) ||
+    singleValue(query.notification),
+  );
 }
 
 function PreviewFixtureNav({
@@ -114,11 +131,13 @@ function PreviewFixtureNav({
   tier,
   fixture,
   pdf,
+  notification,
 }: {
   reportReference: string;
   tier: string;
   fixture: string;
   pdf: string;
+  notification: string;
 }) {
   const basePath = `/reports/${encodeURIComponent(reportReference)}`;
   return (
@@ -132,7 +151,7 @@ function PreviewFixtureNav({
           {paidReportTiers.map((candidate) => (
             <a
               key={candidate}
-              href={`${basePath}?tier=${candidate}&fixture=${fixture}&pdf=${pdf}`}
+              href={`${basePath}?tier=${candidate}&fixture=${fixture}&pdf=${pdf}&notification=${notification}`}
               aria-current={candidate === tier ? "page" : undefined}
               className="rounded-md border border-line bg-surface px-3 py-2 text-sm font-medium text-content hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
             >
@@ -144,7 +163,7 @@ function PreviewFixtureNav({
           {browserReportFixtureNames.map((candidate) => (
             <a
               key={candidate}
-              href={`${basePath}?tier=${tier}&fixture=${candidate}&pdf=${pdf}`}
+              href={`${basePath}?tier=${tier}&fixture=${candidate}&pdf=${pdf}&notification=${notification}`}
               aria-current={candidate === fixture ? "page" : undefined}
               className="rounded-md border border-line bg-surface px-3 py-2 text-xs text-content-muted hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
             >
@@ -157,7 +176,7 @@ function PreviewFixtureNav({
             {pdfFixtureStates.map((candidate) => (
               <a
                 key={candidate}
-                href={`${basePath}?tier=${tier}&fixture=${fixture}&pdf=${candidate}`}
+                href={`${basePath}?tier=${tier}&fixture=${fixture}&pdf=${candidate}&notification=${notification}`}
                 aria-current={candidate === pdf ? "page" : undefined}
                 className="rounded-md border border-line bg-surface px-3 py-2 text-xs text-content-muted hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
               >
@@ -166,6 +185,24 @@ function PreviewFixtureNav({
             ))}
           </div>
         ) : null}
+        <div className="flex flex-wrap gap-2">
+          {reportNotificationStates.map((candidate) => (
+            <a
+              key={candidate}
+              href={`${basePath}?tier=${tier}&fixture=${fixture}&pdf=${pdf}&notification=${candidate}`}
+              aria-current={candidate === notification ? "page" : undefined}
+              className="rounded-md border border-line bg-surface px-3 py-2 text-xs text-content-muted hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
+            >
+              Email: {candidate}
+            </a>
+          ))}
+          <a
+            href="/reports/preview/email"
+            className="rounded-md border border-line bg-surface px-3 py-2 text-xs font-medium text-content hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
+          >
+            Preview report-ready email
+          </a>
+        </div>
       </div>
     </nav>
   );

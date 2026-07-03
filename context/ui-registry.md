@@ -489,3 +489,60 @@ states use the existing semantic critical variants and explicitly state that no 
 data was delivered. Real report sections are projected from the frozen artifact and reuse the 16A
 navigation, source-status, AI interpretation, responsive, and print patterns without new colours,
 spacing, radii, or elevation.
+
+## Authenticated Report Notifications
+
+### Report Notification Status
+
+File: `apps/web/components/report-notification/ReportNotificationStatus.tsx`
+Last updated: 2026-07-03 (17A)
+
+| Property           | Class/pattern                                                           |
+| ------------------ | ----------------------------------------------------------------------- |
+| Background         | shared Card `bg-surface`; semantic Alert surfaces                       |
+| Border             | shared `border-line`; semantic Alert borders                            |
+| Border radius      | shared Card/Alert `rounded-lg`                                          |
+| Text — primary     | shared Card title and semantic Alert content                            |
+| Text — secondary   | `text-content-muted` through CardDescription and AlertDescription       |
+| Spacing            | Card composition; wrapped header `gap-3`; page separation `mb-6`        |
+| Interactive states | none; fixture navigation uses the registered focus-ring link pattern    |
+| Shadow             | shared Card subtle elevation                                            |
+| Accent usage       | positive sent, caution sending/delayed, critical terminal delivery fail |
+
+**Pattern notes:** Sending, sent, delayed, and failed outcomes share one stable, owner-visible
+status block with Badge, icon, heading, durable copy, destination label, and update time. The block
+is hidden from print, uses a polite live region, and always states that email delivery is independent
+from access to the completed report. Delayed and failed delivery never suggest repurchase or report
+regeneration.
+
+### Report-Ready Email Preview
+
+File: `apps/web/components/report-notification/ReportReadyEmail.tsx`
+Last updated: 2026-07-03 (17A)
+
+| Property           | Class/pattern                                                               |
+| ------------------ | --------------------------------------------------------------------------- |
+| Background         | page `bg-page`; email Card `bg-surface`; header `bg-brand-navy`             |
+| Border             | shared `border-line`; metadata and security panels use structural borders   |
+| Border radius      | shared Card/panels `rounded-lg`                                              |
+| Text — primary     | `text-brand-navy`, `text-content`, header `text-content-inverse`             |
+| Text — secondary   | `text-content-muted`, metadata `text-content-subtle`                         |
+| Spacing            | shell `px-4 py-8`; email content `gap-6 p-5 sm:p-8`; compact panels `p-4`    |
+| Interactive states | authoritative Button and underlined support link with semantic focus ring   |
+| Shadow             | shared Card subtle elevation                                                |
+| Accent usage       | navy transactional header/action; positive ready Badge                      |
+
+**Pattern notes:** The compact email contains only company name, tier, reference, generation time,
+authenticated report CTA, and support guidance. It contains no report findings, interpretation,
+personal data, bearer token, or ownership bypass. The preview route is development/test-only and
+the content stacks naturally on mobile before using a two-column metadata grid at `sm`.
+
+### 17B Live Notification Contract
+
+- Last updated: 2026-07-03.
+- The registered Report Notification Status now consumes owner-authorized durable delivery state from
+  the secure report payload; no new visual pattern, colour, spacing, radius, or elevation was added.
+- `queued` and active submission render as sending, a retried queued record renders as delayed,
+  Postmark acceptance renders as sent, and terminal or ambiguous submission renders as failed.
+- The destination remains the generic `your verified account email`; recipient addresses and provider
+  errors never enter the browser payload.

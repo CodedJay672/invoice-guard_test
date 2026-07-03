@@ -50,6 +50,10 @@ export interface GenerationLogger {
   error(context: Record<string, unknown>, message: string): void;
 }
 
+export interface OwnerNotificationPublisher {
+  publish(reportId: string): Promise<void>;
+}
+
 export class ReportGenerationError extends Error {
   constructor(
     message: string,

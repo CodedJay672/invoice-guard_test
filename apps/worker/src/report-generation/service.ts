@@ -3,6 +3,7 @@ import type {
   PersistedReportStatus,
   ReportGenerationHandler,
   ReportGenerationRepository,
+  OwnerNotificationPublisher,
 } from "./types.js";
 import { ReportGenerationError } from "./types.js";
 
@@ -22,6 +23,7 @@ export class ReportGenerationService {
     private readonly repository: ReportGenerationRepository,
     private readonly handler: ReportGenerationHandler,
     private readonly logger: GenerationLogger,
+    private readonly ownerNotifications?: OwnerNotificationPublisher,
   ) {}
 
   async process(input: ProcessReportGenerationInput): Promise<ProcessReportGenerationResult> {
@@ -39,6 +41,9 @@ export class ReportGenerationService {
     }
 
     if (claim.state === "existing" && claim.status !== "generating") {
+      if (claim.status === "ready" || claim.status === "partial") {
+        await this.publishOwnerNotification(input.reportId, context);
+      }
       this.logger.info(
         { ...context, status: claim.status },
         "Report generation is already terminal",
@@ -56,6 +61,9 @@ export class ReportGenerationService {
       const persistedStatus = await this.repository.complete(input.reportId, result);
       const status = persistedStatus ?? result.outcome;
       this.logger.info({ ...context, status }, "Report generation completed");
+      if (status === "ready" || status === "partial") {
+        await this.publishOwnerNotification(input.reportId, context);
+      }
       return { state: "completed", status };
     } catch (error) {
       const retryable = !(error instanceof ReportGenerationError) || error.retryable;
@@ -86,6 +94,20 @@ export class ReportGenerationService {
       const status = (await this.repository.fail(input.reportId)) ?? "failed";
       this.logger.error({ ...context, status }, "Report generation reached a terminal failure");
       return { state: "completed", status };
+    }
+  }
+
+  private async publishOwnerNotification(
+    reportId: string,
+    context: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      await this.ownerNotifications?.publish(reportId);
+    } catch (error) {
+      this.logger.error(
+        { ...context, error },
+        "Owner notification enqueue failed; startup reconciliation will retry it",
+      );
     }
   }
 }

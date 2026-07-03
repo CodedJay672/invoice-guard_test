@@ -48,21 +48,32 @@ export class DrizzleReportGenerationRepository implements ReportGenerationReposi
     reportId: string,
     result: ReportGenerationResult,
   ): Promise<PersistedReportStatus | undefined> {
-    const completed = await this.db
-      .update(schema.purchasedReports)
-      .set({
-        status: result.outcome,
-        reportData: result.reportData,
-        providerStatuses: result.providerStatuses,
-        updatedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(schema.purchasedReports.id, reportId),
-          eq(schema.purchasedReports.status, "generating"),
-        ),
-      )
-      .returning({ status: schema.purchasedReports.status });
+    const completed = await this.db.transaction(async (tx) => {
+      const rows = await tx
+        .update(schema.purchasedReports)
+        .set({
+          status: result.outcome,
+          reportData: result.reportData,
+          providerStatuses: result.providerStatuses,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.purchasedReports.id, reportId),
+            eq(schema.purchasedReports.status, "generating"),
+          ),
+        )
+        .returning({ status: schema.purchasedReports.status });
+      if (rows[0] && (rows[0].status === "ready" || rows[0].status === "partial")) {
+        await tx
+          .insert(schema.reportNotifications)
+          .values({ reportId, type: "owner_report_ready" })
+          .onConflictDoNothing({
+            target: [schema.reportNotifications.reportId, schema.reportNotifications.type],
+          });
+      }
+      return rows;
+    });
     if (completed[0]) return completed[0].status;
     return this.findStatus(reportId);
   }

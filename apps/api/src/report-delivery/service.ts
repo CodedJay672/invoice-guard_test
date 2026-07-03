@@ -13,6 +13,7 @@ import {
 import {
   InvalidFrozenReportError,
   ReportNotFoundError,
+  type DeliverableReportRecord,
   type ReportDeliveryRepository,
 } from "./types.js";
 
@@ -57,6 +58,7 @@ export class ReportDeliveryService {
       storedEntitlements.data,
       row.status,
       row.pdfStorageUrl,
+      row.notification,
     );
     return { state: "report", report: browserReportPayloadSchema.parse(report) };
   }
@@ -68,6 +70,7 @@ function buildBrowserPayload(
   entitlements: PaidReportEntitlements,
   status: "ready" | "partial",
   pdfStorageUrl: string | null,
+  notification: DeliverableReportRecord["notification"],
 ): BrowserReportPayload {
   const overview = artifact.facts.overview ?? {};
   const address = record(overview["registeredAddress"]);
@@ -94,6 +97,22 @@ function buildBrowserPayload(
     issueHref: `mailto:hello@invoiceguard.co.uk?subject=${encodeURIComponent(`Issue with report ${artifact.reportReference}`)}`,
     ...(artifact.tier === "premium"
       ? { pdfState: pdfStorageUrl ? ("ready" as const) : ("available" as const) }
+      : {}),
+    ...(notification
+      ? {
+          notification: {
+            state:
+              notification.status === "sent"
+                ? ("sent" as const)
+                : notification.status === "failed"
+                  ? ("failed" as const)
+                  : notification.status === "queued" && notification.attemptCount > 0
+                    ? ("delayed" as const)
+                    : ("sending" as const),
+            destinationLabel: "your verified account email" as const,
+            updatedAt: displayDateTime(notification.updatedAt.toISOString()),
+          },
+        }
       : {}),
   };
 }

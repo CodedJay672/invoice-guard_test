@@ -9,7 +9,12 @@ import {
   createRegistryTrustClient,
 } from "@workspace/integrations";
 import { createLogger } from "@workspace/logger";
-import { createQueue, QUEUE_NAMES, type SendAdminAlertJobData } from "@workspace/queues";
+import {
+  createQueue,
+  QUEUE_NAMES,
+  type SendAdminAlertJobData,
+  type SendOwnerReportNotificationJobData,
+} from "@workspace/queues";
 
 import { AnthropicAiInterpretationClient } from "./ai-interpretation/client.js";
 import { PaidReportGenerationHandler } from "./paid-generation/handler.js";
@@ -17,6 +22,13 @@ import { DrizzlePaidGenerationRepository } from "./paid-generation/repository.js
 import { DrizzleReportGenerationRepository } from "./report-generation/repository.js";
 import { ReportGenerationService } from "./report-generation/service.js";
 import { createReportGenerationWorker } from "./report-generation/worker.js";
+import { ClerkOwnerEmailResolver } from "./report-notification/clerk-resolver.js";
+import { HttpPostmarkGateway } from "./report-notification/postmark-gateway.js";
+import { OwnerNotificationPublisher } from "./report-notification/publisher.js";
+import { CodeOwnedReportReadyEmailRenderer } from "./report-notification/renderer.js";
+import { DrizzleReportNotificationRepository } from "./report-notification/repository.js";
+import { OwnerReportNotificationService } from "./report-notification/service.js";
+import { createOwnerReportNotificationWorker } from "./report-notification/worker.js";
 
 const config = loadAppConfig();
 assertWorkerProductionConfig(config);
@@ -27,6 +39,12 @@ const logger = createLogger({
 
 if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
   const db = createDatabase(config.databaseUrl);
+  const notificationRepository = new DrizzleReportNotificationRepository(db);
+  const emailQueue = createQueue<SendOwnerReportNotificationJobData, void, string>({
+    name: QUEUE_NAMES.email,
+    connectionString: config.redisUrl,
+  });
+  const notificationPublisher = new OwnerNotificationPublisher(notificationRepository, emailQueue);
   const paidRepository = new DrizzlePaidGenerationRepository(db);
   const alertQueue = createQueue<SendAdminAlertJobData, void, string>({
     name: QUEUE_NAMES.providerAlert,
@@ -74,8 +92,35 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
     new DrizzleReportGenerationRepository(db),
     handler,
     logger,
+    notificationPublisher,
   );
   createReportGenerationWorker({ connectionString: config.redisUrl, service, logger });
+  try {
+    const reconciledNotifications = await notificationPublisher.reconcileQueued();
+    logger.info({ reconciledNotifications }, "Queued owner notifications reconciled");
+  } catch (error) {
+    logger.error({ error }, "Failed to reconcile queued owner notifications at startup");
+  }
+  if (config.clerkSecretKey && config.postmarkApiKey && config.postmarkFromEmail) {
+    const notificationService = new OwnerReportNotificationService(
+      notificationRepository,
+      new ClerkOwnerEmailResolver(config.clerkSecretKey),
+      new CodeOwnedReportReadyEmailRenderer(config.appUrl),
+      new HttpPostmarkGateway({
+        apiKey: config.postmarkApiKey,
+        from: config.postmarkFromEmail,
+        messageStream: config.postmarkMessageStream,
+      }),
+      logger,
+    );
+    createOwnerReportNotificationWorker({
+      connectionString: config.redisUrl,
+      service: notificationService,
+      logger,
+    });
+  } else {
+    logger.info("Owner notification consumer is idle until Clerk and Postmark are configured");
+  }
   logger.info({ queues: QUEUE_NAMES }, "InvoiceGuard paid report worker started");
 } else {
   logger.info(

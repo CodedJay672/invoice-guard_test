@@ -10,6 +10,22 @@ void test("production API configuration fails closed without durable infrastruct
   assert.throws(() => assertApiProductionConfig(config), /DATABASE_URL/);
   assert.throws(() => assertWorkerProductionConfig(config), /REDIS_URL/);
   assert.throws(() => assertWorkerProductionConfig(config), /ANTHROPIC_API_KEY/);
+  assert.throws(() => assertWorkerProductionConfig(config), /POSTMARK_API_KEY/);
+});
+
+void test("production worker accepts complete notification configuration", () => {
+  const config = loadAppConfig({
+    NODE_ENV: "production",
+    DATABASE_URL: "postgres://invoiceguard:test@localhost/invoiceguard",
+    REDIS_URL: "redis://localhost:6379",
+    ANTHROPIC_API_KEY: "sk-ant-test",
+    CLERK_SECRET_KEY: "sk_test_clerk",
+    POSTMARK_API_KEY: "postmark-test",
+    POSTMARK_FROM_EMAIL: "reports@invoiceguard.co.uk",
+    REGISTRY_TRUST_PROVIDER_MODE: "live",
+  });
+  assert.doesNotThrow(() => assertWorkerProductionConfig(config));
+  assert.equal(config.postmarkMessageStream, "outbound");
 });
 
 void test("production worker fails closed until Registry Trust live mode is configured", () => {
@@ -18,6 +34,9 @@ void test("production worker fails closed until Registry Trust live mode is conf
     DATABASE_URL: "postgres://invoiceguard:test@localhost/invoiceguard",
     REDIS_URL: "redis://localhost:6379",
     ANTHROPIC_API_KEY: "sk-ant-test",
+    CLERK_SECRET_KEY: "sk_test_clerk",
+    POSTMARK_API_KEY: "postmark-test",
+    POSTMARK_FROM_EMAIL: "reports@invoiceguard.co.uk",
   });
 
   assert.throws(() => assertWorkerProductionConfig(config), /Registry Trust live mode/);

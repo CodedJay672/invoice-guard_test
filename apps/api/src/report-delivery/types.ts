@@ -18,6 +18,12 @@ export interface DeliverableReportRecord {
   reportData: unknown;
   providerStatuses: unknown;
   pdfStorageUrl: string | null;
+  notification?: {
+    status: "queued" | "sending" | "sent" | "failed";
+    attemptCount: number;
+    failureKind: string | null;
+    updatedAt: Date;
+  } | null;
 }
 
 export interface ReportDeliveryRepository {
