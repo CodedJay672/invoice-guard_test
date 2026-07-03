@@ -5,7 +5,7 @@ node_modules
 **/.clerk
 .turbo
 dist
-context
+/context
 /fixes
 /specs
 build

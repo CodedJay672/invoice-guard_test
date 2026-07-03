@@ -85,6 +85,12 @@ void test("provides provisional compliance and issue-reporting content", () => {
   assert.match(report.disclaimer, /not.*credit decision/);
   assert.match(report.issueHref, /^mailto:hello@invoiceguard\.co\.uk/);
   assert.match(report.issueHref, /IG-2026-000000000184/);
+  assert.match(report.issueDisplayUrl, /^https:\/\/invoiceguard\.co\.uk\//);
+  assert.equal(report.pdfPreviewHref, undefined);
+  assert.equal(
+    getBrowserReportFixture("premium", "complete", "ready").pdfPreviewHref,
+    "/reports/preview/pdf",
+  );
 });
 
 void test("implements accessible screen, mobile, print, and secure delivery contracts", () => {

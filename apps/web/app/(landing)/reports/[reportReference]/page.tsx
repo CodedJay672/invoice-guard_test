@@ -67,6 +67,7 @@ function toBrowserReport(report: BrowserReportPayload): BrowserReportFixture {
   return {
     viewState: "report",
     ...payload,
+    issueDisplayUrl: `https://invoiceguard.co.uk/report-an-issue?reference=${encodeURIComponent(report.reportReference)}`,
     navigation: navigationForSections(report.tier, report.sections),
     ...(pdfState ? { pdfState } : {}),
     ...(notification ? { notification } : {}),

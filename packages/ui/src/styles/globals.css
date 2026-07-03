@@ -123,4 +123,12 @@
   .report-panel:first-child {
     break-before: auto;
   }
+
+  .premium-pdf-page {
+    break-after: page;
+  }
+
+  .premium-pdf-page:last-child {
+    break-after: auto;
+  }
 }

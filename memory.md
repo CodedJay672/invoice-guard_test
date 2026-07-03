@@ -1,55 +1,66 @@
-# Memory — AUTH-C Registration Before Payment
+# Memory — 18A Premium PDF and Compliance Blocks
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03 11:36 +01:00
 
 ## What was built
 
-- Completed AUTH-C across web, API, Stripe webhook processing, database schema, queues, fixtures,
-  and tests.
-- Signed-out buyers now enter Clerk sign-up with a validated checkout return path; unverified users
-  see a blocking verification state; only verified Clerk owners can create checkout sessions.
-- Checkout status and paid reports are bound to the verified Clerk owner. Webhook processing rejects
-  missing or malformed owner metadata.
-- Added guarded forward migration `packages/db/drizzle/0003_wandering_punisher.sql`. It aborts when
-  ownerless reports exist, then makes `clerk_user_id` non-null and removes guest columns/indexes.
-- Free preview now calls Companies House only and returns explicit `notYetCheckedSources` for Gazette,
-  insolvency/disqualification, Registry Trust, and AI interpretation.
-- Removed guest validation, queue naming/tasks, fixtures, access states, and unsupported clean/adverse
-  free-preview conclusions.
-- Updated `context/ui-registry.md`, `context/build-plan.md`, and `context/progress-tracker.md`.
+- Completed 18A with a development/test-only `/reports/preview/pdf` route that is closed with
+  `notFound()` in production.
+- Added deterministic Premium complete, long-content, partial-source, and explicit flag-summary
+  fixtures under `apps/web/components/premium-pdf/`.
+- Added a three-page document preview with immutable identity, source status, entitled report facts,
+  AI interpretation, page-one disclaimer, printed issue URL, and print page-break behavior.
+- Added `apps/web/components/report-compliance/ReportCompliance.tsx` and reused it for the browser
+  report footer and document compliance block.
+- Linked the development Premium `ready` PDF state to the preview without adding generation, storage,
+  queue, database, or delivery logic.
+- Imprinted the page-sheet and compliance patterns into `context/ui-registry.md`; updated
+  `context/build-plan.md` and `context/progress-tracker.md` to mark 18A `UI/Mock Verified`.
 
 ## Decisions made
 
-- No guest purchase, bearer-token report access, or fabricated ownership is permitted.
-- Existing ownerless rows are never silently deleted or assigned; the AUTH-C migration fails safely.
-- Browser checkout payloads contain company, tier, and attempt ID only. Verified owner identity and
-  email travel through the signed server-to-server principal.
-- Free preview exposes Companies House facts only; every other source is presented as not yet checked.
+- The 18A mock uses deterministic HTML page sheets plus dedicated print CSS; it does not choose or
+  emulate the eventual PDF renderer.
+- Browser and document compliance presentation share one content contract while retaining
+  surface-specific rendering.
+- `ENABLE_FLAG_SUMMARY=false` remains canonical. Only the named development fixture enables clearly
+  labelled non-production sample copy.
+- The document prints a separate provisional fixture issue URL. Approved copy and the real issue
+  destination remain deferred to 18B.
+- Premium is the only tier with a PDF document surface; Basic and Standard remain excluded.
 
 ## Problems solved
 
-- API route tests leaked HTTP listeners when assertions failed. Per-test cleanup now closes every
-  tracked server, so focused and aggregate suites terminate normally.
-- Restored the anonymous search limit to the documented five searches per hashed IP per 24 hours.
-- Replaced session-ID-only payment polling with authenticated owner-scoped status checks.
+- Extended the existing 16A Premium PDF action states into an inspectable document contract without
+  coupling UI work to an unselected renderer or object store.
+- Preserved real secure report delivery while adding fixture-only preview metadata and navigation.
+- Ensured source outcomes are conveyed with text and icons, not colour alone, and protected document
+  sections from unsafe print breaks where possible.
 
 ## Current state
 
-- AUTH-C is complete and recorded in the tracker.
-- Typecheck passed 12 tasks; lint passed 14 tasks; aggregate tests passed 12 tasks.
-- Focused tests passed: API 25, web 16, worker 11.
-- Production build passed 12 tasks and all current Next.js routes compiled.
-- The AUTH-C migration is generated and reviewed but has not been applied to a database.
-- Paid-provider and Anthropic report generation remain future work in 15A/15B.
+- 18A is `UI/Mock Verified`. Repository typecheck passed 12 tasks, lint passed 14 tasks, tests passed
+  12 tasks, and the production build passed 12 tasks.
+- The web suite passes all 38 assertions, including the four new 18A document-contract tests. The
+  Next.js build emits `/reports/preview/pdf`, which remains unavailable in production.
+- Formatting checks pass for all 18A code and context files.
+- No PDF renderer, object storage, generation job, persisted PDF state, or approved production copy
+  has been implemented.
+- Migration `packages/db/drizzle/0005_glorious_old_lace.sql` remains reviewed but unapplied.
 
 ## Next session starts with
 
 1. Run `/remember restore` and confirm this state.
-2. Use `/architect` for `15A — UI/Mock: Paid Source, Tier, and AI Interpretation Sections`.
-3. Build the complete paid-report state matrix before starting 15B logic/data work.
+2. Use `/architect` for `18B — Logic/Data: PDF, Storage, Disclaimer, and Templates`.
+3. Select the PDF renderer and object-storage provider only after evaluating runtime compatibility,
+   deterministic pagination, font handling, secure delivery, lifecycle, and retry semantics.
+4. Replace provisional compliance/template fixtures only when exact approved copy and the issue
+   destination are available.
 
 ## Open questions
 
-- Final mandatory disclaimer wording and issue-report address remain production blockers.
-- Registry Trust production credentials/operations and PDF/object-storage selection remain unresolved.
-- Anthropic integration must use `claude-haiku-4-5-20251001` with `max_tokens: 1500` in Phase A.
+- Which PDF renderer and object-storage provider should 18B adopt?
+- What is the final mandatory disclaimer wording and approved issue-report destination?
+- Registry Trust production contract/credentials and production deployment configuration remain open.
+- Production still requires the outstanding real provider credentials and sender/configuration work;
+  no secret values are stored here.

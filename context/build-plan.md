@@ -273,6 +273,8 @@ Depends on: **17A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
 ### 18A — UI/Mock: Premium PDF and Compliance Blocks
 
+Status: **UI/Mock Verified 2026-07-03**.
+
 - Premium PDF mock with identity, reference, timestamp, tier, source status, report sections, page-one disclaimer, and printed issue URL.
 - Browser disclaimer/issue blocks.
 - Flag-summary disabled placeholder and approved-template fixture.

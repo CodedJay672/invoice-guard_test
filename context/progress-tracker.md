@@ -8,13 +8,13 @@ Update after every completed feature. Record actual state only.
 
 **Product phase:** Phase A — Company Search and Paid Reports
 
-**Build-plan phase:** Phase 4 — Delivery
+**Build-plan phase:** Phase 5 — PDF and Compliance
 
-**Last completed:** 17B — Logic/Data: Owner Notifications and Postmark
+**Last completed:** 18A — UI/Mock: Premium PDF and Compliance Blocks
 
-**Next:** 18A — UI/Mock: Premium PDF and Compliance Blocks
+**Next:** 18B — Logic/Data: PDF, Storage, Disclaimer, and Templates
 
-**Status:** 17B complete; durable owner-ready notifications are wired through Clerk, BullMQ, Postmark, and secure report delivery
+**Status:** 18A UI/Mock Verified; the Premium document, compliance, print, long-content, partial-source, and flag-summary contracts are ready for 18B logic
 
 **Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
 is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
@@ -22,9 +22,9 @@ assets are now authoritative implementation references.
 
 ### Current Unit Scope
 
-18A builds the Premium PDF and compliance presentation contract before PDF/storage logic. It covers
-multi-page, long-content, partial-source, print, disclaimer, issue-link, and flag-summary states while
-preserving the frozen-report hierarchy and Premium-only entitlement.
+18B selects the PDF and object-storage implementation, generates Premium documents from frozen report
+data, persists delivery state, and replaces provisional compliance/template fixtures with approved
+exact copy while preserving `ENABLE_FLAG_SUMMARY=false` by default.
 
 ---
 
@@ -62,7 +62,7 @@ preserving the frozen-report hierarchy and Premium-only entitlement.
 - [x] 16B Logic/Data: Secure Report Delivery (A20)
 - [x] 17A UI/Mock: Authenticated Report Notification Outcomes — `UI/Mock Verified` 2026-07-03
 - [x] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
-- [ ] 18A UI/Mock: Premium PDF and Compliance Blocks
+- [x] 18A UI/Mock: Premium PDF and Compliance Blocks — `UI/Mock Verified` 2026-07-03
 - [ ] 18B Logic/Data: PDF, Storage, and Templates (A23-A25)
 - [ ] 19A UI/Mock: Fair Payment Code States
 - [ ] 19B Logic/Data: Fair Payment Code Refresh (A26)
@@ -121,6 +121,9 @@ preserving the frozen-report hierarchy and Premium-only entitlement.
 - Durable owner-ready notification records created with ready/partial report finalization, deterministic
   BullMQ jobs, startup reconciliation, current verified-primary Clerk lookup, code-owned multipart
   templates, and at-most-once Postmark submission with explicit ambiguous-delivery visibility.
+- Production-gated `/reports/preview/pdf` with deterministic Premium complete, long-content,
+  partial-source, and flag-summary page sheets; shared browser/document compliance blocks, page-one
+  disclaimer, printed fixture issue URL, print breaks, and a development-only ready-state preview link.
 - Worker-only Claude Haiku 4.5 interpretation adapter with fixed 1,500-token output limit,
   prompt/schema locking, nullable source mirroring, and validated frozen artifact metadata.
 - Frozen paid entitlements, report-linked immutable source snapshots, tier-aware paid generation,
@@ -306,7 +309,19 @@ API, database, configuration, and web tests passed. Coverage includes unique dur
 deterministic startup reconciliation, verified-primary Clerk resolution, accepted/rejected/ambiguous
 Postmark outcomes, at-most-once resubmission guards, escaped multipart templates, canonical secure
 links, live owner-authorized status projection, and recipient privacy. Focused worker/API/web
-typechecks and worker/API lint passed before the repository-wide completion gates.
+typechecks and worker/API lint passed. Repository typecheck passed 12 tasks, lint passed 14 tasks,
+tests passed 12 tasks, and the production build passed 12 tasks with Next.js 16.2.6 compiling every
+Phase A route.
+
+2026-07-03 Feature 18A checks: focused formatting, web TypeScript, web lint, all 38 web assertions,
+and the focused Next.js 16.2.6 production build passed. Coverage includes all four Premium document
+fixtures, Premium-only entitlement, default-disabled and explicit non-production flag-summary states,
+page-one disclaimer, printed issue URL, shared browser/document compliance presentation, deterministic
+page order, long/partial content, semantic-token enforcement, print breaks, and production preview
+closure. Repository typecheck passed 12 tasks, lint passed 14 tasks, tests passed 12 tasks, and the
+production build passed 12 tasks with `/reports/preview/pdf` emitted as a dynamic route that calls
+`notFound()` in production. User manual document/print QA remains non-blocking under the automated
+gate policy.
 
 ### Coverage Tracking
 
@@ -323,7 +338,7 @@ typechecks and worker/API lint passed before the repository-wide completion gate
 | AI interpretation                         | Composed into frozen paid generation with terminal fallback             |
 | Secure browser report delivery            | Covered for ownership, concealment, lifecycle, validation, and tiers     |
 | Owner notifications                       | Covered for ownership, durable state, retries, ambiguity, and live UI projection |
-| PDF/admin/maintenance                     | Not implemented                                                        |
+| PDF/admin/maintenance                     | 18A PDF/compliance UI verified; PDF logic, admin, maintenance pending   |
 
 ### Environment Variables in Scope
 

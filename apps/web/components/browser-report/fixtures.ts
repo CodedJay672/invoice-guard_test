@@ -54,6 +54,8 @@ export interface BrowserReportFixture {
   navigation: BrowserReportNavigationSection[];
   disclaimer: string;
   issueHref: string;
+  issueDisplayUrl: string;
+  pdfPreviewHref?: string;
   pdfState?: PdfFixtureState;
   unavailableReason?: BrowserReportUnavailableReason;
   notification?: ReportNotificationFixture;
@@ -115,6 +117,10 @@ export function getBrowserReportFixture(
     disclaimer:
       "InvoiceGuard reports information found in the sources identified above. It is not legal or financial advice, a credit decision, or a guarantee of future payment. Verify important decisions independently.",
     issueHref: `mailto:hello@invoiceguard.co.uk?subject=${issueSubject}`,
+    issueDisplayUrl: `https://invoiceguard.co.uk/report-an-issue?reference=${reportReference}`,
+    ...(tier === "premium" && pdfState === "ready"
+      ? { pdfPreviewHref: "/reports/preview/pdf" }
+      : {}),
     ...(tier === "premium" ? { pdfState } : {}),
   };
 }

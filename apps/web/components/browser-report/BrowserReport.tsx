@@ -8,7 +8,6 @@ import {
   Clock3,
   Download,
   FileText,
-  Flag,
   ShieldAlert,
 } from "lucide-react";
 
@@ -30,6 +29,7 @@ import type {
   PaidSourceStatus,
 } from "../paid-report/fixtures";
 import { ReportNotificationStatus } from "../report-notification/ReportNotificationStatus";
+import { ReportComplianceBlock } from "../report-compliance/ReportCompliance";
 
 export function BrowserReport({ report }: { report: BrowserReportFixture }) {
   const [activeSection, setActiveSection] = useState(report.navigation[0]?.id ?? "overview");
@@ -171,7 +171,9 @@ function CompanyMasthead({ report }: { report: BrowserReportFixture }) {
             </Badge>
           </div>
           <p className="text-sm text-content-subtle">{report.industry}</p>
-          {report.pdfState ? <PdfAction state={report.pdfState} /> : null}
+          {report.pdfState ? (
+            <PdfAction state={report.pdfState} previewHref={report.pdfPreviewHref} />
+          ) : null}
         </div>
       </div>
       <div className="border-t border-line bg-surface-subtle/40">
@@ -194,7 +196,13 @@ function CompanyMasthead({ report }: { report: BrowserReportFixture }) {
   );
 }
 
-function PdfAction({ state }: { state: PdfFixtureState }) {
+function PdfAction({
+  state,
+  previewHref,
+}: {
+  state: PdfFixtureState;
+  previewHref: string | undefined;
+}) {
   const content = {
     available: { label: "Generate PDF", icon: FileText, disabled: false },
     generating: { label: "Generating PDF", icon: Clock3, disabled: true },
@@ -208,10 +216,19 @@ function PdfAction({ state }: { state: PdfFixtureState }) {
       role="status"
       aria-live="polite"
     >
-      <Button type="button" disabled={content.disabled} onClick={() => undefined}>
-        <Icon data-icon="inline-start" />
-        {content.label}
-      </Button>
+      {state === "ready" && previewHref ? (
+        <Button asChild>
+          <a href={previewHref}>
+            <Icon data-icon="inline-start" />
+            Preview PDF
+          </a>
+        </Button>
+      ) : (
+        <Button type="button" disabled={content.disabled} onClick={() => undefined}>
+          <Icon data-icon="inline-start" />
+          {content.label}
+        </Button>
+      )}
       <p className="text-xs text-content-subtle">Preview only — no PDF request is sent.</p>
     </div>
   );
@@ -425,23 +442,5 @@ function ReportUnavailableState({ report }: { report: BrowserReportFixture }) {
 }
 
 function ReportFooter({ report }: { report: BrowserReportFixture }) {
-  return (
-    <footer className="border-t border-line bg-brand-navy text-content-inverse print:mt-6 print:bg-surface print:text-content">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-xs sm:px-6 lg:px-8 print:max-w-none print:px-0">
-        <p>{report.disclaimer}</p>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p>
-            InvoiceGuard · {report.reportReference} · Generated {report.generatedAt}
-          </p>
-          <a
-            href={report.issueHref}
-            className="inline-flex items-center gap-2 font-medium underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
-          >
-            <Flag aria-hidden="true" className="size-4" />
-            Report an issue
-          </a>
-        </div>
-      </div>
-    </footer>
-  );
+  return <ReportComplianceBlock content={report} />;
 }

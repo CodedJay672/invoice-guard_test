@@ -546,3 +546,50 @@ the content stacks naturally on mobile before using a two-column metadata grid a
   Postmark acceptance renders as sent, and terminal or ambiguous submission renders as failed.
 - The destination remains the generic `your verified account email`; recipient addresses and provider
   errors never enter the browser payload.
+
+## Premium PDF and Compliance
+
+### Premium PDF Page Sheet
+
+File: `apps/web/components/premium-pdf/PremiumPdfDocument.tsx`
+Last updated: 2026-07-03 (18A)
+
+| Property           | Class/pattern                                                                    |
+| ------------------ | -------------------------------------------------------------------------------- |
+| Background         | preview `bg-page`; document sheets and factual panels `bg-surface`               |
+| Border             | sheets, sections, and compliance blocks use `border-line`                        |
+| Border radius      | screen sheets/sections `rounded-lg`; compact evidence rows `rounded-md`           |
+| Text — primary     | headings `text-brand-navy`; facts `text-content`                                 |
+| Text — secondary   | detail `text-content-muted`; metadata and pagination `text-content-subtle`         |
+| Spacing            | preview `px-4 py-8`; sheets `p-8`; section grids `gap-4`; compact panels `p-3/4`  |
+| Interactive states | fixture links use semantic hover and `focus-visible:ring-2 focus-visible:ring-focus` |
+| Shadow             | screen sheets `shadow-sm`; removed in print                                      |
+| Accent usage       | teal brand label; positive/caution source icons always paired with status text    |
+
+**Pattern notes:** Premium PDF mocks use three deterministic screen page sheets and dedicated print
+breaks. Preview chrome, sheet radius, borders, shadows, and page background disappear in print.
+Page one always carries immutable identity, source status, the provisional disclaimer, and the
+printed fixture issue URL. Long content and factual cards avoid internal print breaks where safe.
+Basic and Standard never enter this document surface.
+
+### Report Compliance Block
+
+File: `apps/web/components/report-compliance/ReportCompliance.tsx`
+Last updated: 2026-07-03 (18A)
+
+| Property           | Class/pattern                                                          |
+| ------------------ | ---------------------------------------------------------------------- |
+| Background         | browser `bg-brand-navy`; document `bg-surface-subtle/40`                |
+| Border             | browser/document separation uses `border-line`                         |
+| Border radius      | document block `rounded-lg`; browser footer is structural              |
+| Text — primary     | document heading `text-brand-navy`; body `text-content-muted`           |
+| Text — secondary   | browser uses `text-content-inverse`; print returns to `text-content`    |
+| Spacing            | browser `px-4 py-6 gap-4`; document `p-4` with compact `gap-3`          |
+| Interactive states | browser issue link uses underline and the canonical semantic focus ring |
+| Shadow             | none                                                                   |
+| Accent usage       | navy browser footer; document shield icon uses brand navy              |
+
+**Pattern notes:** Browser and document reports share one compliance content contract while keeping
+surface-specific presentation. The document variant is non-interactive and prints the issue URL as
+text. The enabled flag-summary sample is explicitly non-production; the canonical state remains
+disabled until approved exact copy is supplied in 18B.
