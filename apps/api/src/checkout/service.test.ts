@@ -34,8 +34,8 @@ const productRepository: ReportProductRepository = {
   findActiveByTier: (tier) =>
     Promise.resolve({
       tier,
-      name: "Basic",
-      pricePence: 799,
+      name: "Single Report",
+      pricePence: 2000,
       includesPdf: false,
       includedItems: [],
       entitlements: entitlementsForTier(tier),
@@ -127,20 +127,20 @@ void test("checkout creation uses the trusted active product price", async () =>
   const harness = createHarness();
   const result = await harness.service.createSession({
     companyNumber: "12345678",
-    tier: "basic",
+    tier: "single_report",
     verifiedEmail: "buyer@example.com",
     clerkUserId: "user_owner_123",
     attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
   });
   assert.equal(result.sessionId, "cs_test_one");
-  assert.equal(harness.stripeGateway.createdPrice, 799);
+  assert.equal(harness.stripeGateway.createdPrice, 2000);
 });
 
 void test("verified checkout ownership is carried into Stripe by the service", async () => {
   const harness = createHarness();
   await harness.service.createSession({
     companyNumber: "12345678",
-    tier: "basic",
+    tier: "single_report",
     verifiedEmail: "owner@example.com",
     attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
     clerkUserId: "user_owner_123",
@@ -226,12 +226,12 @@ function checkoutEvent(
         object: "checkout.session",
         mode: "payment",
         payment_status: paymentStatus,
-        amount_total: 799,
+        amount_total: 2000,
         currency: "gbp",
         customer_details: { email: "buyer@example.com" },
         metadata: {
           companyNumber: "12345678",
-          tier: "basic",
+          tier: "single_report",
           ...(clerkUserId ? { clerkUserId } : {}),
         },
         payment_intent: "pi_one",

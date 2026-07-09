@@ -11,7 +11,7 @@ void test("report-ready multipart content is safe, minimal, and owner-authorized
     reportReference: "IG-2026-ABCDEF123456",
     clerkUserId: "user_1",
     companyName: "North <script>alert(1)</script> Limited",
-    reportTier: "premium",
+    reportTier: "agency_pack",
     reportStatus: "partial",
     status: "queued",
     attemptCount: 0,
@@ -20,7 +20,7 @@ void test("report-ready multipart content is safe, minimal, and owner-authorized
       reportReference: "IG-2026-ABCDEF123456",
       companyNumber: "01234567",
       companyName: "North Limited",
-      tier: "premium",
+      tier: "agency_pack",
       entitlements: {
         companiesHouse: {
           profile: true,

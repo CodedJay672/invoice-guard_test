@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
 
 import Topbar from "@/components/topbar";
+import Footer from "@/components/footer";
 
 export default function LandingPageLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-svh bg-page text-content">
+    <main className="min-h-svh bg-page text-content">
       <Topbar />
-      <main>{children}</main>
-    </div>
+      <div className="p-2 bg-surface">{children}</div>
+      <Footer />
+    </main>
   );
 }

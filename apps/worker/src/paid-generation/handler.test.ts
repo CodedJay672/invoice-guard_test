@@ -7,11 +7,10 @@ import {
   MockLondonGazetteClient,
   MockRegistryTrustClient,
   createProviderFailure,
-  type CompaniesHouseClient,
   type ProviderName,
   type ProviderResult,
 } from "@workspace/integrations";
-import { entitlementsForTier } from "@workspace/validation/paid-report";
+import { entitlementsForTier, type PaidReportTier } from "@workspace/validation/paid-report";
 
 import {
   AI_INTERPRETATION_DISCLAIMER,
@@ -26,11 +25,12 @@ import type {
   PaidGenerationRepository,
   PaidReportSnapshot,
 } from "./types.js";
+import { CompaniesHouseClient } from "@workspace/types";
 
 const NOW = new Date("2026-07-02T12:00:00.000Z");
 
-void test("Basic collection is tier-safe and reuses successful report snapshots", async () => {
-  const repository = new MemoryPaidGenerationRepository(report("basic"));
+void test("Single Report collection is product-safe and reuses successful report snapshots", async () => {
+  const repository = new MemoryPaidGenerationRepository(report("single_report"));
   const aiInputs: unknown[] = [];
   const handler = createHandler(repository, aiInputs);
 
@@ -43,18 +43,24 @@ void test("Basic collection is tier-safe and reuses successful report snapshots"
   assert.equal(repository.usage.length, usageAfterFirst);
   assert.deepEqual(repository.usage.map((item) => `${item.provider}:${item.operation}`).sort(), [
     "companies_house:address_history",
+    "companies_house:charges",
+    "companies_house:filing_history",
+    "companies_house:insolvency",
     "companies_house:officers",
     "companies_house:profile",
+    "fair_payment_code:internal_lookup",
+    "insolvency_disqualified_officers:company_check",
+    "london_gazette:company_notices",
     "registry_trust:ccj",
   ]);
   const input = aiInputs[0] as Record<string, unknown>;
-  assert.equal(input["charges"], null);
-  assert.equal(input["filing_history"], null);
-  assert.equal(input["fair_payment_code"], null);
+  assert.notEqual(input["charges"], null);
+  assert.notEqual(input["filing_history"], null);
+  assert.notEqual(input["fair_payment_code"], null);
 });
 
 void test("foundational Companies House failure skips paid sources and requires refund", async () => {
-  const repository = new MemoryPaidGenerationRepository(report("premium"));
+  const repository = new MemoryPaidGenerationRepository(report("agency_pack"));
   const companiesHouse = new MockCompaniesHouseClient();
   companiesHouse.getCompanyProfile = () =>
     Promise.resolve(
@@ -75,8 +81,8 @@ void test("foundational Companies House failure skips paid sources and requires 
   );
 });
 
-void test("Premium includes internal Fair Payment Code and factual evidence coverage", async () => {
-  const repository = new MemoryPaidGenerationRepository(report("premium"));
+void test("credit-pack products include internal Fair Payment Code and factual evidence coverage", async () => {
+  const repository = new MemoryPaidGenerationRepository(report("business_pack"));
   repository.fairPaymentCode = {
     companiesHouseNumber: repository.report.companiesHouseNumber,
     statusLabel: "Awarded",
@@ -97,7 +103,7 @@ void test("Premium includes internal Fair Payment Code and factual evidence cove
 });
 
 void test("exhausted Registry Trust failure freezes tier-specific recovery metadata", async () => {
-  const repository = new MemoryPaidGenerationRepository(report("basic"));
+  const repository = new MemoryPaidGenerationRepository(report("single_report"));
   const handler = createHandler(repository, [], new MockCompaniesHouseClient(), {
     checkCompany: () =>
       Promise.resolve(
@@ -172,13 +178,20 @@ function createHandler(
   });
 }
 
-function report(tier: "basic" | "standard" | "premium"): GeneratingPaidReport {
+function report(tier: PaidReportTier): GeneratingPaidReport {
   return {
     id: "123e4567-e89b-42d3-a456-426614174000",
     reportReference: "IG-2026-TEST",
     clerkUserId: "user_test",
     stripeCheckoutSessionId: "cs_test_paid",
-    amountPaidPence: tier === "basic" ? 799 : tier === "standard" ? 1499 : 2700,
+    amountPaidPence:
+      tier === "single_report"
+        ? 2000
+        : tier === "starter_pack"
+          ? 5400
+          : tier === "business_pack"
+            ? 8000
+            : 14000,
     currency: "GBP",
     companiesHouseNumber: "01234561",
     companyName: "EXAMPLE LIMITED",

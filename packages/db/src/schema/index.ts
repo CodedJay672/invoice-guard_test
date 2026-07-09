@@ -17,7 +17,12 @@ import type { PaidReportEntitlements } from "@workspace/validation/paid-report";
 
 export type JsonRecord = Record<string, unknown>;
 
-export const reportTierEnum = pgEnum("report_tier", ["basic", "standard", "premium"]);
+export const reportTierEnum = pgEnum("report_tier", [
+  "single_report",
+  "starter_pack",
+  "business_pack",
+  "agency_pack",
+]);
 
 export const purchasedReportStatusEnum = pgEnum("purchased_report_status", [
   "pending",
@@ -63,6 +68,11 @@ export const companies = pgTable(
     companyStatus: varchar("company_status", { length: 64 }).notNull(),
     companyType: varchar("company_type", { length: 64 }),
     incorporationDate: timestamp("incorporation_date", { withTimezone: true }),
+    cessationDate: timestamp("cessation_date", { withTimezone: true }),
+    registeredOfficeAddress1: text("registered_office_address_1"),
+    registeredOfficeAddress2: text("registered_office_address_2"),
+    registeredOfficePostalCode: text("registered_office_postal_code"),
+    registeredOfficePOBox: text("registered_office_po_box"),
     registeredOfficeLocality: text("registered_office_locality"),
     registeredOfficeRegion: text("registered_office_region"),
     registeredOfficeCountry: text("registered_office_country"),

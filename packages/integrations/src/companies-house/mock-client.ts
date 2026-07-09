@@ -18,7 +18,7 @@ import type {
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
   CompaniesHouseSearchResult,
-} from "./types.js";
+} from "../../../types/src/companies-house.js";
 
 const mockCompanies: CompaniesHouseCompanyProfile[] = [
   {
@@ -27,7 +27,16 @@ const mockCompanies: CompaniesHouseCompanyProfile[] = [
     companyStatus: "active",
     companyType: "ltd",
     incorporationDate: "2018-04-12",
+    accounts: undefined,
+    cessationDate: "",
+    has_been_liquidated: false,
+    has_charges: false,
+    has_insolvency_history: false,
     registeredOfficeAddress: {
+      addressLine_1: "",
+      addressLine_2: "",
+      poBox: "",
+      postalCode: "",
       locality: "Manchester",
       region: "Greater Manchester",
       country: "England",
@@ -41,7 +50,16 @@ const mockCompanies: CompaniesHouseCompanyProfile[] = [
     companyStatus: "active",
     companyType: "ltd",
     incorporationDate: "2015-09-03",
+    accounts: undefined,
+    cessationDate: "",
+    has_been_liquidated: false,
+    has_charges: false,
+    has_insolvency_history: false,
     registeredOfficeAddress: {
+      addressLine_1: "",
+      addressLine_2: "",
+      poBox: "",
+      postalCode: "",
       locality: "Bristol",
       region: undefined,
       country: "England",
@@ -55,7 +73,16 @@ const mockCompanies: CompaniesHouseCompanyProfile[] = [
     companyStatus: "dissolved",
     companyType: "ltd",
     incorporationDate: "2011-01-24",
+    accounts: undefined,
+    cessationDate: "",
+    has_been_liquidated: false,
+    has_charges: false,
+    has_insolvency_history: false,
     registeredOfficeAddress: {
+      addressLine_1: "",
+      addressLine_2: "",
+      poBox: "",
+      postalCode: "",
       locality: "Glasgow",
       region: undefined,
       country: "Scotland",

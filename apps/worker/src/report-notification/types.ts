@@ -1,3 +1,5 @@
+import type { ReportProductCode } from "@workspace/types";
+
 export type NotificationStatus = "queued" | "sending" | "sent" | "failed";
 
 export interface OwnerReportNotificationRecord {
@@ -6,7 +8,7 @@ export interface OwnerReportNotificationRecord {
   reportReference: string;
   clerkUserId: string;
   companyName: string;
-  reportTier: "basic" | "standard" | "premium";
+  reportTier: ReportProductCode;
   reportStatus: "ready" | "partial";
   reportData: unknown;
   status: NotificationStatus;

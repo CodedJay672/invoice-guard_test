@@ -1,3 +1,5 @@
+import type { ReportProductCode } from "@workspace/types";
+
 import {
   getPaidReportFixture,
   type AiInterpretation,
@@ -37,7 +39,7 @@ export interface BrowserReportNavigationSection {
 
 export interface BrowserReportFixture {
   viewState: BrowserReportViewState;
-  tier: PaidReportTier;
+  tier: PaidReportTier | ReportProductCode;
   tierLabel: string;
   companyName: string;
   companyNumber: string;
@@ -131,7 +133,7 @@ function navigationFor(report: PaidReportFixture): BrowserReportNavigationSectio
 }
 
 export function navigationForSections(
-  tier: PaidReportTier,
+  tier: PaidReportTier | ReportProductCode,
   sections: PaidReportSection[],
 ): BrowserReportNavigationSection[] {
   const byId = new Map(sections.map((section) => [section.id, section]));
@@ -153,7 +155,7 @@ export function navigationForSections(
     ...(courtRecords.length
       ? [{ id: "court-records", label: "CCJs", count: 1, sections: courtRecords }]
       : []),
-    ...(tier === "premium"
+    ...(sections.some((item) => item.id === "fair-payment-code")
       ? [
           {
             id: "fair-payment-code",

@@ -1,4 +1,5 @@
 import type { BrowserReportPayload, ReportDeliveryResponse } from "@workspace/validation";
+import type { ReportProductCode } from "@workspace/types";
 
 export type PurchasedReportStatus =
   | "pending"
@@ -12,7 +13,7 @@ export type PurchasedReportStatus =
 export interface DeliverableReportRecord {
   reportReference: string;
   clerkUserId: string;
-  reportTier: "basic" | "standard" | "premium";
+  reportTier: ReportProductCode;
   entitlements: unknown;
   status: PurchasedReportStatus;
   reportData: unknown;

@@ -105,7 +105,7 @@ function memoryRepository() {
     reportReference: "IG-2026-ABCDEF123456",
     clerkUserId: "user_1",
     companyName: "Example Limited",
-    reportTier: "basic",
+    reportTier: "single_report",
     reportStatus: "ready",
     reportData: {},
     status: "queued",

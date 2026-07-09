@@ -39,39 +39,56 @@ export interface ReportProductFixture {
 }
 
 export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
-  basic: {
-    tier: "basic",
-    name: "Basic",
-    price: "£7.99",
+  single_report: {
+    tier: "single_report",
+    name: "Single Report",
+    price: "GBP 20",
     includesPdf: false,
     includedItems: [
-      "Court records check",
-      "Director names and appointment dates",
-      "Registered address history",
+      "All 6 data sources",
+      "CCJ registry check",
+      "Fair Payment Code status",
+      "Full written summary",
+      "Instant access",
     ],
     active: true,
   },
-  standard: {
-    tier: "standard",
-    name: "Standard",
-    price: "£14.99",
+  starter_pack: {
+    tier: "starter_pack",
+    name: "Starter Pack",
+    price: "GBP 54",
     includesPdf: false,
     includedItems: [
-      "Everything in Basic",
-      "CCJ amounts and satisfaction status",
-      "Recent filings and registered charges",
+      "Everything in Single Report",
+      "Credits never expire",
+      "Use on any companies",
+      "Instant access",
     ],
     active: true,
   },
-  premium: {
-    tier: "premium",
-    name: "Premium",
-    price: "£27.00",
-    includesPdf: true,
+  business_pack: {
+    tier: "business_pack",
+    name: "Business Pack",
+    price: "GBP 80",
+    includesPdf: false,
     includedItems: [
-      "Everything in Standard",
-      "Director and insolvency depth checks",
-      "Branded PDF and timestamped reference",
+      "Everything in Starter Pack",
+      "Ideal for monthly checks",
+      "Best value under Agency",
+      "Priority email support",
+    ],
+    active: true,
+  },
+  agency_pack: {
+    tier: "agency_pack",
+    name: "Agency Pack",
+    price: "GBP 140",
+    includesPdf: false,
+    includedItems: [
+      "Everything in Business Pack",
+      "Lowest per-report rate",
+      "Team access coming soon",
+      "Priority email support",
     ],
     active: true,
   },

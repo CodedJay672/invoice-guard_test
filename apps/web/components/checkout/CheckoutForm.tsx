@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import type { ReportProductCode } from "@workspace/types";
 
 import { startCheckout } from "@/actions/checkout";
 
@@ -26,7 +27,7 @@ type CheckoutFormProps = {
   fixtureName?: CheckoutFixtureName | undefined;
   buyer: CheckoutBuyer;
   companyNumber: string;
-  tier: "basic" | "standard" | "premium";
+  tier: ReportProductCode;
   statusHref: string;
   cancelled?: boolean | undefined;
 };

@@ -4,9 +4,10 @@ import {
   paidReportEntitlementsSchema,
   type PaidReportEntitlements,
 } from "@workspace/validation/paid-report";
+import type { ReportProductCode } from "@workspace/types";
 import { and, asc, eq } from "drizzle-orm";
 
-export type ReportProductTier = "basic" | "standard" | "premium";
+export type ReportProductTier = ReportProductCode;
 
 export interface ReportProductSummary {
   tier: ReportProductTier;
@@ -24,40 +25,57 @@ export interface ReportProductRepository {
 
 export const canonicalReportProducts: readonly ReportProductSummary[] = [
   {
-    tier: "basic",
-    name: "Basic",
-    pricePence: 799,
+    tier: "single_report",
+    name: "Single Report",
+    pricePence: 2000,
     includesPdf: false,
     includedItems: [
-      "Court records check",
-      "Director names and appointment dates",
-      "Registered address history",
+      "All 6 data sources",
+      "CCJ registry check",
+      "Fair Payment Code status",
+      "Full written summary",
+      "Instant access",
     ],
-    entitlements: entitlementsForTier("basic"),
+    entitlements: entitlementsForTier("single_report"),
   },
   {
-    tier: "standard",
-    name: "Standard",
-    pricePence: 1499,
+    tier: "starter_pack",
+    name: "Starter Pack",
+    pricePence: 5400,
     includesPdf: false,
     includedItems: [
-      "Everything in Basic",
-      "CCJ amounts and satisfaction status",
-      "Recent filings and registered charges",
+      "Everything in Single Report",
+      "Credits never expire",
+      "Use on any companies",
+      "Instant access",
     ],
-    entitlements: entitlementsForTier("standard"),
+    entitlements: entitlementsForTier("starter_pack"),
   },
   {
-    tier: "premium",
-    name: "Premium",
-    pricePence: 2700,
-    includesPdf: true,
+    tier: "business_pack",
+    name: "Business Pack",
+    pricePence: 8000,
+    includesPdf: false,
     includedItems: [
-      "Everything in Standard",
-      "Director and insolvency depth checks",
-      "Branded PDF and timestamped reference",
+      "Everything in Starter Pack",
+      "Ideal for monthly checks",
+      "Best value under Agency",
+      "Priority email support",
     ],
-    entitlements: entitlementsForTier("premium"),
+    entitlements: entitlementsForTier("business_pack"),
+  },
+  {
+    tier: "agency_pack",
+    name: "Agency Pack",
+    pricePence: 14000,
+    includesPdf: false,
+    includedItems: [
+      "Everything in Business Pack",
+      "Lowest per-report rate",
+      "Team access coming soon",
+      "Priority email support",
+    ],
+    entitlements: entitlementsForTier("agency_pack"),
   },
 ];
 

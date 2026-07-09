@@ -12,13 +12,13 @@ import {
 void test("checkout selection normalises canonical identity and display context", () => {
   const result = checkoutSelectionSchema.parse({
     companyNumber: "sc123456",
-    tier: "standard",
+    tier: "starter_pack",
     q: "  Example Company Limited  ",
   });
 
   assert.deepEqual(result, {
     companyNumber: "SC123456",
-    tier: "standard",
+    tier: "starter_pack",
     q: "Example Company Limited",
   });
 });
@@ -36,12 +36,12 @@ void test("checkout creation requires a UUID attempt and normalises boundary inp
   assert.deepEqual(
     createCheckoutSessionSchema.parse({
       companyNumber: "sc123456",
-      tier: "basic",
+      tier: "single_report",
       attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
     }),
     {
       companyNumber: "SC123456",
-      tier: "basic",
+      tier: "single_report",
       attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
     },
   );

@@ -1,0 +1,132 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { freePreviewApiResponseSchema } from "./companies.js";
+
+void test("free preview response accepts normalized Companies House account fields", () => {
+  const result = freePreviewApiResponseSchema.safeParse({
+    data: {
+      preview: {
+        company: {
+          companiesHouseNumber: "12345678",
+          companyName: "ACME SUPPLIES LIMITED",
+          companyStatus: "active",
+          companyType: "ltd",
+          incorporationDate: "2018-04-12",
+          registeredOfficeAddress: {
+            addressLine1: "1 Market Street",
+            locality: "Manchester",
+            postalCode: "M1 1AA",
+          },
+          sicCodes: ["46900"],
+          accounts: {
+            accounting_reference_date: {
+              day: 31,
+              month: 12,
+            },
+            last_accounts: {
+              made_up_to: "2025-12-31",
+              period_end_on: "2025-12-31",
+              period_start_on: "2025-01-01",
+              type: "micro-entity",
+            },
+            next_accounts: {
+              due_on: "2026-09-30",
+              overdue: false,
+              period_end_on: "2026-12-31",
+              period_start_on: "2026-01-01",
+            },
+            next_due: "2026-09-30",
+            next_made_up_to: "2026-12-31",
+            overdue: false,
+          },
+        },
+        notYetCheckedSources: [
+          {
+            source: "registry_trust",
+            label: "Registry Trust",
+            status: "not_yet_checked",
+            message: "Source not yet checked",
+          },
+        ],
+        courtRecordsPrompt: {
+          label: "COURT RECORDS - NOT YET CHECKED",
+          heading: "Court records not yet checked",
+          body: "Unlock a paid report to check court records.",
+          questionLine: "Any CCJs?",
+          button: "Unlock report",
+          smallText: "Paid report only",
+        },
+        curiosityCards: [],
+        tierCards: [
+          {
+            tier: "single_report",
+            name: "Single Report",
+            price: "GBP 20",
+            includesPdf: false,
+            includedItems: ["Full report"],
+            cta: "Buy 1 Report",
+          },
+        ],
+        sourceStatuses: [
+          {
+            provider: "companies_house",
+            status: "success",
+            checkedAt: "2026-07-10T10:00:00.000Z",
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(result.success, true);
+});
+
+void test("free preview response coerces live Companies House account reference strings", () => {
+  const result = freePreviewApiResponseSchema.safeParse({
+    data: {
+      preview: {
+        company: {
+          companiesHouseNumber: "12345678",
+          companyName: "ACME SUPPLIES LIMITED",
+          companyStatus: "active",
+          registeredOfficeAddress: {},
+          sicCodes: [],
+          accounts: {
+            accounting_reference_date: {
+              day: "31",
+              month: "12",
+            },
+            last_accounts: {
+              type: "micro-entity",
+            },
+            next_accounts: {},
+          },
+        },
+        notYetCheckedSources: [],
+        courtRecordsPrompt: {
+          label: "COURT RECORDS - NOT YET CHECKED",
+          heading: "Court records not yet checked",
+          body: "Unlock a paid report to check court records.",
+          questionLine: "Any CCJs?",
+          button: "Unlock report",
+          smallText: "Paid report only",
+        },
+        curiosityCards: [],
+        tierCards: [],
+        sourceStatuses: [
+          {
+            provider: "companies_house",
+            status: "success",
+            checkedAt: "2026-07-10T10:00:00.000Z",
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(result.success, true);
+  if (!result.success) return;
+  assert.equal(result.data.data.preview.company.accounts?.accounting_reference_date.day, 31);
+  assert.equal(result.data.data.preview.company.accounts?.accounting_reference_date.month, 12);
+});

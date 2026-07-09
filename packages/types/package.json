@@ -13,5 +13,8 @@
     "lint": "eslint .",
     "test": "npm run typecheck",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/integrations": "*"
   }
 }

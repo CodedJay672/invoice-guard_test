@@ -12,7 +12,7 @@ import {
 } from "./types.js";
 
 void test("owner receives a validated ready report", async () => {
-  const service = serviceFor(reportRow("basic"));
+  const service = serviceFor(reportRow("single_report"));
   const result = await service.getOwnedReport("IG-2026-A1B2C3D4E5F6", "user_owner");
   assert.equal(result.state, "report");
   if (result.state !== "report") return;
@@ -29,7 +29,7 @@ void test("durable notification states project without exposing the owner email"
     ["failed", 1, "failed"],
   ] as const;
   for (const [status, attemptCount, expected] of cases) {
-    const row = reportRow("basic");
+    const row = reportRow("single_report");
     row.notification = {
       status,
       attemptCount,
@@ -47,7 +47,7 @@ void test("durable notification states project without exposing the owner email"
 
 void test("non-owner and missing reports are both concealed as not found", async () => {
   await assert.rejects(
-    serviceFor(reportRow("basic")).getOwnedReport("IG-2026-A1B2C3D4E5F6", "user_attacker"),
+    serviceFor(reportRow("single_report")).getOwnedReport("IG-2026-A1B2C3D4E5F6", "user_attacker"),
     (error: unknown) => error instanceof ReportNotFoundError && error.accessDenied,
   );
   await assert.rejects(
@@ -64,7 +64,7 @@ void test("lifecycle states never expose frozen report data", async () => {
     "refund_required",
     "refunded",
   ] as const) {
-    const result = await serviceFor({ ...reportRow("basic"), status }).getOwnedReport(
+    const result = await serviceFor({ ...reportRow("single_report"), status }).getOwnedReport(
       "IG-2026-A1B2C3D4E5F6",
       "user_owner",
     );
@@ -77,45 +77,34 @@ void test("lifecycle states never expose frozen report data", async () => {
 });
 
 void test("malformed or entitlement-inconsistent artifacts fail closed", async () => {
-  const malformed = { ...reportRow("standard"), reportData: { schemaVersion: "unknown" } };
+  const malformed = { ...reportRow("starter_pack"), reportData: { schemaVersion: "unknown" } };
   await assert.rejects(
     serviceFor(malformed).getOwnedReport("IG-2026-A1B2C3D4E5F6", "user_owner"),
     InvalidFrozenReportError,
   );
 
-  const inconsistent = reportRow("standard");
-  inconsistent.entitlements = entitlementsForTier("premium");
+  const inconsistent = reportRow("starter_pack");
+  inconsistent.entitlements = { ...entitlementsForTier("starter_pack"), fairPaymentCode: false };
   await assert.rejects(
     serviceFor(inconsistent).getOwnedReport("IG-2026-A1B2C3D4E5F6", "user_owner"),
     InvalidFrozenReportError,
   );
 });
 
-void test("tier projection omits unentitled sections and sensitive CCJ fields", async () => {
-  const expected: Record<PaidReportTier, string[]> = {
-    basic: ["company-overview", "address-history", "court-records", "directors"],
-    standard: [
-      "company-overview",
-      "address-history",
-      "court-records",
-      "directors",
-      "filing-compliance",
-      "registered-charges",
-    ],
-    premium: [
-      "company-overview",
-      "address-history",
-      "court-records",
-      "directors",
-      "filing-compliance",
-      "registered-charges",
-      "director-depth",
-      "fair-payment-code",
-      "confidence-indicator",
-    ],
-  };
+void test("credit-pack products project full-report sections and source details", async () => {
+  const expected = [
+    "company-overview",
+    "address-history",
+    "court-records",
+    "directors",
+    "filing-compliance",
+    "registered-charges",
+    "director-depth",
+    "fair-payment-code",
+    "confidence-indicator",
+  ];
 
-  for (const tier of ["basic", "standard", "premium"] as const) {
+  for (const tier of ["single_report", "starter_pack", "business_pack", "agency_pack"] as const) {
     const result = await serviceFor(reportRow(tier)).getOwnedReport(
       "IG-2026-A1B2C3D4E5F6",
       "user_owner",
@@ -124,17 +113,17 @@ void test("tier projection omits unentitled sections and sensitive CCJ fields", 
     if (result.state !== "report") continue;
     assert.deepEqual(
       result.report.sections.map((section) => section.id),
-      expected[tier],
+      expected,
     );
     assert.equal(
       result.report.sources.some((source) => source.label === "Fair Payment Code"),
-      tier === "premium",
+      true,
     );
     const ccjLabels = result.report.sections
       .find((section) => section.id === "court-records")
       ?.facts.map((fact) => fact.label);
-    assert.equal(ccjLabels?.includes("Judgement amount"), tier !== "basic");
-    assert.equal(ccjLabels?.includes("Satisfaction status"), tier !== "basic");
+    assert.equal(ccjLabels?.includes("Judgement amount"), true);
+    assert.equal(ccjLabels?.includes("Satisfaction status"), true);
   }
 });
 

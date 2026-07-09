@@ -1,6 +1,6 @@
 CREATE TYPE "public"."provider_status" AS ENUM('success', 'failed');--> statement-breakpoint
 CREATE TYPE "public"."purchased_report_status" AS ENUM('pending', 'generating', 'ready', 'failed', 'refund_required', 'refunded');--> statement-breakpoint
-CREATE TYPE "public"."report_tier" AS ENUM('basic', 'standard', 'premium');--> statement-breakpoint
+CREATE TYPE "public"."report_tier" AS ENUM('single_report', 'starter_pack', 'business_pack', 'agency_pack');--> statement-breakpoint
 CREATE TYPE "public"."snapshot_source_context" AS ENUM('free_preview', 'paid_report', 'watchlist');--> statement-breakpoint
 CREATE TABLE "admin_audit_logs" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,

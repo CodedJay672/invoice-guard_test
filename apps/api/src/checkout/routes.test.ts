@@ -71,12 +71,12 @@ void test("checkout status passes the verified owner to the service", async () =
 
 function validCheckoutInput(): {
   companyNumber: string;
-  tier: "basic";
+  tier: "single_report";
   attemptId: string;
 } {
   return {
     companyNumber: "12345678",
-    tier: "basic" as const,
+    tier: "single_report" as const,
     attemptId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
   };
 }

@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import type { ReportProductCode } from "@workspace/types";
 
 import type { CheckoutSessionResult, CheckoutSessionState, StripeGateway } from "./types.js";
 
@@ -23,7 +24,7 @@ export class StripeSdkGateway implements StripeGateway {
     clerkUserId: string;
     pricePence: number;
     currency: string;
-    tier: "basic" | "standard" | "premium";
+    tier: ReportProductCode;
   }): Promise<CheckoutSessionResult> {
     const cancelParams = new URLSearchParams({
       companyNumber: input.companyNumber,

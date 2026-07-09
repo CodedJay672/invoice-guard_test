@@ -18,7 +18,6 @@ export class DrizzlePdfArtifactRepository implements PdfArtifactRepository {
       .where(
         and(
           eq(schema.purchasedReports.id, reportId),
-          eq(schema.purchasedReports.reportTier, "premium"),
           inArray(schema.purchasedReports.status, ["ready", "partial"]),
         ),
       )
@@ -51,7 +50,6 @@ export class DrizzlePdfArtifactRepository implements PdfArtifactRepository {
       .where(
         and(
           eq(schema.reportPdfArtifacts.status, "queued"),
-          eq(schema.purchasedReports.reportTier, "premium"),
           inArray(schema.purchasedReports.status, ["ready", "partial"]),
         ),
       );
@@ -77,7 +75,6 @@ export class DrizzlePdfArtifactRepository implements PdfArtifactRepository {
             SELECT ${schema.purchasedReports.id}
             FROM ${schema.purchasedReports}
             WHERE ${eq(schema.purchasedReports.id, reportId)}
-            AND ${eq(schema.purchasedReports.reportTier, "premium")}
             AND ${schema.purchasedReports.status} IN ('ready', 'partial')
           )`,
         ),

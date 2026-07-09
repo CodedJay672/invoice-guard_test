@@ -1,4 +1,5 @@
 import type {
+  CompanyMatchProfile,
   CompanySearchMatchPayload,
   FreePreviewPayload,
 } from "@workspace/validation/companies";
@@ -48,7 +49,13 @@ const company: CompanySearchMatchPayload = {
   companyStatus: "active",
   companyType: "ltd",
   incorporationDate: "2018-04-12",
+  cessationDate: "",
+  accounts: {} as CompanyMatchProfile,
   registeredOfficeAddress: {
+    addressLine1: "",
+    addressLine2: "",
+    poBox: "",
+    postalCode: "",
     locality: "Manchester",
     region: "Greater Manchester",
     country: "England",
@@ -61,6 +68,10 @@ const secondCompany: CompanySearchMatchPayload = {
   companiesHouseNumber: "87654321",
   companyName: "ACME SERVICES UK LIMITED",
   registeredOfficeAddress: {
+    addressLine1: undefined,
+    addressLine2: undefined,
+    poBox: undefined,
+    postalCode: undefined,
     locality: "Leeds",
     region: "West Yorkshire",
     country: "England",
@@ -69,40 +80,57 @@ const secondCompany: CompanySearchMatchPayload = {
 
 const tierCards: FreePreviewPayload["tierCards"] = [
   {
-    tier: "basic",
-    name: "Basic",
-    price: "£7.99",
+    tier: "single_report",
+    name: "Single Report",
+    price: "GBP 20",
     includesPdf: false,
     includedItems: [
-      "Court records check",
-      "Director names and appointment dates",
-      "Registered address history",
+      "All 6 data sources",
+      "CCJ registry check",
+      "Fair Payment Code status",
+      "Full written summary",
+      "Instant access",
     ],
-    cta: "Unlock Basic Report",
+    cta: "Buy 1 Report",
   },
   {
-    tier: "standard",
-    name: "Standard",
-    price: "£14.99",
+    tier: "starter_pack",
+    name: "Starter Pack",
+    price: "GBP 54",
     includesPdf: false,
     includedItems: [
-      "Everything in Basic",
-      "CCJ amounts and satisfaction status",
-      "Recent filings and registered charges",
+      "Everything in Single Report",
+      "Credits never expire",
+      "Use on any companies",
+      "Instant access",
     ],
-    cta: "Unlock Standard Report",
+    cta: "Buy Starter Pack",
   },
   {
-    tier: "premium",
-    name: "Premium",
-    price: "£27.00",
-    includesPdf: true,
+    tier: "business_pack",
+    name: "Business Pack",
+    price: "GBP 80",
+    includesPdf: false,
     includedItems: [
-      "Everything in Standard",
-      "Director and insolvency depth checks",
-      "Branded PDF and timestamped reference",
+      "Everything in Starter Pack",
+      "Ideal for monthly checks",
+      "Best value under Agency",
+      "Priority email support",
     ],
-    cta: "Unlock Premium Report",
+    cta: "Buy Business Pack",
+  },
+  {
+    tier: "agency_pack",
+    name: "Agency Pack",
+    price: "GBP 140",
+    includesPdf: false,
+    includedItems: [
+      "Everything in Business Pack",
+      "Lowest per-report rate",
+      "Use across client checks",
+      "Priority email support",
+    ],
+    cta: "Buy Agency Pack",
   },
 ];
 
@@ -141,6 +169,12 @@ const basePreview: FreePreviewPayload = {
       message: "Retrieved only after confirmed payment.",
     },
     {
+      source: "fair_payment_code",
+      label: "Fair Payment Code status",
+      status: "not_yet_checked",
+      message: "Included only in paid full reports.",
+    },
+    {
       source: "ai_interpretation",
       label: "AI report interpretation",
       status: "not_yet_checked",
@@ -148,12 +182,12 @@ const basePreview: FreePreviewPayload = {
     },
   ],
   courtRecordsPrompt: {
-    label: "COURT RECORDS — NOT YET CHECKED",
+    label: "COURT RECORDS - NOT YET CHECKED",
     heading: "Has this company ever been taken to court over an unpaid debt?",
     body: "Court records are not included in the free Companies House preview. They are retrieved only after a paid report is purchased.",
     questionLine: "Find out whether this company has CCJs on record.",
     button: "Check the Court Records",
-    smallText: "Included in all paid reports. Basic from £7.99.",
+    smallText: "Included in paid full reports. Single report GBP 20.",
   },
   curiosityCards: [
     {

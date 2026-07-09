@@ -66,6 +66,50 @@ void test("returns provider failure when required profile identity fields are mi
   assert.equal(result.errorCode, "integration_invalid_response");
 });
 
+void test("normalises live Companies House account fields before returning a profile", () => {
+  const result = normaliseCompaniesHouseProfileResponse(
+    {
+      company_number: "12345678",
+      company_name: "ACME SUPPLIES LIMITED",
+      company_status: "active",
+      type: "ltd",
+      date_of_creation: "2018-04-12",
+      registered_office_address: {
+        locality: "Manchester",
+        region: "Greater Manchester",
+        country: "England",
+      },
+      accounts: {
+        accounting_reference_date: {
+          day: "31",
+          month: "12",
+        },
+        last_accounts: {
+          made_up_to: "2025-12-31",
+          period_end_on: "2025-12-31",
+          period_start_on: "2025-01-01",
+          type: "micro-entity",
+        },
+        next_accounts: {
+          due_on: "2026-09-30",
+          overdue: false,
+          period_end_on: "2026-12-31",
+          period_start_on: "2026-01-01",
+        },
+        next_due: "2026-09-30",
+        next_made_up_to: "2026-12-31",
+        overdue: false,
+      },
+    },
+    2,
+  );
+
+  assert.equal(result.status, "success");
+  assert.equal(result.data.accounts?.accounting_reference_date.day, 31);
+  assert.equal(result.data.accounts?.accounting_reference_date.month, 12);
+  assert.equal(result.data.accounts?.last_accounts.type, "micro-entity");
+});
+
 void test("maps missing live API key to an auth provider failure", async () => {
   const client = new LiveCompaniesHouseClient({
     mode: "live",

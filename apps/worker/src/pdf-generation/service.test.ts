@@ -91,7 +91,7 @@ function fakeRepository(events: string[]): PdfArtifactRepository {
       return Promise.resolve({
         reportId,
         reportReference: "IG-2026-ABCDEF123456",
-        reportTier: "premium",
+        reportTier: "single_report",
         reportStatus: "ready",
         reportData: frozenReport,
         providerStatuses: statuses,
@@ -138,7 +138,7 @@ const frozenReport = {
   reportReference: "IG-2026-ABCDEF123456",
   companyNumber: "01234567",
   companyName: "Example Limited",
-  tier: "premium",
+  tier: "single_report",
   entitlements,
   generatedAt: "2026-07-03T10:00:00.000Z",
   facts: {

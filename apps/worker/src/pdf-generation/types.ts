@@ -1,9 +1,10 @@
 import type { FrozenPaidReport, FrozenProviderStatuses } from "@workspace/validation";
+import type { ReportProductCode } from "@workspace/types";
 
 export interface PdfArtifactRecord {
   reportId: string;
   reportReference: string;
-  reportTier: "basic" | "standard" | "premium";
+  reportTier: ReportProductCode;
   reportStatus: "ready" | "partial";
   reportData: unknown;
   providerStatuses: unknown;

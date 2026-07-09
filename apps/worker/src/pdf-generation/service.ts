@@ -29,8 +29,6 @@ export class PdfGenerationService {
     try {
       const report = frozenPaidReportSchema.parse(artifact.reportData);
       const statuses = frozenProviderStatusesSchema.parse(artifact.providerStatuses);
-      if (report.tier !== "premium")
-        throw new Error("PDF generation requires a Premium frozen report.");
       const pdf = await this.renderer.render({ report, statuses, compliance: this.compliance });
       const sha256 = createHash("sha256").update(pdf).digest("hex");
       const objectKey = `reports/${reportId}/${artifact.templateVersion}.pdf`;
@@ -41,7 +39,7 @@ export class PdfGenerationService {
         byteSize: pdf.byteLength,
         generatedAt: new Date(),
       });
-      this.logger.info({ reportId, objectKey, byteSize: pdf.byteLength }, "Premium PDF generated");
+      this.logger.info({ reportId, objectKey, byteSize: pdf.byteLength }, "Report PDF generated");
       return "completed";
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown PDF generation failure";

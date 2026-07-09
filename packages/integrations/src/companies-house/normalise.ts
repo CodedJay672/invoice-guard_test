@@ -10,14 +10,42 @@ import type {
   CompaniesHouseInsolvencyFoundation,
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchResult,
-} from "./types.js";
+} from "../../../types/src/companies-house.js";
 
 const provider = "companies_house";
 
 interface RawCompaniesHouseAddress {
-  locality?: unknown;
-  region?: unknown;
-  country?: unknown;
+  address_line_1: unknown;
+  address_line_2: unknown;
+  care_of: unknown;
+  country: unknown;
+  locality: unknown;
+  po_box: unknown;
+  postal_code: unknown;
+  premises: unknown;
+  region: unknown;
+}
+
+interface RawCompaniesHouseAccount {
+  accounting_reference_date?: {
+    day?: unknown;
+    month?: unknown;
+  };
+  last_accounts?: {
+    made_up_to?: unknown;
+    period_end_on?: unknown;
+    period_start_on?: unknown;
+    type?: unknown;
+  };
+  next_accounts?: {
+    due_on?: unknown;
+    overdue?: unknown;
+    period_end_on?: unknown;
+    period_start_on?: unknown;
+  };
+  next_due?: unknown;
+  next_made_up_to?: unknown;
+  overdue?: unknown;
 }
 
 interface RawCompaniesHouseSearchItem {
@@ -36,8 +64,13 @@ interface RawCompaniesHouseProfile {
   company_status?: unknown;
   type?: unknown;
   date_of_creation?: unknown;
+  date_of_cessation?: unknown;
   registered_office_address?: RawCompaniesHouseAddress;
   sic_codes?: unknown;
+  accounts?: RawCompaniesHouseAccount;
+  has_been_liquidated?: unknown;
+  has_charges?: unknown;
+  has_insolvency_history?: unknown;
 }
 
 interface RawCompaniesHouseOfficerResponse {
@@ -74,18 +107,69 @@ function asStringArray(value: unknown): string[] {
 }
 
 function asNumber(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+}
+
+function asBoolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
 }
 
 function normaliseAddress(rawAddress: RawCompaniesHouseAddress | undefined): {
+  addressLine_1: string | undefined;
+  addressLine_2: string | undefined;
   locality: string | undefined;
   region: string | undefined;
   country: string | undefined;
+  postalCode: string | undefined;
+  poBox: string | undefined;
 } {
   return {
+    addressLine_1: asString(rawAddress?.address_line_1),
+    addressLine_2: asString(rawAddress?.address_line_2),
     locality: asString(rawAddress?.locality),
     region: asString(rawAddress?.region),
     country: asString(rawAddress?.country),
+    postalCode: asString(rawAddress?.postal_code),
+    poBox: asString(rawAddress?.po_box),
+  };
+}
+
+function normaliseAccounts(
+  rawAccounts: RawCompaniesHouseAccount | undefined,
+): CompaniesHouseCompanySummary["accounts"] {
+  if (!rawAccounts || typeof rawAccounts !== "object") {
+    return undefined;
+  }
+
+  return {
+    accounting_reference_date: {
+      day: asNumber(rawAccounts.accounting_reference_date?.day),
+      month: asNumber(rawAccounts.accounting_reference_date?.month),
+    },
+    last_accounts: {
+      made_up_to: asString(rawAccounts.last_accounts?.made_up_to),
+      period_end_on: asString(rawAccounts.last_accounts?.period_end_on),
+      period_start_on: asString(rawAccounts.last_accounts?.period_start_on),
+      type: asString(rawAccounts.last_accounts?.type),
+    },
+    next_accounts: {
+      due_on: asString(rawAccounts.next_accounts?.due_on),
+      overdue: asBoolean(rawAccounts.next_accounts?.overdue),
+      period_end_on: asString(rawAccounts.next_accounts?.period_end_on),
+      period_start_on: asString(rawAccounts.next_accounts?.period_start_on),
+    },
+    next_due: asString(rawAccounts.next_due),
+    next_made_up_to: asString(rawAccounts.next_made_up_to),
+    overdue: asBoolean(rawAccounts.overdue),
   };
 }
 
@@ -108,6 +192,11 @@ function normaliseSearchItem(
     incorporationDate: asString(item.date_of_creation),
     registeredOfficeAddress: normaliseAddress(item.address),
     sicCodes: [],
+    accounts: undefined,
+    cessationDate: undefined,
+    has_been_liquidated: undefined,
+    has_charges: undefined,
+    has_insolvency_history: undefined,
   };
 }
 
@@ -159,6 +248,11 @@ function normaliseProfile(
     incorporationDate: asString(rawProfile.date_of_creation),
     registeredOfficeAddress: normaliseAddress(rawProfile.registered_office_address),
     sicCodes: asStringArray(rawProfile.sic_codes),
+    accounts: normaliseAccounts(rawProfile.accounts),
+    cessationDate: asString(rawProfile.date_of_cessation),
+    has_been_liquidated: rawProfile.has_been_liquidated as boolean,
+    has_charges: rawProfile.has_charges as boolean,
+    has_insolvency_history: rawProfile.has_insolvency_history as boolean,
     activeDirectorCount: undefined,
   };
 }

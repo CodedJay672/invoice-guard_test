@@ -1,4 +1,4 @@
-import type { ProviderMode, ProviderResult } from "../provider.js";
+import type { ProviderMode, ProviderResult } from "@workspace/integrations";
 
 export interface CompaniesHouseClientConfig {
   mode: ProviderMode;
@@ -17,9 +17,13 @@ export interface CompaniesHouseCompanyNumberInput {
 }
 
 export interface CompaniesHouseRegisteredOfficeAddress {
+  addressLine_1: string | undefined;
+  addressLine_2: string | undefined;
   locality: string | undefined;
   region: string | undefined;
   country: string | undefined;
+  postalCode: string | undefined;
+  poBox: string | undefined;
 }
 
 export interface CompaniesHouseInsolvencyFoundation {
@@ -34,8 +38,35 @@ export interface CompaniesHouseCompanySummary {
   companyStatus: string;
   companyType: string | undefined;
   incorporationDate: string | undefined;
+  cessationDate: string | undefined;
   registeredOfficeAddress: CompaniesHouseRegisteredOfficeAddress;
   sicCodes: string[];
+  accounts:
+    | {
+        accounting_reference_date: {
+          day: number | undefined;
+          month: number | undefined;
+        };
+        last_accounts: {
+          made_up_to: string | undefined;
+          period_end_on: string | undefined;
+          period_start_on: string | undefined;
+          type: string | undefined;
+        };
+        next_accounts: {
+          due_on: string | undefined;
+          overdue: boolean | undefined;
+          period_end_on: string | undefined;
+          period_start_on: string | undefined;
+        };
+        next_due: string | undefined;
+        next_made_up_to: string | undefined;
+        overdue: boolean | undefined;
+      }
+    | undefined;
+  has_been_liquidated: boolean | undefined;
+  has_charges: boolean | undefined;
+  has_insolvency_history: boolean | undefined;
 }
 
 export interface CompaniesHouseCompanyProfile extends CompaniesHouseCompanySummary {

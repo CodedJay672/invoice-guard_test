@@ -6,15 +6,6 @@ import test from "node:test";
 import {
   createProviderSuccess,
   MockCompaniesHouseClient,
-  type CompaniesHouseClient,
-  type CompaniesHouseAddressHistory,
-  type CompaniesHouseCompanyNumberInput,
-  type CompaniesHouseCompanyProfile,
-  type CompaniesHouseInsolvencyFoundation,
-  type CompaniesHouseOfficers,
-  type CompaniesHouseRegisteredOfficeAddress,
-  type CompaniesHouseSearchInput,
-  type CompaniesHouseSearchResult,
   type ProviderMode,
   type ProviderResult,
 } from "@workspace/integrations";
@@ -33,6 +24,17 @@ import {
 import { InMemoryCompanyRepository, InMemorySearchLogRepository } from "./repository.js";
 import { registerCompanyRoutes } from "./routes.js";
 import { CompanyService } from "./service.js";
+import {
+  CompaniesHouseAddressHistory,
+  CompaniesHouseClient,
+  CompaniesHouseCompanyNumberInput,
+  CompaniesHouseCompanyProfile,
+  CompaniesHouseInsolvencyFoundation,
+  CompaniesHouseOfficers,
+  CompaniesHouseRegisteredOfficeAddress,
+  CompaniesHouseSearchInput,
+  CompaniesHouseSearchResult,
+} from "@workspace/types";
 
 const testHashSecret = "invoiceguard-test-search-hash-secret-123456";
 const testProxySecret = "invoiceguard-test-proxy-shared-secret-123456";
@@ -120,10 +122,16 @@ void test("GET /companies/:companyNumber/free-preview returns Companies House-on
   );
   assert.deepEqual(
     body.data.preview.notYetCheckedSources.map((source) => source.source),
-    ["london_gazette", "insolvency_disqualified_officers", "registry_trust", "ai_interpretation"],
+    [
+      "london_gazette",
+      "insolvency_disqualified_officers",
+      "registry_trust",
+      "fair_payment_code",
+      "ai_interpretation",
+    ],
   );
   assert.equal(body.data.preview.courtRecordsPrompt.label, "COURT RECORDS — NOT YET CHECKED");
-  assert.equal(body.data.preview.tierCards.length, 3);
+  assert.equal(body.data.preview.tierCards.length, 4);
 
   await close();
 });
@@ -176,7 +184,10 @@ void test("GET /companies/search validates query input", async () => {
 });
 
 void test("GET /companies/search blocks the 6th anonymous search in a 24 hour window", async () => {
-  const { baseUrl, close } = await startTestServer();
+  const { baseUrl, close } = await startTestServer(
+    new InMemorySearchLogRepository(),
+    new InMemoryAnonymousSearchRateLimiter(5),
+  );
 
   for (let searchNumber = 1; searchNumber <= 5; searchNumber += 1) {
     const response = await fetch(`${baseUrl}/companies/search?q=acme`);
@@ -318,6 +329,7 @@ void test("free preview selections store a hashed IP and selected company number
 
 async function startTestServer(
   searchLogRepository = new InMemorySearchLogRepository(),
+  anonymousSearchRateLimiter = new InMemoryAnonymousSearchRateLimiter(),
 ): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   const companyService = new CompanyService({
     companiesHouseClient: new MockCompaniesHouseClient(),
@@ -328,7 +340,7 @@ async function startTestServer(
 
   const app = createApiApp({
     companyService,
-    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(),
+    anonymousSearchRateLimiter,
     requestIdentityResolver: createTestIdentityResolver(),
   });
 
@@ -433,7 +445,16 @@ class CountingCompaniesHouseClient extends SingleCompanyCompaniesHouseClient {
       companyStatus: "active",
       companyType: "ltd",
       incorporationDate: "2018-04-12",
+      accounts: undefined,
+      cessationDate: "",
+      has_been_liquidated: false,
+      has_charges: false,
+      has_insolvency_history: false,
       registeredOfficeAddress: {
+        addressLine_1: "",
+        addressLine_2: "",
+        poBox: "",
+        postalCode: "",
         locality: "Manchester",
         region: "Greater Manchester",
         country: "England",

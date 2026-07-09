@@ -1,5 +1,5 @@
 import type { InvoiceGuardQueue, GenerateReportPdfJobData } from "@workspace/queues";
-import { DEFAULT_JOB_OPTIONS, QUEUE_JOB_NAMES } from "@workspace/queues";
+import { QUEUE_JOB_NAMES } from "@workspace/queues";
 
 import type { PdfArtifactRepository } from "./types.js";
 

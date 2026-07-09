@@ -65,17 +65,16 @@ interactive state belongs to the smallest practical client leaf.
 - Scope: no recovery, subscription, accounting-sync, watchlist, testimonial, or risk-score claims.
 - Accessibility: one `main` landmark, labelled primary navigation, semantic section headings, and 44px navigation targets.
 
-### Landing Company Autocomplete
+### Landing Company Search
 
 - Path: `apps/web/components/root-searchbar.tsx`.
-- Last updated: 2026-06-27.
-- Purpose: debounce company-name/number input, render Companies House suggestions, and navigate only after an exact entity is selected.
-- Input: shared `Input` with `h-12 bg-surface text-content`, visible semantic focus treatment, and combobox/listbox relationships.
-- Results: `rounded-lg border border-line bg-surface shadow-sm`; rows use `min-h-11`, `border-line`, `hover:bg-surface-subtle`, and `focus-visible:ring-focus`.
-- States: idle, loading skeleton/status, results, empty, and durable caution error.
-- Selection contract: `/search?companyNumber=<canonical-number>&q=<registered-name>`.
+- Last updated: 2026-07-09.
+- Purpose: submit a company-name/number query to `/search?q=...` without autocomplete or browser-side provider calls.
+- Input: shared `Input` with `h-12 bg-surface text-content` and visible semantic focus treatment.
+- States: idle, invalid, and submitting.
+- Navigation contract: `/search?q=<query>`.
 - Responsive: form stacks below `sm`; dropdown remains constrained to the search control width.
-- Accessibility: explicit accessible name, `aria-autocomplete`, `aria-controls`, `aria-expanded`, labelled listbox, and keyboard-focusable native result buttons.
+- Accessibility: explicit accessible name, native form submit, icon-hidden decoration, and no suggestion listbox.
 
 ### Search Page Shell
 
@@ -119,11 +118,21 @@ interactive state belongs to the smallest practical client leaf.
 ### TierCard
 
 - Path: `apps/web/components/company-search/CompanySearchExperience.tsx`.
-- Server-authoritative Basic, Standard, and Premium products; fixtures mirror persisted defaults.
+- Last updated: 2026-07-09.
+- Server-authoritative credit-pack products: Single Report, Starter Pack, Business Pack, and Agency Pack; fixtures mirror persisted defaults.
 - Report rail: `flex min-w-0 flex-col gap-4 lg:sticky lg:top-6 lg:self-start`.
 - CTA uses the authoritative navy action pattern, remains disabled until a company preview exists,
-  then navigates with canonical company number, tier, and display-only company name.
-- Shows exact price, entitlements, and PDF availability; never introduces subscriptions.
+  then navigates with canonical company number, product code, and display-only company name.
+- Shows exact price and full-report entitlement summary; never introduces subscriptions or report-depth tiers.
+
+### Company Route Locked Source State
+
+- Path: `apps/web/app/(landing)/company/[houseNumber]/**/page.tsx` and `CompanyRouteState.tsx`.
+- Last updated: 2026-07-09.
+- Purpose: keep public company navigation available while making paid-only source boundaries explicit.
+- Pattern: shared page shell with `bg-page`, source status Cards, semantic Badge/Alert copy, and a return link to the overview.
+- States: Companies House overview, filing history, CCJ, charges, officers, AI summary, insolvency, and Fair Payment Code source-not-yet-checked states.
+- Accessibility: each route has a stable heading and source-state text; no blurred paid data or inferred clean/adverse conclusion is rendered.
 
 ### StatusBadge and Source Banner
 
@@ -146,7 +155,7 @@ interactive state belongs to the smallest practical client leaf.
 
 - 2026-06-22: desktop clean, adverse, and source-failure states inspected in Edge.
 - 2026-06-22: exact 390px viewport measured with no horizontal overflow; rate-limit state inspected.
-- 2026-06-22: keyboard order verified as search input, search button, then Basic/Standard/Premium actions.
+- 2026-06-22: historical keyboard order verified as search input, search button, then report actions; current credit-pack actions use the same ordering pattern.
 - 2026-06-22: Figma node `58:176` compared at pattern level: navy hero, trust strip, one-off pricing, CTA hierarchy, and footer rhythm retained; risk-score/subscription/recovery concepts excluded.
 - Fixture query support is development/test-only; production ignores `fixture`.
 
@@ -227,11 +236,13 @@ lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8`.
   canonical and required no visual changes.
 - 2026-07-02 15B Claude sub-slice changed worker/data contracts only. The registered Paid AI
   Interpretation Block remains the canonical presentation and required no visual or token changes.
+- 2026-07-10 Companies House account payload normalization changed data contracts only. Company
+  overview and search UI patterns remain unchanged.
 
 - No known token, dark-mode, raw-colour, gradient, fixed-content-width, or page-level Client Component drift in the landing/search experience.
 - Checkout and payment-status UI are `UI/Mock Verified` through automated state and contract coverage;
   user manual QA is non-blocking.
-- Physical landing/autocomplete browser verification remains pending because the browser execution bridge was unavailable on 2026-06-27.
+- Physical landing/search browser verification remains pending because the browser execution bridge was unavailable on 2026-06-27.
 
 ---
 
@@ -242,7 +253,7 @@ Phase A candidates from node `58:176`:
 - `NAV`: wordmark and restrained navigation/action hierarchy.
 - `HERO`: company-search hierarchy, trust hints, and snapshot panel.
 - `TRUST BAR`: source names, adapted to distinguish free from paid checks.
-- One-off report note from GBP 7.99.
+- One-off report note from GBP 20.
 - CTA and footer rhythm.
 
 Replace the hero risk score/overdue metrics with factual company identity and source status. Exclude recovery sections, subscriptions, and recovery testimonials.
@@ -393,7 +404,7 @@ Last updated: 2026-07-02 (15A)
 | Shadow             | shared outline Button subtle shadow                     |
 | Accent usage       | caution parent Alert owns the operational-state colour |
 
-**Pattern notes:** Basic/Standard offer a free-recheck action and Premium offers issue escalation.
+**Pattern notes:** Current credit-pack products offer the same free-recheck recovery action.
 The 15A fixture action is explicitly non-destructive and reports that no request was sent; 15B may
 replace the handler without changing this presentation contract.
 
@@ -479,7 +490,7 @@ Last updated: 2026-07-03 (18B)
 row and a labelled native section selector below `md`. Tabs support arrow, Home, and End navigation.
 Screen presentation shows one section; print hides controls and expands every entitled section with
 page-break protection. Status always repeats in text/icon form, unavailable sources never imply a
-clean result, and Premium alone exposes the on-demand PDF action. The dark report footer contains
+clean result, and PDF visibility is artifact-driven. The dark report footer contains
 the provisional disclaimer, immutable identifiers, and issue link; print returns it to a light,
 ink-friendly surface.
 
@@ -490,10 +501,10 @@ data was delivered. Real report sections are projected from the frozen artifact 
 navigation, source-status, AI interpretation, responsive, and print patterns without new colours,
 spacing, radii, or elevation.
 
-**18B PDF action contract:** Premium PDF generation is automatic. `available` is a disabled queued
+**18B PDF action contract:** PDF generation is artifact-driven and owner-authorized. `available` is a disabled queued
 fallback, `generating` remains disabled with live text, `ready` uses the existing primary Button to a
 same-origin owner-authorized download route, and `failed` uses the same Button pattern for an
-idempotent retry. Signed provider URLs and storage keys never enter the report payload. The helper
+idempotent Server Action retry. Signed provider URLs and storage keys never enter the report payload. The helper
 caption remains `text-xs text-content-subtle`; no new colour, radius, shadow, or spacing pattern was
 introduced.
 
@@ -577,7 +588,7 @@ Last updated: 2026-07-03 (18B)
 breaks. Preview chrome, sheet radius, borders, shadows, and page background disappear in print.
 Page one always carries immutable identity, source status, the provisional disclaimer, and the
 printed fixture issue URL. Long content and factual cards avoid internal print breaks where safe.
-Basic and Standard never enter this document surface.
+Current credit-pack products do not use the old Basic/Standard/Premium PDF entitlement split.
 
 **18B renderer contract:** The preview and worker invoke the shared
 `@workspace/report-document` static HTML/CSS renderer. Production output uses worker-hosted Chromium,

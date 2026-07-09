@@ -1,11 +1,11 @@
 import { schema, type Database } from "@workspace/db";
-
-import type {
+import {
   CompanyPayload,
   CompanyRepository,
   CompanySearchLogInput,
   SearchLogRepository,
 } from "./types.js";
+import { toCompanyAddressPayload } from "./types.js";
 
 const { companies, searchLogs } = schema;
 
@@ -19,6 +19,9 @@ export class DrizzleCompanyRepository implements CompanyRepository {
     const incorporationDate = profile.incorporationDate
       ? new Date(`${profile.incorporationDate}T00:00:00.000Z`)
       : null;
+    const cessationDate = profile.cessationDate
+      ? new Date(`${profile.cessationDate}T00:00:00.000Z`)
+      : null;
 
     const rows = await this.db
       .insert(companies)
@@ -28,6 +31,11 @@ export class DrizzleCompanyRepository implements CompanyRepository {
         companyStatus: profile.companyStatus,
         companyType: profile.companyType,
         incorporationDate,
+        registeredOfficeAddress1: profile.registeredOfficeAddress.addressLine_1,
+        registeredOfficeAddress2: profile.registeredOfficeAddress.addressLine_2,
+        registeredOfficePOBox: profile.registeredOfficeAddress.poBox,
+        registeredOfficePostalCode: profile.registeredOfficeAddress.postalCode,
+        cessationDate,
         registeredOfficeLocality: profile.registeredOfficeAddress.locality,
         registeredOfficeRegion: profile.registeredOfficeAddress.region,
         registeredOfficeCountry: profile.registeredOfficeAddress.country,
@@ -43,6 +51,11 @@ export class DrizzleCompanyRepository implements CompanyRepository {
           companyStatus: profile.companyStatus,
           companyType: profile.companyType,
           incorporationDate,
+          registeredOfficeAddress1: profile.registeredOfficeAddress.addressLine_1,
+          registeredOfficeAddress2: profile.registeredOfficeAddress.addressLine_2,
+          registeredOfficePOBox: profile.registeredOfficeAddress.poBox,
+          registeredOfficePostalCode: profile.registeredOfficeAddress.postalCode,
+          cessationDate,
           registeredOfficeLocality: profile.registeredOfficeAddress.locality,
           registeredOfficeRegion: profile.registeredOfficeAddress.region,
           registeredOfficeCountry: profile.registeredOfficeAddress.country,
@@ -66,12 +79,18 @@ export class DrizzleCompanyRepository implements CompanyRepository {
       companyStatus: row.companyStatus,
       companyType: row.companyType ?? undefined,
       incorporationDate: row.incorporationDate?.toISOString(),
+      cessationDate: row.cessationDate?.toISOString(),
       registeredOfficeAddress: {
+        addressLine1: row.registeredOfficeAddress1 ?? undefined,
+        addressLine2: row.registeredOfficeAddress2 ?? undefined,
+        poBox: row.registeredOfficePOBox ?? undefined,
+        postalCode: row.registeredOfficePostalCode ?? undefined,
         locality: row.registeredOfficeLocality ?? undefined,
         region: row.registeredOfficeRegion ?? undefined,
         country: row.registeredOfficeCountry ?? undefined,
       },
       sicCodes: row.sicCodes,
+      accounts: profile.accounts,
       industryLabel: row.industryLabel ?? undefined,
       activeDirectorCount: row.activeDirectorCount ?? undefined,
       lastFetchedAt: row.lastFetchedAt?.toISOString(),
@@ -105,8 +124,10 @@ export class InMemoryCompanyRepository implements CompanyRepository {
       companyStatus: profile.companyStatus,
       companyType: profile.companyType,
       incorporationDate: profile.incorporationDate,
-      registeredOfficeAddress: profile.registeredOfficeAddress,
+      cessationDate: profile.cessationDate,
+      registeredOfficeAddress: toCompanyAddressPayload(profile.registeredOfficeAddress),
       sicCodes: profile.sicCodes,
+      accounts: profile.accounts,
       industryLabel: undefined,
       activeDirectorCount: profile.activeDirectorCount,
       lastFetchedAt: new Date().toISOString(),

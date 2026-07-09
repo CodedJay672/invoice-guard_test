@@ -68,9 +68,14 @@ void test("context compliance migration guards destructive enum conversion", asy
   assert.match(migration, /Cannot remove watchlist source context/);
   assert.match(migration, /ADD VALUE IF NOT EXISTS 'partial'/);
   assert.match(migration, /RENAME COLUMN "subscription_tier" TO "report_tier"/);
-  assert.match(migration, /799/);
-  assert.match(migration, /1499/);
-  assert.match(migration, /2700/);
+  assert.match(migration, /single_report/);
+  assert.match(migration, /starter_pack/);
+  assert.match(migration, /business_pack/);
+  assert.match(migration, /agency_pack/);
+  assert.match(migration, /2000/);
+  assert.match(migration, /5400/);
+  assert.match(migration, /8000/);
+  assert.match(migration, /14000/);
 });
 
 void test("AUTH-C migration refuses ownerless reports before retiring guest columns", async () => {

@@ -41,13 +41,13 @@ void test("known checkout fixtures resolve outside production", () => {
 void test("checkout href preserves canonical selection without personal data", () => {
   const selection = resolveCheckoutSelection({
     companyNumber: "12345678",
-    tier: "premium",
+    tier: "agency_pack",
     q: "Example Limited",
   });
 
   assert.ok(selection);
   assert.equal(
     buildCheckoutHref(selection),
-    "/checkout?companyNumber=12345678&tier=premium&q=Example+Limited",
+    "/checkout?companyNumber=12345678&tier=agency_pack&q=Example+Limited",
   );
 });

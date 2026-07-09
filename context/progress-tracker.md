@@ -14,15 +14,16 @@ Update after every completed feature. Record actual state only.
 
 **Next:** 19A — UI/Mock: Fair Payment Code States
 
-**Status:** 18B complete; Premium PDF generation, private R2 storage, durable artifact state, secure owner download, and retry/reconciliation are implemented. Production PDF consumption remains fail-closed until approved compliance copy and R2 configuration are supplied.
+**Status:** 18B complete; PDF generation, private R2 storage, durable artifact state, secure owner download, and retry/reconciliation are implemented. Production PDF consumption remains fail-closed until approved compliance copy and R2 configuration are supplied.
 
-**Latest refinement:** 2026-07-02 client scope update: free tier is Companies House-only, registration
-is required before payment, paid reports require Claude interpretation in Phase A, and local design/logo
-assets are now authoritative implementation references.
+**Latest refinement:** 2026-07-09 structure/data boundary fix: public products are now the four credit packs
+Single Report, Starter Pack, Business Pack, and Agency Pack; the landing page submits to `/search?q=...`
+without autocomplete; `/search` reads via the server-only DAL; paid-source company routes render locked
+not-yet-checked states; PDF retry uses a Server Action instead of a client POST route.
 
 ### Current Unit Scope
 
-19A defines the present, absent, stale, refreshing, and source-failed Premium Fair Payment Code
+19A defines the present, absent, stale, refreshing, and source-failed paid-report Fair Payment Code
 presentation states without changing the completed 18B PDF delivery contract.
 
 ---
@@ -83,8 +84,10 @@ presentation states without changing the completed 18B PDF delivery contract.
 - Typed BullMQ foundation; processors not implemented.
 - Mock/live-shaped Companies House, London Gazette, and insolvency/disqualified-officer adapters.
 - Search/profile/free-preview API, atomic Redis/in-memory rate limiting, signed proxy identity, and HMAC-hashed search logs.
-- Server-authoritative one-off report products and Companies House-only preview with explicit not-yet-checked paid sources.
-- Phase A landing page with debounced Companies House suggestions and canonical company selection into `/search`.
+- Server-authoritative one-off credit-pack report products and Companies House-only preview with explicit not-yet-checked paid sources.
+- Phase A landing page with direct query submission into `/search?q=...`; autocomplete is not part of the active landing flow.
+- `/search` Server Component data access through `apps/web/lib/data`, with company-result links to `/company/[houseNumber]/overview`.
+- Company route group states for overview and locked paid-source tabs: filing history, CCJ, charges, officers, AI summary, insolvency, and Fair Payment Code.
 - Brand Asset Guide v1.0 visual foundation: InvoiceGuard navy/emerald palette, Inter typography,
   12px controls, rounded outline icons, and sparse brand-gradient usage.
 - Live Companies House adapter support for alphabetical search, registered-office-address, profile, officers, filing history, charges, and insolvency endpoints.
@@ -109,7 +112,7 @@ presentation states without changing the completed 18B PDF delivery contract.
   production hides the preview route with `notFound()`.
 - Responsive fixture-driven `/reports/[reportReference]` browser report with desktop tabs, mobile
   section selector, expanded print document, complete/partial/access/not-ready/not-found/provider
-  states, provisional issue/disclaimer copy, and Premium-only PDF UI states.
+  states, provisional issue/disclaimer copy, and historical Premium-only PDF UI states.
 - Secure browser delivery with verified Clerk-owner authorization, concealed missing/non-owner
   responses, strict frozen-artifact and response schemas, entitlement-safe DTO projection, uncached
   server-only DAL access, lifecycle-only non-deliverable states, and development-only fixtures.
@@ -143,6 +146,9 @@ presentation states without changing the completed 18B PDF delivery contract.
 - A Logic/Data unit cannot start until its paired UI/Mock unit is recorded as `UI/Mock Verified` with
   complete deterministic states and passing automated checks. User manual QA is non-blocking.
 - Registry Trust runs only after webhook-confirmed payment.
+- Public product codes are `single_report`, `starter_pack`, `business_pack`, and `agency_pack`; pack size changes credit quantity and price, not report depth.
+- The price section is the authoritative public product display; persisted prices are 2000, 5400, 8000, and 14000 pence.
+- Current credit-pack products grant full report entitlements and share the same Registry Trust free-recheck recovery path.
 - Webhooks create reports; redirects do not.
 - PostgreSQL/Drizzle, BullMQ/Redis, Clerk, Stripe, and Postmark are selected.
 - `ENABLE_FLAG_SUMMARY=false` remains the default for the separate legacy template summary.
@@ -171,7 +177,7 @@ Free preview is architecturally isolated from every source except Companies Hous
 
 - Production requires approved disclaimer wording and Lucky's ICO confirmation.
 - Live providers, Stripe, Clerk, Postmark, PDF, and storage require implementation/verification.
-- Landing/autocomplete physical browser QA remains pending because the in-app browser bridge was unavailable on 2026-06-27.
+- Landing/search physical browser QA remains pending because the in-app browser bridge was unavailable on 2026-06-27.
 
 ### Open Questions
 
@@ -331,6 +337,19 @@ artifact state with cascade deletion, trusted-owner download/retry, private obje
 automatic Premium-only publication, startup reconciliation, and the dynamic same-origin PDF route.
 Production PDF consumption intentionally remains idle until R2 configuration and approved code-owned
 compliance copy exist; `ENABLE_FLAG_SUMMARY=false` remains canonical.
+
+2026-07-09 structure/data boundary fix checks: `npx drizzle-kit check` passed; the disposable dev
+database schemas were reset and `npm run pg:migrate` applied the corrected migration chain
+successfully. Repository typecheck passed 13 tasks. Focused tests passed for `packages/validation`
+(6 assertions), `apps/web` (38 assertions), `apps/worker` (37 assertions), and `apps/api` (35
+assertions). Focused lint passed for web, API, and worker. The stale `0008` migration metadata was
+removed with the bad migration.
+
+2026-07-10 Companies House account payload bugfix: live profile `accounts.accounting_reference_date`
+string day/month values are normalized to numbers, and `last_accounts.type` is treated as the string
+that Companies House returns. Focused checks passed for integrations tests (16 assertions),
+validation tests (8 assertions), API tests (35 assertions), web tests (38 assertions), typecheck for
+integrations, validation, types, API, and web, and lint for integrations and validation.
 
 ### Coverage Tracking
 

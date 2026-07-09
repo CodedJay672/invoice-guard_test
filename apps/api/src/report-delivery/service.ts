@@ -95,7 +95,7 @@ function buildBrowserPayload(
     interpretation: buildInterpretation(artifact, sources),
     disclaimer: DISCLAIMER,
     issueHref: `mailto:hello@invoiceguard.co.uk?subject=${encodeURIComponent(`Issue with report ${artifact.reportReference}`)}`,
-    ...(artifact.tier === "premium"
+    ...(pdfArtifact
       ? {
           pdfState:
             pdfArtifact?.status === "ready"
@@ -224,7 +224,7 @@ function buildSections(
     sections.push({
       id: "director-depth",
       title: "Director and insolvency checks",
-      description: "Premium Companies House, Gazette, and officer-depth checks.",
+      description: "Companies House, Gazette, and officer-depth checks.",
       facts: [{ label: "Checks recorded", value: String(Object.keys(insolvency).length) }],
     });
   }
@@ -459,5 +459,8 @@ function providerLabel(provider: string): string {
 }
 
 function titleCase(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }

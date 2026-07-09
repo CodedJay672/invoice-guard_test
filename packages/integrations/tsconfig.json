@@ -3,6 +3,6 @@
   "compilerOptions": {
     "baseUrl": "."
   },
-  "include": ["package.json", "src/**/*.ts"],
+  "include": ["package.json", "src/**/*.ts", "../types/src/companies-house.ts"],
   "exclude": ["node_modules", "dist"]
 }

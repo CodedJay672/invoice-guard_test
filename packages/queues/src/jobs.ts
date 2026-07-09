@@ -1,6 +1,7 @@
 import type { QueueName } from "./names.js";
+import type { ReportProductCode } from "@workspace/types";
 
-export type ReportTier = "basic" | "standard" | "premium";
+export type ReportTier = ReportProductCode;
 
 export interface GeneratePaidReportJobData extends Record<string, unknown> {
   reportId: string;

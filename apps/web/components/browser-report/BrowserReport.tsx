@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   Bot,
   CheckCircle2,
@@ -17,6 +17,8 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
+
+import { retryReportPdf } from "@/actions/report-pdf";
 
 import type {
   BrowserReportFixture,
@@ -213,11 +215,12 @@ function PdfAction({
   reportReference: string;
 }) {
   const [currentState, setCurrentState] = useState(state);
+  const [isPending, startTransition] = useTransition();
   const content = {
     available: { label: "PDF queued", icon: FileText, disabled: true },
     generating: { label: "Generating PDF", icon: Clock3, disabled: true },
     ready: { label: "Download PDF", icon: Download, disabled: false },
-    failed: { label: "Retry PDF", icon: CircleAlert, disabled: false },
+    failed: { label: isPending ? "Retrying PDF" : "Retry PDF", icon: CircleAlert, disabled: false },
   }[currentState];
   const Icon = content.icon;
   return (
@@ -236,17 +239,14 @@ function PdfAction({
       ) : (
         <Button
           type="button"
-          disabled={content.disabled}
+          disabled={content.disabled || isPending}
           onClick={() => {
             if (currentState !== "failed") return;
             setCurrentState("generating");
-            void fetch(`/api/reports/${encodeURIComponent(reportReference)}/pdf`, {
-              method: "POST",
-            })
-              .then((response) => {
-                if (!response.ok) setCurrentState("failed");
-              })
-              .catch(() => setCurrentState("failed"));
+            startTransition(async () => {
+              const result = await retryReportPdf(reportReference);
+              if (!result.ok) setCurrentState("failed");
+            });
           }}
         >
           <Icon data-icon="inline-start" />

@@ -24,7 +24,7 @@ import type {
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
   CompaniesHouseSearchResult,
-} from "./types.js";
+} from "../../../types/src/companies-house.js";
 
 const provider = "companies_house";
 
@@ -232,7 +232,6 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
       };
     } catch (error) {
       const isTimeout = error instanceof Error && error.name === "AbortError";
-
       return createProviderFailure(provider, {
         code: isTimeout ? "integration_timeout" : "integration_network_error",
         message: isTimeout

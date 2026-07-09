@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>InvoiceGuard – Company Search</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F0F2F5;
+    color: #111827;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── SIGNAL STRIP ── */
+  /* Only data available FREE from Companies House API */
+  .signal-strip {
+    padding: 14px 24px; background: #FAFAFA;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .signal {
+    display: flex; align-items: center; gap: 7px;
+    border-radius: 7px; padding: 8px 14px;
+    border-width: 1px; border-style: solid;
+    font-size: 12px; font-weight: 600;
+  }
+  .signal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .signal-red    { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+  .signal-red .signal-dot    { background: #DC2626; }
+  .signal-amber  { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }
+  .signal-amber .signal-dot  { background: #D97706; }
+  .signal-green  { background: #F0FDF4; border-color: #BBF7D0; color: #166534; }
+  .signal-green .signal-dot  { background: #16A34A; }
+  .signal-blue   { background: #EFF6FF; border-color: #BFDBFE; color: #1D4ED8; }
+  .signal-blue .signal-dot   { background: #2563EB; }
+
+  /* ── FREE DATA NOTE ── */
+  .free-data-note {
+    padding: 10px 24px; background: #F8FAFC;
+    border-bottom: 1px solid #E5E7EB;
+    font-size: 11px; color: #94A3B8;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ── AI PREVIEW ── */
+  .ai-preview {
+    padding: 16px 24px; border-bottom: 1px solid #E5E7EB; background: #EFF6FF;
+  }
+  .ai-preview-header { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; }
+  .ai-icon {
+    width: 18px; height: 18px; background: #2563EB; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 800; color: white; flex-shrink: 0;
+  }
+  .ai-preview-label { font-size: 11px; font-weight: 700; color: #1D4ED8; }
+  .ai-preview-text-wrap { position: relative; }
+  .ai-preview-visible { font-size: 13px; color: #1E3A5F; line-height: 1.7; margin-bottom: 6px; }
+  .ai-preview-blurred {
+    font-size: 13px; color: #1E3A5F; line-height: 1.7;
+    filter: blur(4px); user-select: none; pointer-events: none; opacity: 0.7;
+  }
+  .ai-preview-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 50px;
+    background: linear-gradient(to bottom, rgba(239,246,255,0), rgba(239,246,255,1));
+  }
+
+  /* ── LOCKED DATA GRID ── */
+  .locked-sections {
+    padding: 16px 24px; border-bottom: 1px solid #E5E7EB;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 10px;
+  }
+  .locked-item {
+    background: #F9FAFB; border: 1px solid #E5E7EB;
+    border-radius: 8px; padding: 12px 14px; position: relative; overflow: hidden;
+  }
+  .locked-item-label {
+    font-size: 10px; font-weight: 700; color: #9CA3AF;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px;
+  }
+  .locked-item-value { font-size: 13px; font-weight: 600; color: #111827; }
+  .locked-item-value.blurred { filter: blur(5px); user-select: none; pointer-events: none; }
+  .locked-item-value.green { color: #16A34A; filter: none; }
+  .locked-item-value.red   { color: #DC2626; filter: none; }
+  .locked-item-value.amber { color: #D97706; filter: none; }
+  .lock-icon { position: absolute; top: 10px; right: 10px; font-size: 12px; color: #CBD5E1; }
+
+  /* ── CCJ TEASER ── */
+  /* No CCJ data called — just a prompt to unlock */
+  .ccj-teaser {
+    margin: 0 24px 16px;
+    background: #F5F3FF; border: 1px solid #DDD6FE;
+    border-radius: 8px; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ccj-teaser-left { display: flex; align-items: center; gap: 10px; }
+  .ccj-teaser-icon { font-size: 18px; }
+  .ccj-teaser-text { font-size: 12px; color: #5B21B6; line-height: 1.5; }
+  .ccj-teaser-text strong { font-weight: 700; }
+  .ccj-unlock-btn {
+    background: #7C3AED; color: white; font-size: 12px; font-weight: 600;
+    border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* ── CTA BLOCK ── */
+  .cta-block {
+    padding: 22px 24px;
+    background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 100%);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .cta-title { font-size: 16px; font-weight: 800; color: white; letter-spacing: -0.3px; margin-bottom: 4px; }
+  .cta-subtitle { font-size: 12px; color: #94A3B8; line-height: 1.5; }
+  .cta-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .cta-price { display: flex; align-items: baseline; gap: 4px; }
+  .cta-amount { font-size: 28px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+  .cta-per { font-size: 12px; color: #94A3B8; }
+  .cta-btn {
+    background: #2563EB; color: white; font-size: 14px; font-weight: 700;
+    border: none; border-radius: 8px; padding: 12px 28px; cursor: pointer;
+    transition: background 0.15s; white-space: nowrap; letter-spacing: -0.2px;
+  }
+  .cta-btn:hover { background: #1D4ED8; }
+  .cta-guarantee { font-size: 11px; color: #64748B; display: flex; align-items: center; gap: 5px; }
+
+  /* ── WHAT'S INCLUDED ── */
+  .whats-included {
+    padding: 14px 24px; border-top: 1px solid #1E293B;
+    display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  .included-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #64748B; }
+  .included-tick { color: #22C55E; font-size: 13px; }
+
+  /* ── FPC BADGE ── */
+  .fpc-badge-wrap {
+    padding: 0 24px 16px;
+  }
+  .fpc-badge {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; flex-wrap: wrap;
+    background: #F0FDF4; border: 1.5px dashed #86EFAC;
+    border-radius: 9px; padding: 14px 16px;
+    position: relative; overflow: hidden;
+  }
+  .fpc-badge-left { display: flex; align-items: center; gap: 12px; }
+  .fpc-icon {
+    width: 38px; height: 38px; background: #DCFCE7; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .fpc-label {
+    font-size: 10px; font-weight: 700; color: #166534;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px;
+  }
+  .fpc-status-blurred {
+    font-size: 14px; font-weight: 800; color: #166534;
+    filter: blur(5px); user-select: none; display: inline-block;
+  }
+  .fpc-status-sub { font-size: 11px; color: #4ADE80; margin-top: 2px; }
+  .fpc-lock-col { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .fpc-lock-badge {
+    background: #166534; color: white;
+    font-size: 10px; font-weight: 700; border-radius: 4px; padding: 3px 8px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .fpc-unlock-btn {
+    background: white; color: #166534;
+    border: 1.5px solid #86EFAC; border-radius: 6px;
+    font-size: 12px; font-weight: 700; padding: 7px 14px;
+    cursor: pointer; white-space: nowrap; transition: all 0.15s;
+  }
+  .fpc-unlock-btn:hover { background: #F0FDF4; }
+  .fpc-overlay-text {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(240,253,244,0.6);
+    font-size: 12px; font-weight: 600; color: #166534;
+    pointer-events: none;
+  }
+
+  /* ── DATA SOURCE LABEL ── */
+  .data-source {
+    font-size: 10px; color: #CBD5E1; letter-spacing: 0.04em;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* ── FOOTER ── */
+  .footer { background: #0F172A; padding: 18px 28px; text-align: center; }
+  .footer-text { color: #475569; font-size: 12px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .header { padding: 12px 16px; }
+    .header-nav { display: none; }
+    .search-bar { padding: 0 16px 20px; }
+    .main { padding: 18px 16px 50px; }
+    .result-header { flex-direction: column; }
+    .result-right { align-items: flex-start; }
+    .cta-block { flex-direction: column; align-items: flex-start; }
+    .cta-right { align-items: flex-start; }
+    .locked-sections { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ══════════════════════════════════════
+       RESULT 1 — Distressed company
+       All signals from free CH API only
+  ══════════════════════════════════════ -->
+  <div class="result-card">
+    <div class="result-header">
+      
+    <div class="signal-strip">
+      <div class="signal signal-red">
+        <div class="signal-dot"></div>
+        Insolvency case on record
+      </div>
+      <div class="signal signal-amber">
+        <div class="signal-dot"></div>
+        Charge registered
+      </div>
+      <div class="signal signal-amber">
+        <div class="signal-dot"></div>
+        Accounts overdue
+      </div>
+      <div class="signal signal-amber">
+        <div class="signal-dot"></div>
+        Confirmation statement overdue
+      </div>
+    </div>
+
+    <div class="free-data-note">
+      🏛 Signals above are sourced from the free Companies House public register only · Full detail, AI interpretation and CCJ check available in paid report
+    </div>
+
+    <!-- AI PREVIEW — first sentence only, rest blurred -->
+    <div class="ai-preview">
+      <div class="ai-preview-header">
+        <div class="ai-icon">AI</div>
+        <span class="ai-preview-label">InvoiceGuard AI Interpretation — Preview</span>
+      </div>
+      <div class="ai-preview-text-wrap">
+        <p class="ai-preview-visible">
+          Nexora Digital Solutions Ltd is a private limited IT consultancy incorporated in June 2020, currently in liquidation.
+        </p>
+        <p class="ai-preview-blurred">
+          The company entered Creditors Voluntary Liquidation on 26 February 2024 following an extraordinary resolution to wind up. An outstanding charge registered in August 2021 covers all assets of the company. Two insolvency practitioners were appointed on the same date and have filed annual reports confirming the liquidation remains active. Accounts for the period to May 2023 were never filed.
+        </p>
+        <div class="ai-preview-overlay"></div>
+      </div>
+    </div>
+    <div class="locked-sections">
+      <div class="locked-item">
+        <p class="locked-item-label">Company Status</p>
+        <p class="locked-item-value red">Liquidation</p>
+        <!-- Status is free — shown unblurred -->
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Insolvency Type</p>
+        <p class="locked-item-value blurred">Creditors Voluntary</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Insolvency Practitioners</p>
+        <p class="locked-item-value blurred">S. Ross & A. Kelly</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Charge Holder</p>
+        <p class="locked-item-value blurred">Swishfund LTD</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Charge Type</p>
+        <p class="locked-item-value blurred">Fixed + Floating</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Active Directors</p>
+        <!-- Count comes free from CH API — shown, names are locked -->
+        <p class="locked-item-value amber">2 directors</p>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Director Names</p>
+        <p class="locked-item-value blurred">D. Brown & R. Hanlon</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Last Accounts Filed</p>
+        <p class="locked-item-value blurred">31 May 2022</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+    </div>
+
+    <div class="fpc-badge-wrap">
+      <div class="fpc-badge">
+        <div class="fpc-badge-left">
+          <div class="fpc-icon">🏅</div>
+          <div>
+            <p class="fpc-label">Fair Payment Code Status</p>
+            <span class="fpc-status-blurred">Gold Signatory</span>
+            <p class="fpc-status-sub">Small Business Commissioner · Unlock to view</p>
+          </div>
+        </div>
+        <div class="fpc-lock-col">
+          <span class="fpc-lock-badge">🔒 Paid report only</span>
+          <button class="fpc-unlock-btn">Unlock FPC status →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ccj-teaser">
+      <div class="ccj-teaser-left">
+        <span class="ccj-teaser-icon">⚖️</span>
+        <p class="ccj-teaser-text">
+          <strong>Does this company have County Court Judgements?</strong><br>
+          A full CCJ registry check is included in your paid report — no extra charge.
+        </p>
+      </div>
+      <button class="ccj-unlock-btn">See CCJ check →</button>
+    </div>
+
+    <!-- CTA -->
+   
+
+    <div class="whats-included">
+      <div class="included-item"><span class="included-tick">✓</span> Full company overview</div>
+      <div class="included-item"><span class="included-tick">✓</span> Charge holder &amp; type detail</div>
+      <div class="included-item"><span class="included-tick">✓</span> Insolvency type &amp; practitioners</div>
+      <div class="included-item"><span class="included-tick">✓</span> Director names &amp; history</div>
+      <div class="included-item"><span class="included-tick">✓</span> Filing history timeline</div>
+      <div class="included-item"><span class="included-tick">✓</span> CCJ registry check</div>
+      <div class="included-item"><span class="included-tick">✓</span> Full AI interpretation</div>
+    </div>
+
+  </div><!-- /result 1 -->
+
+
+  <!-- ══════════════════════════════════════
+       RESULT 2 — Clean active company
+       All signals from free CH API only
+  ══════════════════════════════════════ -->
+  <div class="result-card secondary">
+
+    <div class="result-header">
+      <div>
+        <h2 class="result-name" style="font-size:16px;">Nexora Digital Solutions (North East) Ltd</h2>
+        <div class="result-meta">
+          <span>No: <strong>14821033</strong></span>
+          <span>Incorporated: <strong>03 Mar 2023</strong></span>
+          <span>Type: <strong>Private limited Company</strong></span>
+          <span>SIC: <strong>62020 – IT Consultancy</strong></span>
+        </div>
+      </div>
+      <div class="result-right">
+        <div class="status-badge status-active">ACTIVE</div>
+        <span class="data-source">🏛 Companies House</span>
+      </div>
+    </div>
+
+    <!-- Clean company — all green signals from free CH API -->
+    <div class="signal-strip">
+      <div class="signal signal-green">
+        <div class="signal-dot"></div>
+        No insolvency on record
+      </div>
+      <div class="signal signal-green">
+        <div class="signal-dot"></div>
+        No charges registered
+      </div>
+      <div class="signal signal-green">
+        <div class="signal-dot"></div>
+        Accounts up to date
+      </div>
+      <div class="signal signal-green">
+        <div class="signal-dot"></div>
+        Confirmation statement up to date
+      </div>
+    </div>
+
+    <div class="free-data-note">
+      🏛 Signals above are sourced from the free Companies House public register only · Full detail, AI interpretation and CCJ check available in paid report
+    </div>
+
+    <!-- AI preview -->
+    <div class="ai-preview">
+      <div class="ai-preview-header">
+        <div class="ai-icon">AI</div>
+        <span class="ai-preview-label">InvoiceGuard AI Interpretation — Preview</span>
+      </div>
+      <div class="ai-preview-text-wrap">
+        <p class="ai-preview-visible">
+          Nexora Digital Solutions (North East) Ltd is an active private limited IT consultancy incorporated in March 2023, with no insolvency proceedings or registered charges on record.
+        </p>
+        <p class="ai-preview-blurred">
+          Accounts and confirmation statements are filed and up to date. The company has 1 active director appointed at incorporation with no resignations on record. A full CCJ registry check is included in the paid report to confirm whether any court judgements have been registered against this company.
+        </p>
+        <div class="ai-preview-overlay"></div>
+      </div>
+    </div>
+
+    <!-- Locked data grid — clean company -->
+    <div class="locked-sections">
+
+      <div class="locked-item">
+        <p class="locked-item-label">Company Status</p>
+        <p class="locked-item-value green">Active</p>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Insolvency</p>
+        <p class="locked-item-value green">None on record</p>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Charges</p>
+        <p class="locked-item-value green">None registered</p>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Active Directors</p>
+        <!-- Count free from CH API -->
+        <p class="locked-item-value green">1 director</p>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Director Name</p>
+        <p class="locked-item-value blurred">J. T. Morrison</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Last Accounts Filed</p>
+        <p class="locked-item-value blurred">March 2024</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">Director Appointments</p>
+        <p class="locked-item-value blurred">03 Mar 2023</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+      <div class="locked-item">
+        <p class="locked-item-label">PSC (Owner)</p>
+        <p class="locked-item-value blurred">J. T. Morrison</p>
+        <span class="lock-icon">🔒</span>
+      </div>
+
+    </div>
+
+    <!-- FPC BADGE — result 2 (clean company, FPC status still locked) -->
+    <div class="fpc-badge-wrap">
+      <div class="fpc-badge">
+        <div class="fpc-badge-left">
+          <div class="fpc-icon">🏅</div>
+          <div>
+            <p class="fpc-label">Fair Payment Code Status</p>
+            <span class="fpc-status-blurred">Not a signatory</span>
+            <p class="fpc-status-sub">Small Business Commissioner · Unlock to view</p>
+          </div>
+        </div>
+        <div class="fpc-lock-col">
+          <span class="fpc-lock-badge">🔒 Paid report only</span>
+          <button class="fpc-unlock-btn">Unlock FPC status →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CCJ teaser — same for every result, no data called -->
+    <div class="ccj-teaser">
+      <div class="ccj-teaser-left">
+        <span class="ccj-teaser-icon">⚖️</span>
+        <p class="ccj-teaser-text">
+          <strong>Does this company have County Court Judgements?</strong><br>
+          A full CCJ registry check is included in your paid report — no extra charge.
+        </p>
+      </div>
+      <button class="ccj-unlock-btn">See CCJ check →</button>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-block" style="background: linear-gradient(135deg, #1E293B 0%, #334155 100%);">
+      <div>
+        <p class="cta-title">Unlock the full intelligence report</p>
+        <p class="cta-subtitle">Charges · Insolvency · Officers · Filing history · CCJ check · Full AI interpretation</p>
+      </div>
+      <div class="cta-right">
+        <div class="cta-price">
+          <span class="cta-amount">£4.99</span>
+          <span class="cta-per">per report</span>
+        </div>
+        <button class="cta-btn">Unlock Full Report →</button>
+        <span class="cta-guarantee">🔒 Secure payment · Instant access</span>
+      </div>
+    </div>
+
+    <div class="whats-included">
+      <div class="included-item"><span class="included-tick">✓</span> Full company overview</div>
+      <div class="included-item"><span class="included-tick">✓</span> Charge holder &amp; type detail</div>
+      <div class="included-item"><span class="included-tick">✓</span> Insolvency type &amp; practitioners</div>
+      <div class="included-item"><span class="included-tick">✓</span> Director names &amp; history</div>
+      <div class="included-item"><span class="included-tick">✓</span> Filing history timeline</div>
+      <div class="included-item"><span class="included-tick">✓</span> CCJ registry check</div>
+      <div class="included-item"><span class="included-tick">✓</span> Full AI interpretation</div>
+    </div>
+
+  </div><!-- /result 2 -->
+
+</div><!-- /main -->
+
+<!-- FOOTER -->
+<div class="footer">
+  <p class="footer-text">
+    InvoiceGuard · Verdikt Intelligence Ltd · Free search data sourced from Companies House public register ·
+    CCJ data sourced from Registry Trust (paid reports only) · Secure payments by Stripe
+  </p>
+</div>
+
+</body>
+</html>

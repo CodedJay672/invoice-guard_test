@@ -1,258 +1,76 @@
-"use client";
-
-import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
-  ArrowRight,
-  Building2,
-  CalendarDays,
+  BotIcon,
+  BuildingIcon,
   CircleAlert,
-  LockKeyhole,
-  Search,
-  Users,
+  LucideIcon,
+  ScaleIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Suspense } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import {
-  apiErrorResponseSchema,
-  companySearchApiResponseSchema,
-  freePreviewApiResponseSchema,
-  type CompanyAddressPayload,
-  type CompanySearchMatchPayload,
-  type FreePreviewPayload,
-} from "@workspace/validation/companies";
+import type {
+  CompanyAddressPayload,
+  CompanySearchMatchPayload,
+  FreePreviewPayload,
+} from "@workspace/types";
+
+import { searchCompanies } from "@/lib/data/search-companies";
 
 import {
-  fallbackTierCards,
   getSearchFixtureState,
-  type PreviewStatus,
   type SearchFixtureName,
   type SearchStatus,
 } from "./fixtures";
+import SearchPanel from "./search-panel";
 
 type CompanySearchExperienceProps = {
   fixtureName?: SearchFixtureName | undefined;
-  initialCompanyNumber?: string | undefined;
   initialQuery?: string | undefined;
 };
 
-export function CompanySearchExperience({
+export async function CompanySearchExperience({
   fixtureName,
-  initialCompanyNumber,
   initialQuery,
 }: CompanySearchExperienceProps) {
-  const router = useRouter();
-  const initialState = getSearchFixtureState(fixtureName);
-  const [query, setQuery] = useState(initialQuery ?? initialState.query);
-  const [matches, setMatches] = useState(initialState.matches);
-  const [preview, setPreview] = useState(initialState.preview);
-  const [searchStatus, setSearchStatus] = useState<SearchStatus>(initialState.searchStatus);
-  const [previewStatus, setPreviewStatus] = useState<PreviewStatus>(
-    initialCompanyNumber && !fixtureName ? "loading" : initialState.previewStatus,
-  );
-  const [message, setMessage] = useState(initialState.message);
-
-  async function searchCompanies(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    const trimmedQuery = query.trim();
-
-    if (trimmedQuery.length < 2) {
-      setSearchStatus("invalid");
-      setMessage("Enter at least 2 characters.");
-      return;
-    }
-
-    setSearchStatus("loading");
-    setMessage(undefined);
-    setPreview(undefined);
-    setPreviewStatus("idle");
-
-    try {
-      const response = await fetch(`/api/companies/search?q=${encodeURIComponent(trimmedQuery)}`);
-      const body = (await response.json()) as unknown;
-
-      if (!response.ok) {
-        const error = apiErrorResponseSchema.safeParse(body);
-        const code = error.success ? error.data.error.code : "company_search_failed";
-
-        setSearchStatus(code === "anonymous_search_rate_limited" ? "rate_limited" : "error");
-        setMatches([]);
-        setMessage(
-          error.success
-            ? error.data.error.message
-            : "Company data could not be retrieved right now.",
-        );
-        return;
-      }
-
-      const parsed = companySearchApiResponseSchema.safeParse(body);
-
-      if (!parsed.success) {
-        throw new Error("Company search returned an invalid response.");
-      }
-
-      setMatches(parsed.data.data.matches);
-      setSearchStatus(parsed.data.data.matches.length > 0 ? "results" : "empty");
-    } catch {
-      setSearchStatus("error");
-      setMatches([]);
-      setMessage("Company data could not be retrieved right now.");
-    }
-  }
-
-  const applyPreviewResult = useCallback((result: PreviewRequestResult): void => {
-    if (result.status === "failed") {
-      setPreviewStatus("error");
-      setMessage(result.message);
-      return;
-    }
-
-    setPreview(result.preview);
-    setPreviewStatus("ready");
-  }, []);
-
-  const loadPreview = useCallback(
-    async (companyNumber: string): Promise<void> => {
-      setPreviewStatus("loading");
-      setMessage(undefined);
-      applyPreviewResult(await requestFreePreview(companyNumber));
-    },
-    [applyPreviewResult],
-  );
-
-  useEffect(() => {
-    if (initialCompanyNumber && !fixtureName) {
-      void requestFreePreview(initialCompanyNumber).then(applyPreviewResult);
-    }
-  }, [applyPreviewResult, fixtureName, initialCompanyNumber]);
-
-  const tierCards = preview?.tierCards ?? fallbackTierCards;
+  const fixtureState = getSearchFixtureState(fixtureName);
+  const matches = initialQuery
+    ? await searchCompanies(initialQuery)
+    : {
+        searchStatus: fixtureState.searchStatus,
+        matches: fixtureState.matches,
+        message: fixtureState.message,
+      };
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
-      <section aria-label="Company search and free preview" className="flex min-w-0 flex-col gap-6">
-        <SearchPanel
-          query={query}
-          searchStatus={searchStatus}
-          onQueryChange={(value) => {
-            setQuery(value);
-            setSearchStatus(value.length > 0 ? "typing" : "idle");
-            setMessage(undefined);
-          }}
-          onSubmit={(event) => void searchCompanies(event)}
-        />
-
-        <SearchFeedback status={searchStatus} message={message} />
-
-        {matches.length > 0 ? <SearchResults matches={matches} onSelect={loadPreview} /> : null}
-
-        {previewStatus === "loading" ? <PreviewLoading /> : null}
-
-        {previewStatus === "error" && message ? (
-          <Alert variant="critical">
-            <CircleAlert aria-hidden="true" />
-            <AlertTitle>Free preview unavailable</AlertTitle>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        {preview ? <FreePreview preview={preview} /> : null}
-      </section>
-
-      <aside
-        aria-label="Report options"
-        className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-24 lg:self-start"
+    <section className="min-h-svh w-full bg-page">
+      <div className="border-b border-b-line bg-surface px-7 py-6">
+        <div className="mx-auto w-full max-w-240">
+          <SearchPanel />
+        </div>
+      </div>
+      <section
+        aria-label="Company search and free preview"
+        className="mx-auto w-full max-w-275 px-6 py-7"
       >
-        {tierCards.map((tier) => (
-          <TierCard
-            key={tier.tier}
-            tier={tier}
-            ready={Boolean(preview) || initialState.tierCtasReady}
-            onSelect={() => {
-              if (!preview) return;
-              const params = new URLSearchParams({
-                companyNumber: preview.company.companiesHouseNumber,
-                tier: tier.tier,
-                q: preview.company.companyName,
-              });
-              router.push(`/checkout?${params.toString()}`);
-            }}
-          />
-        ))}
-        <p aria-live="polite" className="text-sm text-content-muted">
-          {preview
-            ? "Choose a one-off report to review the checkout summary."
-            : "Select a company before choosing a report."}
-        </p>
-      </aside>
-    </div>
-  );
-}
+        <SearchFeedback status={matches.searchStatus} message={matches.message} />
 
-type SearchPanelProps = {
-  query: string;
-  searchStatus: SearchStatus;
-  onQueryChange: (value: string) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-};
-
-function SearchPanel({ query, searchStatus, onQueryChange, onSubmit }: SearchPanelProps) {
-  return (
-    <Card className="border-brand-teal/30 shadow-md">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">
-          <h2>Find a UK company</h2>
-        </CardTitle>
-        <CardDescription>
-          Search by registered company name or Companies House number.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form className="flex flex-col gap-3" onSubmit={onSubmit}>
-          <label className="text-sm font-medium text-content" htmlFor="company-search">
-            Company name or number
-          </label>
-          <div className="flex flex-col gap-3 rounded-md bg-page p-2 sm:flex-row">
-            <div className="relative min-w-0 flex-1">
-              <Search
-                aria-hidden="true"
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-content-muted"
-              />
-              <Input
-                id="company-search"
-                value={query}
-                onChange={(event) => onQueryChange(event.target.value)}
-                aria-invalid={searchStatus === "invalid"}
-                className="h-11 border-transparent bg-surface pl-9 shadow-sm"
-                placeholder="For example, ACME or 12345678"
-              />
-            </div>
-            <Button
-              type="submit"
-              size="lg"
-              disabled={searchStatus === "loading"}
-              className="h-11 px-5"
-            >
-              <Search data-icon="inline-start" />
-              {searchStatus === "loading" ? "Searching" : "Search"}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        {matches.matches.length > 0 ? (
+          <Suspense key={initialQuery} fallback={<PreviewLoading />}>
+            <SearchResults query={initialQuery ?? ""} matches={matches.matches} />
+          </Suspense>
+        ) : null}
+      </section>
+    </section>
   );
 }
 
@@ -265,7 +83,7 @@ function SearchFeedback({ status, message }: SearchFeedbackProps) {
   if (status === "loading") {
     return (
       <p aria-live="polite" className="text-sm text-content-muted" role="status">
-        Searching Companies House…
+        Searching Companies House...
       </p>
     );
   }
@@ -298,42 +116,41 @@ function SearchFeedback({ status, message }: SearchFeedbackProps) {
 
 type SearchResultsProps = {
   matches: CompanySearchMatchPayload[];
-  onSelect: (companyNumber: string) => Promise<void>;
+  query: string;
 };
 
-function SearchResults({ matches, onSelect }: SearchResultsProps) {
+function SearchResults({ matches, query }: SearchResultsProps) {
   return (
-    <section aria-labelledby="search-results-heading" className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="search-results-heading" className="text-xl font-semibold text-content">
-          Search results
-        </h2>
-        <p className="text-sm text-content-muted">{matches.length} found</p>
+    <section aria-labelledby="search-results-heading" className="mx-auto w-full max-w-240 p-7">
+      <h2 id="search-results-heading" className="mb-4 text-xs text-content-subtle">
+        Search results: <span className="text-content">{matches.length} found</span> for{" "}
+        &quot;{query}&quot;. Data from Companies House public register.
+      </h2>
+
+      <div className="mb-5 flex flex-wrap items-center justify-center gap-7 rounded-md border border-line bg-surface px-5 py-3.5">
+        <SourceTrustItem icon={BuildingIcon} text="Free search uses Companies House data" />
+        <SourceTrustItem icon={ScaleIcon} text="Court records checked in paid reports" />
+        <SourceTrustItem icon={BotIcon} text="AI interpretation only in paid reports" />
       </div>
+
       {matches.map((company) => (
-        <button
-          key={company.companiesHouseNumber}
-          type="button"
-          onClick={() => void onSelect(company.companiesHouseNumber)}
-          className="min-h-11 rounded-lg border border-line bg-surface p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-brand-teal hover:shadow-md focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="truncate text-base font-semibold text-brand-navy">
-                {company.companyName}
-              </h3>
-              <p className="mt-1 font-mono text-xs text-content-muted">
-                {company.companiesHouseNumber}
-              </p>
-            </div>
-            <StatusBadge status={company.companyStatus} />
-          </div>
-          <p className="mt-3 text-sm text-content-muted">
-            {formatAddress(company.registeredOfficeAddress)}
-          </p>
-        </button>
+        <SearchResultCard key={company.companiesHouseNumber} {...company} />
       ))}
     </section>
+  );
+}
+
+type SourceTrustItemProps = {
+  icon: LucideIcon;
+  text: string;
+};
+
+function SourceTrustItem({ icon: Icon, text }: SourceTrustItemProps) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-content-subtle">
+      <Icon aria-hidden="true" className="size-3.5" />
+      <span>{text}</span>
+    </div>
   );
 }
 
@@ -353,267 +170,38 @@ function PreviewLoading() {
   );
 }
 
-type FreePreviewProps = {
-  preview: FreePreviewPayload;
-};
-
-function FreePreview({ preview }: FreePreviewProps) {
+function SearchResultCard({ ...company }: CompanySearchMatchPayload) {
   return (
-    <div className="flex flex-col gap-5">
-      <Card className="shadow-md">
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-content-muted">Company snapshot</p>
-              <CardTitle>
-                <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-brand-navy">
-                  {preview.company.companyName}
-                </h2>
-              </CardTitle>
-              <p className="mt-2 font-mono text-sm text-content-muted">
-                {preview.company.companiesHouseNumber}
-              </p>
+    <article className="mb-5 overflow-hidden rounded-md border border-line bg-surface">
+      <Link href={`/company/${company.companiesHouseNumber}/overview`}>
+        <div className="flex flex-wrap justify-between gap-3 px-6 py-5">
+          <div>
+            <h3 className="mb-1.25 text-lg font-black">{company.companyName}</h3>
+            <div className="flex flex-wrap gap-3 text-xs text-content-subtle">
+              <span>
+                No: <strong>{company.companiesHouseNumber}</strong>
+              </span>
+              <span>
+                Incorporated:{" "}
+                <strong>{formatDateWithAge(company.incorporationDate, undefined)}</strong>
+              </span>
+              <span>
+                Type: <strong>{company.companyType ?? "Not listed"}</strong>
+              </span>
+              <span>
+                SIC: <strong>{company.sicCodes.join(", ") || "Not listed"}</strong>
+              </span>
             </div>
-            <StatusBadge status={preview.company.companyStatus} />
           </div>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid gap-3 sm:grid-cols-3">
-            <Fact
-              icon={CalendarDays}
-              label="Incorporated"
-              value={formatDateWithAge(preview.company.incorporationDate, preview.companyAge)}
-            />
-            <Fact
-              icon={Building2}
-              label="Registered area"
-              value={formatAddress(preview.company.registeredOfficeAddress)}
-            />
-            <Fact
-              icon={Users}
-              label="Active directors"
-              value={String(preview.company.activeDirectorCount ?? "Not listed")}
-            />
-          </dl>
-        </CardContent>
-      </Card>
-
-      <SourceStatusList statuses={preview.sourceStatuses} />
-      <NotYetCheckedSourceList sources={preview.notYetCheckedSources} />
-
-      <CourtRecordsCard prompt={preview.courtRecordsPrompt} />
-
-      {preview.curiosityCards.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {preview.curiosityCards.map((card) => (
-            <CuriosityCard key={card.kind} card={card} />
-          ))}
+          <div className="flex flex-col items-end gap-2">
+            <StatusBadge status={company.companyStatus} />
+            <span className="text-[10px] text-content-subtle">
+              {providerLabel("companies_house")}
+            </span>
+          </div>
         </div>
-      ) : null}
-    </div>
-  );
-}
-
-function NotYetCheckedSourceList({
-  sources,
-}: {
-  sources: FreePreviewPayload["notYetCheckedSources"];
-}) {
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>
-          <h2>Not yet checked</h2>
-        </CardTitle>
-        <CardDescription>
-          These sources are not queried by the free Companies House preview.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ul className="flex flex-col gap-3">
-          {sources.map((source) => (
-            <li
-              key={source.source}
-              className="flex flex-col gap-1 border-b border-line pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="text-sm font-medium text-content">{source.label}</p>
-                <p className="text-xs text-content-muted">{source.message}</p>
-              </div>
-              <Badge variant="outline">Not yet checked</Badge>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
-
-type FactProps = {
-  icon: typeof CalendarDays;
-  label: string;
-  value: string;
-};
-
-function Fact({ icon: Icon, label, value }: FactProps) {
-  return (
-    <div className="rounded-md border border-line bg-page p-3">
-      <dt className="flex items-center gap-2 text-xs font-medium text-content-muted uppercase">
-        <Icon aria-hidden="true" className="size-4" />
-        {label}
-      </dt>
-      <dd className="mt-2 text-sm font-medium text-content">{value}</dd>
-    </div>
-  );
-}
-
-type SourceStatusListProps = {
-  statuses: FreePreviewPayload["sourceStatuses"];
-};
-
-function SourceStatusList({ statuses }: SourceStatusListProps) {
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>
-          <h2>Checked sources</h2>
-        </CardTitle>
-        <CardDescription>Each status reflects this free preview only.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ul className="flex flex-col gap-3">
-          {statuses.map((source) => (
-            <li
-              key={source.provider}
-              className="flex flex-col gap-1 border-b border-line pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="text-sm font-medium text-content">{providerLabel(source.provider)}</p>
-                <p className="text-xs text-content-muted">
-                  Checked {formatCheckedAt(source.checkedAt)}
-                </p>
-              </div>
-              <Badge variant={source.status === "success" ? "positive" : "caution"}>
-                {source.status === "success" ? "Checked" : source.message}
-              </Badge>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
-  );
-}
-
-type CourtRecordsCardProps = {
-  prompt: FreePreviewPayload["courtRecordsPrompt"];
-};
-
-function CourtRecordsCard({ prompt }: CourtRecordsCardProps) {
-  return (
-    <Card tone="navy" className="shadow-lg">
-      <CardHeader>
-        <p className="text-xs font-semibold tracking-wider text-brand-teal uppercase">
-          {prompt.label}
-        </p>
-        <CardTitle>
-          <h2 className="text-xl font-semibold">{prompt.heading}</h2>
-        </CardTitle>
-        <CardDescription>{prompt.body}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm font-semibold">{prompt.questionLine}</p>
-      </CardContent>
-      <CardFooter className="flex-col items-stretch gap-3">
-        <Button type="button" disabled size="lg" className="h-11 w-full">
-          <LockKeyhole data-icon="inline-start" />
-          {prompt.button}
-        </Button>
-        <p className="text-xs text-content-inverse/70">{prompt.smallText}</p>
-      </CardFooter>
-    </Card>
-  );
-}
-
-type CuriosityCardProps = {
-  card: FreePreviewPayload["curiosityCards"][number];
-};
-
-function CuriosityCard({ card }: CuriosityCardProps) {
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle>
-          <h3>{card.heading ?? card.question}</h3>
-        </CardTitle>
-        <CardDescription>{card.body}</CardDescription>
-      </CardHeader>
-      {card.blurredAnswer || card.lockTag ? (
-        <CardContent className="flex flex-col gap-3">
-          {card.blurredAnswer ? (
-            <p className="rounded-md border border-dashed border-line bg-surface-subtle px-3 py-2 text-sm font-semibold text-content-muted blur-[1px]">
-              {card.blurredAnswer}
-            </p>
-          ) : null}
-          {card.lockTag ? (
-            <Badge variant="outline">
-              <LockKeyhole aria-hidden="true" />
-              {card.lockTag}
-            </Badge>
-          ) : null}
-        </CardContent>
-      ) : null}
-    </Card>
-  );
-}
-
-type TierCardProps = {
-  tier: FreePreviewPayload["tierCards"][number];
-  ready: boolean;
-  onSelect: () => void;
-};
-
-function TierCard({ tier, ready, onSelect }: TierCardProps) {
-  return (
-    <Card
-      size="sm"
-      className="transition hover:-translate-y-0.5 hover:border-brand-teal hover:shadow-md"
-    >
-      <CardHeader>
-        <CardTitle>
-          <h2>{tier.name}</h2>
-        </CardTitle>
-        <CardDescription>One-off company report</CardDescription>
-        <CardAction>
-          <Badge variant="outline">{tier.includesPdf ? "PDF included" : "No PDF"}</Badge>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <p className="text-2xl font-semibold text-content">{tier.price}</p>
-        <ul className="flex flex-col gap-2 text-sm text-content-muted">
-          {tier.includedItems.map((item) => (
-            <li key={item} className="flex gap-2">
-              <span
-                aria-hidden="true"
-                className="mt-2 size-1.5 shrink-0 rounded-full bg-brand-teal"
-              />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-      <CardFooter>
-        <Button
-          type="button"
-          variant="authoritative"
-          disabled={!ready}
-          onClick={onSelect}
-          className="h-10 w-full justify-between"
-        >
-          {tier.cta}
-          <ArrowRight data-icon="inline-end" />
-        </Button>
-      </CardFooter>
-    </Card>
+      </Link>
+    </article>
   );
 }
 
@@ -624,14 +212,21 @@ type StatusBadgeProps = {
 function StatusBadge({ status }: StatusBadgeProps) {
   const isActive = status.trim().toLowerCase() === "active";
 
-  return <Badge variant={isActive ? "positive" : "caution"}>{status}</Badge>;
+  return (
+    <Badge
+      variant={isActive ? "positive" : "caution"}
+      className="rounded-sm px-3.5 py-1.5 text-xs font-extrabold"
+    >
+      {status}
+    </Badge>
+  );
 }
 
-function formatAddress(address: CompanyAddressPayload): string {
+export function formatAddress(address: CompanyAddressPayload): string {
   return [address.locality, address.region].filter(Boolean).join(", ") || "Area not listed";
 }
 
-function formatDateWithAge(date: string | undefined, age: string | undefined): string {
+export function formatDateWithAge(date: string | undefined, age: string | undefined): string {
   if (!date) {
     return "Not listed";
   }
@@ -645,53 +240,10 @@ function formatDateWithAge(date: string | undefined, age: string | undefined): s
   return age ? `${formattedDate} (${age})` : formattedDate;
 }
 
-function formatCheckedAt(value: string): string {
-  const date = new Date(value);
-
-  return Number.isNaN(date.getTime())
-    ? "time unavailable"
-    : new Intl.DateTimeFormat("en-GB", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(date);
-}
-
 function providerLabel(provider: FreePreviewPayload["sourceStatuses"][number]["provider"]): string {
   const labels = {
     companies_house: "Companies House",
   } as const;
 
   return labels[provider];
-}
-
-type PreviewRequestResult =
-  | { status: "success"; preview: FreePreviewPayload }
-  | { status: "failed"; message: string };
-
-async function requestFreePreview(companyNumber: string): Promise<PreviewRequestResult> {
-  try {
-    const response = await fetch(
-      `/api/companies/${encodeURIComponent(companyNumber)}/free-preview`,
-    );
-    const body = (await response.json()) as unknown;
-
-    if (!response.ok) {
-      const error = apiErrorResponseSchema.safeParse(body);
-
-      return {
-        status: "failed",
-        message: error.success
-          ? error.data.error.message
-          : "Free preview could not be retrieved right now.",
-      };
-    }
-
-    const parsed = freePreviewApiResponseSchema.safeParse(body);
-
-    return parsed.success
-      ? { status: "success", preview: parsed.data.data.preview }
-      : { status: "failed", message: "Free preview could not be retrieved right now." };
-  } catch {
-    return { status: "failed", message: "Free preview could not be retrieved right now." };
-  }
 }

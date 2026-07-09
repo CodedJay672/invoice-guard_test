@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useClerk } from "@clerk/nextjs";
-import { ChevronDown, LogOut, UserRound } from "lucide-react";
+import { useClerk, UserAvatar } from "@clerk/nextjs";
+import { LogOut, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@workspace/ui/components/button";
@@ -10,11 +10,11 @@ import { Button } from "@workspace/ui/components/button";
 type AccountControlProps =
   | { state: "signed-out"; signInHref: string }
   | {
-      state: "signed-in";
-      email?: string;
-      verified?: boolean;
-      signingOut?: boolean;
-    };
+    state: "signed-in";
+    email?: string;
+    verified?: boolean;
+    signingOut?: boolean;
+  };
 
 export function AccountControl(props: AccountControlProps) {
   const { signOut } = useClerk();
@@ -42,7 +42,7 @@ export function AccountControl(props: AccountControlProps) {
 
   if (props.state === "signed-out") {
     return (
-      <Button asChild variant="outline" className="min-h-11">
+      <Button asChild variant="ghost" className="min-h-11">
         <Link href={props.signInHref}>Sign in</Link>
       </Button>
     );
@@ -54,15 +54,13 @@ export function AccountControl(props: AccountControlProps) {
         ref={triggerRef}
         type="button"
         variant="outline"
-        className="min-h-11 max-w-56"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls="account-menu"
         onClick={() => setOpen((current) => !current)}
+        className="size-8 overflow-hidden"
       >
-        <UserRound data-icon="inline-start" />
-        <span className="truncate">{props.email ?? "Verify email"}</span>
-        <ChevronDown data-icon="inline-end" />
+        <UserAvatar fallback={<UserRound />} />
       </Button>
       {open ? (
         <div

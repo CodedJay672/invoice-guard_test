@@ -113,7 +113,6 @@ export class PdfAccessService {
         and(
           eq(schema.purchasedReports.reportReference, reportReference),
           eq(schema.purchasedReports.clerkUserId, clerkUserId),
-          eq(schema.purchasedReports.reportTier, "premium"),
         ),
       )
       .limit(1);

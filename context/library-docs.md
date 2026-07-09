@@ -35,6 +35,9 @@ Never rely on general training knowledge alone for library APIs — they change 
 - `app/api/**/route.ts` handles web concerns or proxies to Express only.
 - Do not duplicate validation, providers, payments, or report creation in web proxies.
 - Route handlers are uncached unless explicitly configured.
+- Server Components read through server-only DAL helpers in `apps/web/lib/data`.
+- Server Actions in `apps/web/actions` own mutations/retry commands; client components should not POST to route handlers for those commands.
+- Thin route handlers may remain for bounded polling/status reads and owner-authorized download redirects.
 - Use `next/font` for Inter and Geist Mono.
 
 Relevant installed guides include project structure, Server/Client Components, caching, Route Handlers, error handling, data fetching, and fonts. Dynamic request data may be asynchronous in this version; copy no older API pattern from memory.
@@ -199,14 +202,14 @@ const RegisteredOfficeAddress = {
 const CompanyProfile = {
     "accounts": {
         "accounting_reference_date": {
-            "day": "integer",
-            "month": "integer"
+            "day": "string or integer",
+            "month": "string or integer"
         },
         "last_accounts": {
             "made_up_to": "date",
             "period_end_on": "date",
             "period_start_on": "date",
-            "type": {}
+            "type": "string"
         },
         "next_accounts": {
             "due_on": "date",
@@ -530,7 +533,7 @@ Live endpoint behavior, rate limits, response shape, attribution, and terms requ
 - Log every query and preserve failure/recheck rules.
 - Load current official integration docs before implementation.
 
-Every call records operation, company number, report, estimated cost, status, and timestamp. Basic/Standard failure supports a recovery recheck; Premium failure is escalated for refund/recheck decision.
+Every call records operation, company number, report, estimated cost, status, and timestamp. Registry Trust failure supports the same free-recheck recovery path across current credit-pack products.
 
 ## Anthropic Paid-Report Interpretation
 
@@ -553,6 +556,7 @@ Every call records operation, company number, report, estimated cost, status, an
 Configuration exists; SDK/feature are not implemented.
 
 - One-off Checkout only in Phase A.
+- The current products are credit packs: `single_report` at 2000 pence, `starter_pack` at 5400 pence, `business_pack` at 8000 pence, and `agency_pack` at 14000 pence.
 - Server chooses product, price, currency, and metadata.
 - Signed raw-body webhook creates reports and uses `stripe_events` idempotency.
 - Redirect pages only display status.
@@ -595,7 +599,7 @@ S3-compatible API.
 
 Evaluate server-runtime compatibility, deterministic pagination, font embedding, accessibility/print needs, storage lifecycle, signed/public access, and retry behavior before selection.
 
-- Render only validated frozen Premium report data through the shared `@workspace/report-document`
+- Render only validated frozen report data through the shared `@workspace/report-document`
   HTML/CSS contract.
 - Use tagged A4 output with CSS page sizing and print backgrounds.
 - Store deterministic private object keys, SHA-256, byte size, and template/compliance versions in
@@ -614,4 +618,4 @@ Mock provider mode is the local/test default. Production activation requires cre
 
 ---
 
-Invoice/accounting integrations, recovery, statutory interest, demand letters, subscriptions, and dashboard concepts are future reference. The depicted risk score conflicts with confirmed product rules and is not implemented unless those rules formally change.
+Invoice/accounting integrations, recovery, statutory interest, demand letters, subscriptions, and dashboard concepts are future reference. The depicted risk score conflicts with confirmed product rules and is not implemented unless those rules formally change. The Basic/Standard/Premium depth model is retired for public products; use the four credit-pack product codes instead.

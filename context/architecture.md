@@ -27,8 +27,9 @@
 apps/
   web/          # Next pages, UI, thin same-origin API proxies
     (landing)
-      /           # landing page with search bar in hero section
-      /search     # selected-company preview and report-tier selection (`companyNumber` query)
+      /           # landing page with direct search form
+      /search     # Companies House result list (`q` query)
+      /company    # company route group with factual overview and locked paid-source states
       /pricing    # Pricing page
   api/          # Express routes, services, repositories, composition
   worker/       # BullMQ processors and schedulers
@@ -52,10 +53,10 @@ Read relevant installed Next.js documentation under `node_modules/next/dist/docs
 
 | Area | Owns | Must not own |
 | --- | --- | --- |
-| `apps/web` | Presentation, interaction state, thin Express proxies | Providers, payment confirmation, report creation, durable business rules |
+| `apps/web` | Presentation, interaction state, Server Component reads through server-only DAL helpers, Server Actions for mutations, thin Express proxies | Providers, payment confirmation, report creation, durable business rules |
 | `apps/api` | HTTP validation, auth/admin checks, Stripe webhooks, service orchestration | Long-running jobs or UI |
-| `apps/web/lib/action` | Next js server actions for database mutation methods |
-| `apps/web/lib/data` | Next js DAL. All GET requests happen here |
+| `apps/web/actions` | Next.js Server Actions for mutations and retry commands that need owner context |
+| `apps/web/lib/data` | Server-only Next.js DAL. Server Components read through these helpers; inline component fetches are avoided |
 | `apps/worker` | Report/PDF/email/alert/maintenance jobs | Public HTTP or UI |
 | `packages/integrations` | External transport, normalization, provider results | Product entitlement or UI |
 | `packages/db` | Schema, migrations, typed persistence | HTTP/presentation logic |
@@ -86,14 +87,14 @@ Browser -> Next proxy -> Express route -> validation/rate limit
 ```
 
 ```text
-Landing autocomplete -> Next search proxy -> Companies House matches
-                     -> select canonical company number
-                     -> /search?companyNumber=... -> free-preview proxy
+Landing search form -> /search?q=... Server Component
+                    -> server-only DAL -> Next search proxy -> Express search
+                    -> Companies House matches -> company route links
 ```
 
 ```text
-Tier selection -> Clerk registration/sign-in gate -> Stripe Checkout -> signed webhook -> stripe_events
-               -> purchased_reports(pending) -> report-generation-queue
+Product selection -> Clerk registration/sign-in gate -> Stripe Checkout -> signed webhook -> stripe_events
+                  -> purchased_reports(pending) -> report-generation-queue
 ```
 
 ```text
@@ -113,7 +114,7 @@ The free-preview dependency graph receives only Companies House. Gazette, insolv
 - AI interpretation is Phase A report-generation work, not a later enhancement.
 - Only authenticated, webhook-confirmed paid reports may invoke it.
 - The server/worker uses the exact model `claude-haiku-4-5-20251001` with `max_tokens: 1500`; neither value is client-controlled.
-- Input is limited to the frozen, tier-entitled factual report payload and explicit source statuses. Prompting must prohibit invented facts, legal/financial advice, credit decisions, risk scores, and conclusions from unavailable sources.
+- Input is limited to the frozen, product-entitled factual report payload and explicit source statuses. Prompting must prohibit invented facts, legal/financial advice, credit decisions, risk scores, and conclusions from unavailable sources.
 - Store the interpretation with model, generation timestamp, prompt/template version, and status as part of the frozen report artifact. Retries are idempotent and failures are visible.
 
 ### Webhook Flow
@@ -155,7 +156,7 @@ until its verified production contract is supplied.
 - `companies`: canonical Companies House identity.
 - `company_data_snapshots`: timestamped provider data/status by source context and tier.
 - `search_logs`: search/conversion metadata and anonymisation state.
-- `report_products`: tier, price in pence, PDF flag, and entitlements.
+- `report_products`: credit-pack product code, price in pence, PDF flag, and entitlements.
 - `purchased_reports`: authenticated owner, payment/report lifecycle, frozen JSON including AI interpretation metadata/status, provider statuses, and PDF URL.
 - `stripe_events`: durable webhook idempotency.
 - `provider_usage_logs`: paid-provider calls and cost modelling.
@@ -224,7 +225,7 @@ Required observability includes structured logs, provider latency/failure, queue
 - Stripe signature and event idempotency are verified before report creation.
 - Frontend redirects never create purchased reports.
 - Ready report data is immutable; rechecks create new rows.
-- Paid fetches attempt fresh entitled data and reject cache older than 24 hours.
+- Paid fetches attempt fresh product-entitled data and reject cache older than 24 hours.
 - Checkout and report delivery require an authenticated Clerk owner with a verified primary email; no guest purchase/access path exists.
 - Admin authorization is enforced server-side with Clerk and `ADMIN_EMAIL`.
 - Provider failures remain visible.

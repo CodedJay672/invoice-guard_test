@@ -26,7 +26,7 @@ void test("accepts only current Phase A return paths", () => {
   const accepted = [
     "/",
     "/search?q=ACME#results",
-    "/checkout?companyNumber=12345678&tier=basic",
+    "/checkout?companyNumber=12345678&tier=single_report",
     "/checkout/status?sessionId=cs_test",
     "/reports/RPT_123",
   ];
@@ -53,12 +53,12 @@ void test("rejects external, malformed, admin, and future-phase return paths", (
 
 void test("builds auth links from normalized return paths", () => {
   assert.equal(
-    authHref("/sign-in", "/checkout?tier=basic"),
-    "/sign-in?returnTo=%2Fcheckout%3Ftier%3Dbasic",
+    authHref("/sign-in", "/checkout?tier=single_report"),
+    "/sign-in?returnTo=%2Fcheckout%3Ftier%3Dsingle_report",
   );
   assert.equal(authHref("/sign-up", "https://example.com"), "/sign-up?returnTo=%2Fsearch");
   assert.equal(
-    authHref("/sign-up", "/checkout?companyNumber=12345678&tier=premium&q=Example+Limited"),
-    "/sign-up?returnTo=%2Fcheckout%3FcompanyNumber%3D12345678%26tier%3Dpremium%26q%3DExample%2BLimited",
+    authHref("/sign-up", "/checkout?companyNumber=12345678&tier=agency_pack&q=Example+Limited"),
+    "/sign-up?returnTo=%2Fcheckout%3FcompanyNumber%3D12345678%26tier%3Dagency_pack%26q%3DExample%2BLimited",
   );
 });

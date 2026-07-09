@@ -11,14 +11,10 @@ export const runtime = "nodejs";
 type PdfRouteContext = { params: Promise<{ reportReference: string }> };
 
 export async function GET(_request: Request, context: PdfRouteContext) {
-  return proxy(context, false);
+  return proxyDownload(context);
 }
 
-export async function POST(_request: Request, context: PdfRouteContext) {
-  return proxy(context, true);
-}
-
-async function proxy(context: PdfRouteContext, retry: boolean) {
+async function proxyDownload(context: PdfRouteContext) {
   const config = loadWebProxyConfig();
   assertWebProxyProductionConfig(config);
   const identity = await resolveAuthIdentity();
@@ -30,17 +26,17 @@ async function proxy(context: PdfRouteContext, retry: boolean) {
   const headers = new Headers({ Accept: "application/json" });
   addTrustedPrincipalHeaders(headers, identity);
   const target = new URL(
-    `/reports/${encodeURIComponent(parsed.data)}/pdf${retry ? "/retry" : ""}`,
+    `/reports/${encodeURIComponent(parsed.data)}/pdf`,
     config.apiBaseUrl,
   );
   const response = await fetch(target, {
-    method: retry ? "POST" : "GET",
+    method: "GET",
     headers,
     cache: "no-store",
     redirect: "manual",
   });
   const body = await response.arrayBuffer();
-  if (!retry && response.ok) {
+  if (response.ok) {
     const payload = JSON.parse(Buffer.from(body).toString("utf8")) as { data?: { url?: unknown } };
     if (typeof payload.data?.url === "string") return NextResponse.redirect(payload.data.url, 302);
   }

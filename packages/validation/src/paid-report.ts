@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ReportProductCode } from "@workspace/types";
 
 export const paidReportEntitlementsSchema = z
   .object({
@@ -29,44 +30,9 @@ export const paidReportEntitlementsSchema = z
   .strict();
 
 export type PaidReportEntitlements = z.infer<typeof paidReportEntitlementsSchema>;
-export type PaidReportTier = "basic" | "standard" | "premium";
+export type PaidReportTier = ReportProductCode;
 
-export const CANONICAL_PAID_REPORT_ENTITLEMENTS: Record<PaidReportTier, PaidReportEntitlements> = {
-  basic: {
-    companiesHouse: {
-      profile: true,
-      addressHistory: true,
-      officers: true,
-      filingHistory: false,
-      charges: false,
-      insolvency: false,
-    },
-    registryTrust: { enabled: true, includeAmounts: false, includeSatisfaction: false },
-    londonGazette: false,
-    insolvencyDisqualifiedOfficers: false,
-    fairPaymentCode: false,
-    evidenceCoverage: false,
-    relatedCompanies: false,
-    aiInterpretation: true,
-  },
-  standard: {
-    companiesHouse: {
-      profile: true,
-      addressHistory: true,
-      officers: true,
-      filingHistory: true,
-      charges: true,
-      insolvency: false,
-    },
-    registryTrust: { enabled: true, includeAmounts: true, includeSatisfaction: true },
-    londonGazette: false,
-    insolvencyDisqualifiedOfficers: false,
-    fairPaymentCode: false,
-    evidenceCoverage: false,
-    relatedCompanies: false,
-    aiInterpretation: true,
-  },
-  premium: {
+const fullReportEntitlements: PaidReportEntitlements = {
     companiesHouse: {
       profile: true,
       addressHistory: true,
@@ -82,7 +48,13 @@ export const CANONICAL_PAID_REPORT_ENTITLEMENTS: Record<PaidReportTier, PaidRepo
     evidenceCoverage: true,
     relatedCompanies: false,
     aiInterpretation: true,
-  },
+};
+
+export const CANONICAL_PAID_REPORT_ENTITLEMENTS: Record<PaidReportTier, PaidReportEntitlements> = {
+  single_report: fullReportEntitlements,
+  starter_pack: fullReportEntitlements,
+  business_pack: fullReportEntitlements,
+  agency_pack: fullReportEntitlements,
 };
 
 export function entitlementsForTier(tier: PaidReportTier): PaidReportEntitlements {

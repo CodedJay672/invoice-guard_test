@@ -50,6 +50,13 @@
       "when": 1783077207774,
       "tag": "0006_fresh_naoko",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783604033655,
+      "tag": "0007_worthless_loa",
+      "breakpoints": true
     }
   ]
 }

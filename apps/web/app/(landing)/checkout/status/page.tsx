@@ -20,7 +20,7 @@ export default async function Page({ searchParams }: PageProps) {
   );
   const selection = resolveCheckoutSelection({
     companyNumber: singleValue(params.companyNumber) ?? (fixtureName ? "12345678" : undefined),
-    tier: singleValue(params.tier) ?? (fixtureName ? "basic" : undefined),
+    tier: singleValue(params.tier) ?? (fixtureName ? "single_report" : undefined),
     q: singleValue(params.q),
   });
   const sessionId = singleValue(params.sessionId);

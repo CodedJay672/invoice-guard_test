@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@workspace/types": "*",
     "bullmq": "^5.77.3",
     "ioredis": "5.10.1"
   }

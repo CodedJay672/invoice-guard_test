@@ -75,7 +75,7 @@ Every preview shows:
 - Registered company name and monospace number.
 - Status, incorporation date/age, registered town/county, and active director count.
 - Court Records prompt.
-- Basic, Standard, and Premium tiers.
+- Single Report, Starter Pack, Business Pack, and Agency Pack credit-pack products.
 
 Adverse previews stack every applicable factual banner. Clean previews use the approved reassurance and curiosity cards. Neither path may imply Registry Trust was checked.
 
@@ -83,9 +83,9 @@ Adverse previews stack every applicable factual banner. Clean previews use the a
 
 ## Reports and Admin
 
-Every browser report includes reference, timestamp, company identity, tier, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and entitled PDF action.
+Every browser report includes reference, timestamp, company identity, product label, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and artifact-driven PDF action.
 
-Every paid-tier report also includes a clearly labelled AI interpretation. It distinguishes facts from interpretation, identifies unavailable sources, and never presents legal/financial advice, a credit decision, or a risk score.
+Every paid report also includes a clearly labelled AI interpretation. It distinguishes facts from interpretation, identifies unavailable sources, and never presents legal/financial advice, a credit decision, or a risk score.
 
 Partial reports identify both successful and failed sources.
 

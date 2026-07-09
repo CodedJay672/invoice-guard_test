@@ -1,7 +1,6 @@
 import {
   createProviderFailure,
   createProviderSuccess,
-  type CompaniesHouseClient,
   type InsolvencyDisqualifiedOfficersClient,
   type LondonGazetteClient,
   type ProviderName,
@@ -31,6 +30,7 @@ import type {
   PaidReportSnapshot,
   ProviderAlertPublisher,
 } from "./types.js";
+import { CompaniesHouseClient } from "@workspace/types";
 
 const SNAPSHOT_REUSE_MS = 24 * 60 * 60 * 1000;
 const REGISTRY_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -288,12 +288,10 @@ export class PaidReportGenerationHandler implements ReportGenerationHandler {
             }
           : null,
         recovery: registryFailed
-          ? report.reportTier === "premium"
-            ? { type: "admin_escalation" }
-            : {
-                type: "free_recheck",
-                eligibleUntil: new Date(this.now().getTime() + REGISTRY_RECHECK_MS).toISOString(),
-              }
+          ? {
+              type: "free_recheck",
+              eligibleUntil: new Date(this.now().getTime() + REGISTRY_RECHECK_MS).toISOString(),
+            }
           : null,
       },
     };

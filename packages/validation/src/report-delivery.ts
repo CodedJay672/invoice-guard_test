@@ -1,4 +1,12 @@
 import { z } from "zod";
+import type { ReportProductCode } from "@workspace/types";
+
+const reportProductCodeSchema = z.enum([
+  "single_report",
+  "starter_pack",
+  "business_pack",
+  "agency_pack",
+]) satisfies z.ZodType<ReportProductCode>;
 
 const deliveryEntitlementsSchema = z
   .object({
@@ -92,7 +100,7 @@ export const frozenPaidReportSchema = z
     reportReference: reportReferenceSchema,
     companyNumber: z.string().min(1).max(16),
     companyName: z.string().min(1),
-    tier: z.enum(["basic", "standard", "premium"]),
+    tier: reportProductCodeSchema,
     entitlements: deliveryEntitlementsSchema,
     generatedAt: z.string().datetime(),
     facts: deliveryAiInputSchema,
@@ -196,7 +204,7 @@ export const reportNotificationSchema = z
 
 export const browserReportPayloadSchema = z
   .object({
-    tier: z.enum(["basic", "standard", "premium"]),
+    tier: reportProductCodeSchema,
     tierLabel: z.string(),
     companyName: z.string(),
     companyNumber: z.string(),

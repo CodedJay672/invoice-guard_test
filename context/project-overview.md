@@ -4,7 +4,7 @@
 
 InvoiceGuard is a UK company-intelligence platform for SMEs, freelancers, agencies, and contractors who need to check a company before deciding whether to work with it.
 
-The active commercial build is Phase A: search for a UK company, review a Companies House-only free preview, register or sign in, purchase a Basic, Standard, or Premium report, and receive a frozen, timestamped report assembled from public and paid sources. Every paid report includes an AI interpretation generated with `claude-haiku-4-5-20251001` and `max_tokens: 1500`; Premium also includes a branded PDF. Guest purchases are not supported.
+The active commercial build is Phase A: search for a UK company, review a Companies House-only free preview, register or sign in, purchase one of four credit-pack products, and receive a frozen, timestamped report assembled from public and paid sources. Every paid report includes full report entitlements and an AI interpretation generated with `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Guest purchases are not supported.
 
 Invoice chasing and late-payment recovery belong to a future phase.
 
@@ -21,12 +21,15 @@ InvoiceGuard does not issue credit scores, approve or reject companies, or provi
 ## Active Routes
 
 ```text
-/                                      -> Phase A landing page with company autocomplete
-/search?companyNumber=&q=              -> Company search, selected-company preview, and report tiers
+/                                      -> Phase A landing page with direct company search form
+/search?q=                             -> Company search results from Companies House public register
+/company/[houseNumber]/overview        -> Company route shell for Companies House factual overview
+/company/[houseNumber]/{filing-history,ccj,charges,officers,ai-summary,insolvency,fpc}
+                                       -> Locked/not-yet-checked source states
 /api/companies/search                  -> Next.js proxy to Express
 /api/companies/[companyNumber]/free-preview
                                        -> Next.js proxy to Express
-/reports/[reportReference]             -> Paid report delivery (planned)
+/reports/[reportReference]             -> Owner-authorized paid report delivery
 /admin                                 -> Operations dashboard (planned)
 ```
 
@@ -56,15 +59,15 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 ### Search and Free Preview
 
 1. Visitor searches by registered name or Companies House number from the landing page or search page.
-2. Landing-page suggestions require selection of a Companies House entity; its company number becomes the canonical identity passed to `/search`.
+2. The landing page submits a plain query to `/search?q=...`; no autocomplete or browser-side provider call is used there.
 3. Anonymous visitors are limited to five searches per hashed IP per 24 hours.
 4. Free-tier search and preview call Companies House only. London Gazette, insolvency/disqualified-officer sources, Registry Trust, and AI are never called for free-tier requests.
-5. The UI presents Companies House facts, clearly labels all other checks as not yet checked, and shows the paid report tiers.
+5. The UI presents Companies House facts, clearly labels all other checks as not yet checked, and shows the four credit-pack products.
 
 ### Purchase and Generation
 
-1. Visitor selects Basic, Standard, or Premium.
-2. A signed-out visitor must register or sign in and return to the selected company/tier before checkout.
+1. Visitor selects Single Report, Starter Pack, Business Pack, or Agency Pack.
+2. A signed-out visitor must register or sign in and return to the selected company/product before checkout.
 3. The server requires an authenticated Clerk user with a verified primary email, then creates a one-off Stripe Checkout Session.
 4. Stripe webhook signature and event idempotency are verified.
 5. The webhook—not the redirect—creates one pending report owned by that Clerk user and enqueues generation.
@@ -73,10 +76,10 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 ### Delivery
 
-- Every report shows reference, timestamp, company identity, tier, source statuses, disclaimer, and issue link.
+- Every report shows reference, timestamp, company identity, product label, source statuses, disclaimer, and issue link.
 - Reports are accessible only to their authenticated owner (or an authorized admin).
 - Postmark may send report-ready notifications, but email links must resolve through authenticated owner access.
-- Premium includes PDF; Basic does not.
+- PDF access is artifact-driven and owner-authorized; no current credit-pack product exposes a public PDF entitlement flag.
 
 ---
 
@@ -107,7 +110,7 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 - London Gazette supplies strike-off and winding-up notices.
 - The configured insolvency/disqualified-officer route supplies paid-report flags when entitled.
 - Registry Trust supplies paid CCJ data only after payment.
-- Fair Payment Code supplies Premium-only status when implemented.
+- Fair Payment Code is a paid-report source when implemented and is never called during free preview.
 
 ---
 
@@ -116,15 +119,18 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 | Product | Price | Scope |
 | --- | ---: | --- |
 | Free Preview | GBP 0 | Companies House company identity, status, incorporation, industry, partial address, and active director count. No other provider or AI call. |
-| Basic | GBP 7.99 | Preview plus CCJ count/court/year, directors, registered-address history, and AI interpretation. No PDF. |
-| Standard | GBP 14.99 | Basic plus CCJ amounts/satisfaction, recent filing compliance, charges, and AI interpretation. |
-| Premium | GBP 27.00 | Standard plus deeper director/insolvency/related-company checks, Fair Payment Code, Confidence Indicator, AI interpretation, timestamped reference, and PDF. |
+| Single Report | GBP 20.00 | One full report credit. |
+| Starter Pack | GBP 54.00 | Three full report credits. |
+| Business Pack | GBP 80.00 | Five full report credits. |
+| Agency Pack | GBP 140.00 | Ten full report credits. |
+
+The public pricing section is the authoritative product display for these four credit packs. The database and API store the matching product codes `single_report`, `starter_pack`, `business_pack`, and `agency_pack` with integer pence prices 2000, 5400, 8000, and 14000. All four products currently grant the same full-report source entitlements; pack size changes credit quantity and price, not report depth.
 
 The AI interpretation is mandatory Phase A scope for paid reports. It uses `claude-haiku-4-5-20251001` with `max_tokens: 1500`, interprets only frozen factual report data, and must remain clearly labelled as an interpretation rather than legal, credit, or financial advice. `ENABLE_FLAG_SUMMARY` continues to govern the separate legacy approved-template flag summary and defaults to `false`.
 
 ### Free Preview Presentation
 
-Always show registered name, company number, status, incorporation date and age, registered town/county, active-director count, Court Records prompt, and paid tiers.
+Always show registered name, company number, status, incorporation date and age, registered town/county, active-director count, Court Records prompt, and paid product options.
 
 The free preview makes no adverse or clean conclusion from Gazette, insolvency, disqualification, court, or other paid sources because they are not queried. Those sources are shown as not yet checked. Companies House failure must not be represented as a clean check.
 
@@ -135,8 +141,7 @@ The free preview makes no adverse or clean conclusion from Gazette, insolvency, 
 - Provider snapshots retain checked time, source context, tier, status, and normalized payload/failure.
 - Companies House failure prevents delivery and triggers automatic refund handling.
 - Non-critical failure produces a partial report with explicit source status.
-- Basic/Standard Registry Trust failure offers a free recheck within seven days when service recovers.
-- Premium Registry Trust failure is surfaced for Lucky's recheck/partial-refund decision.
+- Registry Trust failure offers the same free recheck path across credit-pack products when the service recovers.
 
 ---
 
@@ -145,10 +150,10 @@ The free preview makes no adverse or clean conclusion from Gazette, insolvency, 
 In scope:
 
 - Company search, free preview, and anonymous rate limiting.
-- One-off report products and Stripe payment.
+- One-off credit-pack products and Stripe payment.
 - Paid-only Registry Trust boundary.
 - BullMQ report generation, provider snapshots, and partial reports.
-- Authenticated owner-only delivery, Postmark notifications, and Premium PDF.
+- Authenticated owner-only delivery, Postmark notifications, and artifact-driven PDF access.
 - Paid-report AI interpretation using the fixed Claude model and output limit.
 - Mandatory disclaimer, issue reporting, approved copy templates, and Fair Payment Code refresh.
 - Clerk-protected admin operations, refunds, conversion analytics, and maintenance jobs.
@@ -169,7 +174,7 @@ Out of scope:
 | B | Accounts, report history, saved companies, notes | At least 30 real, delivered, non-refunded Phase A purchases and acceptable conversion. |
 | C | Starter watchlists and non-CCJ alerts | After Phase B. |
 | D | Higher-tier monitoring and enterprise admin | After Phase C. |
-| E | Structured payment-experience signals | After sufficient eligible Premium usage. |
+| E | Structured payment-experience signals | After sufficient eligible paid-report usage. |
 | F | Invoice recovery and chasing | Separate future scope. |
 
 If Phase A conversion is poor, improve Phase A rather than opening a later phase.
@@ -193,7 +198,7 @@ The Figma design preserves future product direction: dashboard, invoice ingestio
 
 ## Commercial Measurement
 
-Phase A measures searches, selected companies, checkout starts, paid/delivered reports, refund rate, revenue by tier, and search-to-purchase conversion. The later-phase gate counts only real user payments that are not tests or refunds and produced a delivered report.
+Phase A measures searches, selected companies, checkout starts, paid/delivered reports, refund rate, revenue by product, and search-to-purchase conversion. The later-phase gate counts only real user payments that are not tests or refunds and produced a delivered report.
 
 ---
 
@@ -204,7 +209,7 @@ Phase A measures searches, selected companies, checkout starts, paid/delivered r
 - A payment creates exactly one report through the webhook path.
 - Paid reports use fresh entitled data and expose provider failures.
 - Owner access, admin authorization, refunds, and report immutability are secure and tested.
-- Every paid tier generates its AI interpretation in Phase A with the exact configured model and token limit; AI failure is visible and does not invent or conceal source data.
+- Every paid product generates its AI interpretation in Phase A with the exact configured model and token limit; AI failure is visible and does not invent or conceal source data.
 - Every report and PDF contains approved compliance content.
 - Lucky provides the mandatory disclaimer and confirms ICO registration before production launch.
 - Admin alerts expose provider, webhook, generation, email, and stuck-report failures.

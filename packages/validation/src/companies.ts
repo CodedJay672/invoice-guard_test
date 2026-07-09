@@ -1,4 +1,12 @@
 import { z } from "zod";
+import type {
+  CompanyAddressPayload as SharedCompanyAddressPayload,
+  CompanyAccountsPayload as SharedCompanyAccountsPayload,
+  CompanyPayload as SharedCompanyPayload,
+  CompanySearchMatchPayload as SharedCompanySearchMatchPayload,
+  FreePreviewPayload as SharedFreePreviewPayload,
+  ReportProductCode,
+} from "@workspace/types";
 
 export const companySearchQuerySchema = z
   .string()
@@ -13,26 +21,74 @@ export const companiesHouseNumberSchema = z
   .transform((value) => value.toUpperCase());
 
 export const companyAddressPayloadSchema = z.object({
+  addressLine1: z.string().optional(),
+  addressLine2: z.string().optional(),
   locality: z.string().optional(),
   region: z.string().optional(),
   country: z.string().optional(),
+  postalCode: z.string().optional(),
+  poBox: z.string().optional(),
+}) satisfies z.ZodType<SharedCompanyAddressPayload>;
+
+const optionalNumericStringSchema = z.preprocess((value) => {
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : value;
+  }
+
+  return value;
+}, z.number().int().positive().optional());
+
+export const companyAccountsPayloadSchema: z.ZodType<
+  SharedCompanyAccountsPayload,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  accounting_reference_date: z.object({
+    day: optionalNumericStringSchema,
+    month: optionalNumericStringSchema,
+  }),
+  last_accounts: z.object({
+    made_up_to: z.string().optional(),
+    period_end_on: z.string().optional(),
+    period_start_on: z.string().optional(),
+    type: z.string().optional(),
+  }),
+  next_accounts: z.object({
+    due_on: z.string().optional(),
+    overdue: z.boolean().optional(),
+    period_end_on: z.string().optional(),
+    period_start_on: z.string().optional(),
+  }),
+  next_due: z.string().optional(),
+  next_made_up_to: z.string().optional(),
+  overdue: z.boolean().optional(),
 });
 
-export const companySearchMatchPayloadSchema = z.object({
+export const companySearchMatchPayloadSchema: z.ZodType<
+  SharedCompanySearchMatchPayload,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
   companiesHouseNumber: z.string(),
   companyName: z.string(),
   companyStatus: z.string(),
   companyType: z.string().optional(),
   incorporationDate: z.string().optional(),
+  cessationDate: z.string().optional(),
   registeredOfficeAddress: companyAddressPayloadSchema,
   sicCodes: z.array(z.string()),
+  accounts: companyAccountsPayloadSchema.optional(),
 });
 
-export const companyPayloadSchema = companySearchMatchPayloadSchema.extend({
-  industryLabel: z.string().optional(),
-  activeDirectorCount: z.number().int().nonnegative().optional(),
-  lastFetchedAt: z.string().optional(),
-});
+export const companyPayloadSchema: z.ZodType<SharedCompanyPayload, z.ZodTypeDef, unknown> =
+  companySearchMatchPayloadSchema.and(
+    z.object({
+      industryLabel: z.string().optional(),
+      activeDirectorCount: z.number().int().nonnegative().optional(),
+      lastFetchedAt: z.string().optional(),
+    }),
+  );
 
 const freePreviewProviderSchema = z.literal("companies_house");
 
@@ -50,7 +106,11 @@ export const freePreviewSourceStatusSchema = z.discriminatedUnion("status", [
   }),
 ]);
 
-export const freePreviewPayloadSchema = z.object({
+export const freePreviewPayloadSchema: z.ZodType<
+  SharedFreePreviewPayload,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
   company: companyPayloadSchema,
   companyAge: z.string().optional(),
   notYetCheckedSources: z.array(
@@ -59,6 +119,7 @@ export const freePreviewPayloadSchema = z.object({
         "london_gazette",
         "insolvency_disqualified_officers",
         "registry_trust",
+        "fair_payment_code",
         "ai_interpretation",
       ]),
       label: z.string(),
@@ -88,7 +149,12 @@ export const freePreviewPayloadSchema = z.object({
   ),
   tierCards: z.array(
     z.object({
-      tier: z.enum(["basic", "standard", "premium"]),
+      tier: z.enum([
+        "single_report",
+        "starter_pack",
+        "business_pack",
+        "agency_pack",
+      ]) satisfies z.ZodType<ReportProductCode>,
       name: z.string(),
       price: z.string(),
       includesPdf: z.boolean(),
@@ -115,6 +181,8 @@ export const apiErrorResponseSchema = z.object({
   meta: z.object({ resetAt: z.string().optional() }).optional(),
 });
 
-export type CompanyAddressPayload = z.infer<typeof companyAddressPayloadSchema>;
-export type CompanySearchMatchPayload = z.infer<typeof companySearchMatchPayloadSchema>;
-export type FreePreviewPayload = z.infer<typeof freePreviewPayloadSchema>;
+export type CompanyMatchProfile = z.infer<typeof companyAccountsPayloadSchema>;
+export type CompanyAddressPayload = SharedCompanyAddressPayload;
+export type CompanySearchMatchPayload = SharedCompanySearchMatchPayload;
+export type CompanyPayload = SharedCompanyPayload;
+export type FreePreviewPayload = SharedFreePreviewPayload;

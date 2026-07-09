@@ -80,6 +80,12 @@ export class CompanyService {
           message: "Retrieved only after confirmed payment.",
         },
         {
+          source: "fair_payment_code",
+          label: "Fair Payment Code status",
+          status: "not_yet_checked",
+          message: "Included only in paid full reports.",
+        },
+        {
           source: "ai_interpretation",
           label: "AI report interpretation",
           status: "not_yet_checked",
@@ -92,7 +98,7 @@ export class CompanyService {
         body: "County Court Judgements are held by Registry Trust, a separate official UK register from Companies House. They show whether any court has ordered this company to pay a debt and whether that debt has been settled or remains outstanding. Court records are not included in the free check. They are only retrieved when you unlock a paid report.",
         questionLine: "Find out whether this company has CCJs on record.",
         button: "Check the Court Records",
-        smallText: "Included in all paid reports. Basic from £7.99.",
+        smallText: "Included in paid full reports. Single report GBP 20.",
       },
       curiosityCards: buildCuriosityCards(company.activeDirectorCount),
       tierCards: reportProducts.map((product) => ({
@@ -101,7 +107,7 @@ export class CompanyService {
         price: formatPrice(product.pricePence),
         includesPdf: product.includesPdf,
         includedItems: product.includedItems,
-        cta: `Unlock ${product.name} Report`,
+        cta: product.tier === "single_report" ? "Buy 1 Report" : `Buy ${product.name}`,
       })),
       sourceStatuses: [
         {

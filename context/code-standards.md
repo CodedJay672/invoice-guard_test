@@ -36,7 +36,9 @@ The AI agent on this project operates as a senior engineer. This means:
 - Route handlers are uncached unless explicitly configured.
 - Route handlers live in `app/api/` — never put business logic directly in route handlers
 - Server Actions live in `actions/` — never define Server Actions inline in components
-- DAL live in `data/` — never fetch data in server actions or inline in components
+- DAL helpers live in `lib/data/` and are server-only; Server Components read through them instead of fetching inline
+- Server Actions perform mutations/retry commands and may call the Express backend with trusted owner context; Client Components must not POST to app route handlers for those commands
+- Thin route handlers remain acceptable for bounded client polling/status reads and owner-authorized download redirects
 - Follow installed docs for async params/context and other version-specific APIs.
 - Load Inter and mono fonts through `next/font` in the root layout.
 - Components contain no provider calls, database work, or durable business rules.
@@ -190,7 +192,7 @@ Integration modules separate client/factory, live adapter, mock adapter, types, 
 
 - Paid-report interpretation is required in Phase A and runs only after authenticated payment and frozen factual assembly.
 - Use exactly `claude-haiku-4-5-20251001` with `max_tokens: 1500`; model and output limit are server-controlled validated configuration/constants.
-- Send only tier-entitled frozen facts and explicit source statuses. Store model, prompt/template version, generation time, and outcome with the immutable report artifact.
+- Send only product-entitled frozen facts and explicit source statuses. Store model, prompt/template version, generation time, and outcome with the immutable report artifact.
 - AI output must not invent facts, infer from unchecked sources, provide legal/financial advice, make credit decisions, or create risk scores/labels. Provider facts and failures remain independently visible.
 - AI calls require timeouts, bounded retries, structured failures, idempotent generation, and tests for malformed/unsafe output and unavailable sources.
 - Approved templates are implemented exactly and never paraphrased.
@@ -250,7 +252,7 @@ Integration modules separate client/factory, live adapter, mock adapter, types, 
 
 ## Verification
 
-Preserve tests for Companies House-only free-tier isolation, anonymous limits, authenticated checkout enforcement, webhook idempotency, refund/partial-report paths, owner authorization, AI model/token/prompt boundaries, report immutability, disclaimer presence, and flag-summary behavior.
+Preserve tests for Companies House-only free-tier isolation, anonymous limits, authenticated checkout enforcement, server-authoritative credit-pack pricing, webhook idempotency, refund/partial-report paths, owner authorization, AI model/token/prompt boundaries, report immutability, disclaimer presence, and flag-summary behavior.
 
 Run narrow checks during development and repository typecheck, lint, tests, and formatting before completion.
 

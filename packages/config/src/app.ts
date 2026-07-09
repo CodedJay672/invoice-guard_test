@@ -1,6 +1,9 @@
 import { z } from "zod";
+import { config } from "dotenv";
 
 import { readBooleanFlag, runtimeEnvironmentSchema } from "./env.js";
+
+config({ path: "../../.env" });
 
 const appConfigSchema = z.object({
   NODE_ENV: runtimeEnvironmentSchema,

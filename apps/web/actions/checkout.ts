@@ -11,18 +11,19 @@ export type StartCheckoutResult = { ok: true; url: string } | { ok: false; messa
 export async function startCheckout(input: unknown): Promise<StartCheckoutResult> {
   try {
     const identity = await resolveAuthIdentity();
-    if (identity.state !== "verified") {
+    if (identity.state === "unverified") {
       return {
         ok: false,
-        message:
-          identity.state === "unverified"
-            ? "Verify your account email before continuing to payment."
-            : "Register or sign in before continuing to payment.",
+        message: "Verify your account email before continuing to payment.",
       };
     }
 
-    const parsed = createCheckoutSessionSchema.safeParse(input);
-    if (!parsed.success) return { ok: false, message: "Check the report selection." };
+    const candidate =
+      identity.state === "verified" && typeof input === "object" && input !== null
+        ? { ...input, email: identity.email }
+        : input;
+    const parsed = createCheckoutSessionSchema.safeParse(candidate);
+    if (!parsed.success) return { ok: false, message: "Check the report delivery details." };
 
     const config = loadWebProxyConfig();
     const abortController = new AbortController();

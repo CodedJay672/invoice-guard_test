@@ -28,7 +28,7 @@ BEGIN
     SELECT 1
     FROM "provider_usage_logs"
     WHERE "subscription_tier" IS NOT NULL
-      AND "subscription_tier" NOT IN ('basic', 'standard', 'premium')
+      AND "subscription_tier" NOT IN ('single_report', 'starter_pack', 'business_pack', 'agency_pack')
   ) THEN
     RAISE EXCEPTION 'Cannot convert provider usage tier because unsupported values exist.';
   END IF;
@@ -52,31 +52,40 @@ INSERT INTO "report_products" (
 )
 VALUES
   (
-    'basic',
-    'Basic',
-    799,
+    'single_report',
+    'Single Report',
+    2000,
     'GBP',
     false,
     true,
-    '{"includedItems":["Court records check","Director names and appointment dates","Registered address history"]}'::jsonb
+    '{"includedItems":["All 6 data sources","CCJ registry check","Fair Payment Code status","Full written summary","Instant access"]}'::jsonb
   ),
   (
-    'standard',
-    'Standard',
-    1499,
+    'starter_pack',
+    'Starter Pack',
+    5400,
     'GBP',
     false,
     true,
-    '{"includedItems":["Everything in Basic","CCJ amounts and satisfaction status","Recent filings and registered charges"]}'::jsonb
+    '{"includedItems":["Everything in Single Report","Credits never expire","Use on any companies","Instant access"]}'::jsonb
   ),
   (
-    'premium',
-    'Premium',
-    2700,
+    'business_pack',
+    'Business Pack',
+    8000,
     'GBP',
+    false,
     true,
+    '{"includedItems":["Everything in Starter Pack","Ideal for monthly checks","Best value under Agency","Priority email support"]}'::jsonb
+  ),
+  (
+    'agency_pack',
+    'Agency Pack',
+    14000,
+    'GBP',
+    false,
     true,
-    '{"includedItems":["Everything in Standard","Director and insolvency depth checks","Branded PDF and timestamped reference"]}'::jsonb
+    '{"includedItems":["Everything in Business Pack","Lowest per-report rate","Team access coming soon","Priority email support"]}'::jsonb
   )
 ON CONFLICT ("tier") DO UPDATE
 SET

@@ -83,7 +83,7 @@ Build with mock fixtures:
 - Search idle, typing, loading, results, no-results, invalid-query, rate-limited, and provider-error states.
 - Preview loading, Companies House factual result, standard/non-active, Companies House source-failed, and explicit not-yet-checked states for every non-free source.
 - Court Records unchecked/locked card.
-- Basic, Standard, and Premium cards with prices, entitlements, PDF availability, disabled/ready CTA states.
+- Single Report, Starter Pack, Business Pack, and Agency Pack cards with prices, entitlements, disabled/ready CTA states.
 - Responsive mobile, tablet, and desktop layouts.
 
 Verification: compare the landing page against `context/designs/landing_page.html` and `landing_page.png`, and relevant flows against `free-preview-suggestions.png`, `paid-search-result.png`, and `payment-page.png`. Do not include risk scores or recovery features.
@@ -95,15 +95,15 @@ Depends on: **12A — UI/Mock Verified**.
 - Preserve and wire existing search/free-preview APIs into verified components.
 - Extract interactive logic from page-level composition.
 - Consolidate canonical design tokens and remove raw colour classes.
-- Seed/read report products at 799, 1499, and 2700 pence.
-- Validate trusted entitlements and PDF flags server-side.
+- Seed/read report products at 2000, 5400, 8000, and 14000 pence.
+- Validate trusted product entitlements and PDF flags server-side.
 - Preserve tests proving free-tier search/preview can call only Companies House and cannot call Gazette, insolvency/disqualification, Registry Trust, Fair Payment Code, or AI.
 
 #### Landing/Search Refinement
 
-- `/` is the Phase A landing page and keeps all interactive behavior in the autocomplete client leaf.
-- Landing autocomplete uses the existing same-origin company-search proxy and requires selection of a canonical Companies House entity.
-- Selection navigates to `/search` with the company number and display query; `/search` loads that company preview directly while retaining its standalone search controls.
+- `/` is the Phase A landing page and keeps interactive search behavior in the smallest client leaf.
+- Landing search submits directly to `/search?q=...`; autocomplete is no longer part of the active landing flow.
+- `/search` loads Companies House matches through the server-only DAL and links results into `/company/[houseNumber]/overview`; source-specific company routes show locked/not-yet-checked states until a paid report exists.
 - Landing copy remains limited to Phase A company intelligence and one-off reports. Recovery, subscriptions, accounting sync, watchlists, and risk scores remain excluded.
 
 ---
@@ -112,7 +112,7 @@ Depends on: **12A — UI/Mock Verified**.
 
 ### 13A — UI/Mock: Checkout and Payment Status
 
-- Checkout summary with canonical company identity, selected tier, exact price, and entitlements.
+- Checkout summary with canonical company identity, selected credit-pack product, exact price, and entitlements.
 - Signed-out registration/sign-in gate plus authenticated verified-email state. No guest checkout state.
 - Invalid/inactive product, validation failure, redirecting, cancelled, failed, paid/pending, duplicate-refresh, and delayed-confirmation states.
 - Clear language that payment confirmation comes from Stripe, not the redirect.
@@ -207,9 +207,9 @@ Depends on: **14A — UI/Mock Verified**.
 ### 15A — UI/Mock: Paid Report Source and Tier Sections
 
 - Source-status list for success, failed, unavailable, stale, pending, and not-entitled states.
-- Complete and partial Basic, Standard, and Premium section fixtures.
+- Complete and partial credit-pack product section fixtures.
 - Companies House foundational failure/refund state.
-- Registry Trust recheck and Premium escalation states.
+- Registry Trust recheck states for credit-pack products.
 - AI interpretation loading, ready, unavailable/failed, partial-source, and safety-fallback states for every paid tier. The UI clearly separates source facts from interpretation.
 
 Verification: automated tier/state matrix coverage and factual-language review; user manual QA is non-blocking.
@@ -219,7 +219,7 @@ Verification: automated tier/state matrix coverage and factual-language review; 
 Depends on: **15A — UI/Mock Verified**.
 
 - Implement paid-only Registry Trust and provider usage/cost logging.
-- Orchestrate sources from trusted tier entitlements.
+- Orchestrate sources from trusted product entitlements.
 - Enforce fresh-data/cache-age rules.
 - Store snapshots, statuses, timestamps, reference, and frozen report JSON.
 - Generate the paid-report interpretation in the worker with exactly `claude-haiku-4-5-20251001` and `max_tokens: 1500` after factual assembly. Persist output plus model, prompt/template version, timestamp, and status in the frozen report artifact.
@@ -235,8 +235,8 @@ Depends on: **15A — UI/Mock Verified**.
 
 Status: **UI/Mock Verified 2026-07-02**.
 
-- Complete and partial Basic, Standard, and Premium report pages.
-- Header, company identity, reference, timestamp, tier, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and PDF action.
+- Complete and partial paid report pages for credit-pack products.
+- Header, company identity, reference, timestamp, product label, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and artifact-driven PDF action.
 - Loading, access-denied, not-ready, not-found, and provider-failure states.
 - Screen, mobile, and print layouts.
 
@@ -275,12 +275,12 @@ Depends on: **17A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
 Status: **UI/Mock Verified 2026-07-03**.
 
-- Premium PDF mock with identity, reference, timestamp, tier, source status, report sections, page-one disclaimer, and printed issue URL.
+- PDF mock with identity, reference, timestamp, product label, source status, report sections, page-one disclaimer, and printed issue URL.
 - Browser disclaimer/issue blocks.
 - Flag-summary disabled placeholder and approved-template fixture.
 - Multi-page, long-content, partial-source, and print states.
 
-Verification: document/PDF inspection, print testing, copy review, and comparison with relevant report design. Basic has no PDF.
+Verification: document/PDF inspection, print testing, copy review, and comparison with relevant report design. PDF visibility is artifact-driven rather than tied to the old depth tiers.
 
 ### 18B — Logic/Data: PDF, Storage, Disclaimer, and Templates
 
@@ -290,14 +290,14 @@ Status: **Logic/Data complete 2026-07-03**. Production PDF consumption remains d
 until approved compliance copy and R2 deployment configuration are supplied.
 
 - Select/document PDF and object-storage implementation.
-- Generate Premium PDF from frozen report data.
+- Generate PDF from frozen report data when an artifact is requested/available.
 - Persist object reference, surface failure, and retry safely.
 - Implement mandatory disclaimer and exact approved templates behind `ENABLE_FLAG_SUMMARY=false`.
 - Add snapshot/exact-copy tests.
 
 ### 19A — UI/Mock: Fair Payment Code States
 
-- Present, absent, stale, refreshing, and source-failed Premium states.
+- Present, absent, stale, refreshing, and source-failed paid-report states.
 
 Verification: automated report/admin state coverage and factual copy review; user manual QA is non-blocking.
 
@@ -308,7 +308,7 @@ Depends on: **19A — UI/Mock Verified**.
 The internal Fair Payment Code status table and paid-report lookup moved into 15B. This unit now
 owns only verified refresh/import automation, freshness operations, and maintenance scheduling.
 
-- Implement seven-day refresh, persistence, Premium consumption, and visible failure status.
+- Implement seven-day refresh, persistence, paid-report consumption, and visible failure status.
 
 ---
 

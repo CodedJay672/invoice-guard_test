@@ -1,6 +1,14 @@
 import { z } from "zod";
+import type { ReportProductCode } from "@workspace/types";
 
-export const reportTierSchema = z.enum(["basic", "standard", "premium"]);
+export const reportProductCodeSchema = z.enum([
+  "single_report",
+  "starter_pack",
+  "business_pack",
+  "agency_pack",
+]) satisfies z.ZodType<ReportProductCode>;
+
+export const reportTierSchema = reportProductCodeSchema;
 
 const checkoutCompanyNumberSchema = z
   .string()
@@ -44,6 +52,7 @@ export const checkoutStatusSchema = z.enum([
 ]);
 
 export type CheckoutSelection = z.infer<typeof checkoutSelectionSchema>;
-export type ReportTier = z.infer<typeof reportTierSchema>;
+export type ReportTier = z.infer<typeof reportProductCodeSchema>;
+export type ReportProductCodeInput = ReportTier;
 export type CreateCheckoutSessionInput = z.infer<typeof createCheckoutSessionSchema>;
 export type CheckoutStatus = z.infer<typeof checkoutStatusSchema>;
