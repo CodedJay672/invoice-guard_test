@@ -1,11 +1,5 @@
-import { CompanyRouteState } from "../CompanyRouteState";
+import { CompanyWorkspaceRoute, type CompanyWorkspacePageProps } from "../company-workspace-route";
 
-export default function InsolvencyPage() {
-  return (
-    <CompanyRouteState
-      title="Insolvency"
-      status="source_not_yet_checked"
-      description="Insolvency and disqualified-officer checks are paid-report sources. The free company view does not make those calls."
-    />
-  );
+export default function InsolvencyPage(props: CompanyWorkspacePageProps) {
+  return <CompanyWorkspaceRoute {...props} activeTab="insolvency" />;
 }

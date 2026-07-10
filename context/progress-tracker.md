@@ -8,23 +8,22 @@ Update after every completed feature. Record actual state only.
 
 **Product phase:** Phase A — Company Search and Paid Reports
 
-**Build-plan phase:** Phase 5 — PDF and Compliance
+**Build-plan phase:** Client update retrofit — Free Companies House tabs
 
-**Last completed:** 18B — Logic/Data: PDF, Storage, Disclaimer, and Templates
+**Last completed:** 12C — UI/Mock: Free Companies House Tab Workspace
 
-**Next:** 19A — UI/Mock: Fair Payment Code States
+**Next:** 12D — Logic/Data: Companies House Tab Data
 
-**Status:** 18B complete; PDF generation, private R2 storage, durable artifact state, secure owner download, and retry/reconciliation are implemented. Production PDF consumption remains fail-closed until approved compliance copy and R2 configuration are supplied.
+**Status:** 12C is `UI/Mock Verified`. The public company workspace now has shared tabs for free Companies House overview, filing history, charges, officers, and insolvency fixture states, while CCJs, Fair Payment Code, and AI Summary remain paid placeholders. 12D is next to replace tab fixtures with real Companies House endpoint wiring.
 
-**Latest refinement:** 2026-07-09 structure/data boundary fix: public products are now the four credit packs
-Single Report, Starter Pack, Business Pack, and Agency Pack; the landing page submits to `/search?q=...`
-without autocomplete; `/search` reads via the server-only DAL; paid-source company routes render locked
-not-yet-checked states; PDF retry uses a Server Action instead of a client POST route.
+**Latest refinement:** 2026-07-10 client product update: Companies House is a free source for overview,
+filing history, charges, officers, and insolvency tabs. CCJs, Fair Payment Code, and AI summaries are
+paid-only. The public AI Summary tab summarizes Companies House overview data and shows a blurred/skeleton
+placeholder to free users.
 
 ### Current Unit Scope
 
-19A defines the present, absent, stale, refreshing, and source-failed paid-report Fair Payment Code
-presentation states without changing the completed 18B PDF delivery contract.
+12D will wire overview, filing history, charges, officers, and insolvency tabs to Companies House endpoints only. CCJs, Fair Payment Code, and AI Summary remain paid-only boundaries. 19A stays paused until 12D is complete.
 
 ---
 
@@ -64,6 +63,8 @@ presentation states without changing the completed 18B PDF delivery contract.
 - [x] 17B Logic/Data: Owner Notifications and Postmark (A21-A22 revised)
 - [x] 18A UI/Mock: Premium PDF and Compliance Blocks — `UI/Mock Verified` 2026-07-03
 - [x] 18B Logic/Data: PDF, Storage, and Templates (A23-A25)
+- [x] 12C UI/Mock: Free Companies House Tab Workspace — `UI/Mock Verified` 2026-07-10
+- [ ] 12D Logic/Data: Companies House Tab Data
 - [ ] 19A UI/Mock: Fair Payment Code States
 - [ ] 19B Logic/Data: Fair Payment Code Refresh (A26)
 - [ ] 20A UI/Mock: Admin Dashboard
@@ -87,7 +88,9 @@ presentation states without changing the completed 18B PDF delivery contract.
 - Server-authoritative one-off credit-pack report products and Companies House-only preview with explicit not-yet-checked paid sources.
 - Phase A landing page with direct query submission into `/search?q=...`; autocomplete is not part of the active landing flow.
 - `/search` Server Component data access through `apps/web/lib/data`, with company-result links to `/company/[houseNumber]/overview`.
-- Company route group states for overview and locked paid-source tabs: filing history, CCJ, charges, officers, AI summary, insolvency, and Fair Payment Code.
+- Reusable public company workspace shell for `/company/[houseNumber]/*` with shared masthead,
+  desktop tabs, mobile selector, source-status panel, development/test-only tab fixtures, and paid
+  placeholders for CCJs, Fair Payment Code, and AI Summary.
 - Brand Asset Guide v1.0 visual foundation: InvoiceGuard navy/emerald palette, Inter typography,
   12px controls, rounded outline icons, and sparse brand-gradient usage.
 - Live Companies House adapter support for alphabetical search, registered-office-address, profile, officers, filing history, charges, and insolvency endpoints.
@@ -138,9 +141,11 @@ presentation states without changing the completed 18B PDF delivery contract.
 
 - Companies House number is canonical identity.
 - Phase A is search and one-off paid reports only.
-- Free-tier search and preview query Companies House only; no other provider or AI dependency is permitted.
+- Free-tier search, preview, and company tabs query Companies House only; no other provider or AI dependency is permitted.
+- Companies House filing history, charges, officers, and insolvency are free tab data.
+- CCJs, Fair Payment Code, and AI summaries are paid-only.
 - Users must register/sign in with a verified primary email before Stripe Checkout; no guest purchases or guest access tokens.
-- Every paid tier receives an AI interpretation in Phase A using exactly `claude-haiku-4-5-20251001` with `max_tokens: 1500`.
+- Every paid tier receives AI interpretation in Phase A using exactly `claude-haiku-4-5-20251001` with `max_tokens: 1500`; the public AI Summary tab summarizes Companies House overview data only.
 - Figma is complete-system reference; only Phase A-relevant patterns are active.
 - Every remaining feature is split into a verified UI/Mock unit and a later Logic/Data unit.
 - A Logic/Data unit cannot start until its paired UI/Mock unit is recorded as `UI/Mock Verified` with
@@ -163,13 +168,14 @@ presentation states without changing the completed 18B PDF delivery contract.
 ```text
 Browser -> Next proxy -> Express company routes -> CompanyService
         -> Companies House only for free tier
-        -> normalized factual preview -> other sources shown as not yet checked
+        -> normalized overview/filing-history/charges/officers/insolvency tabs
+        -> CCJs/Fair Payment Code/AI shown as paid placeholders
 
 Clerk owner -> Stripe webhook -> idempotent pending report -> BullMQ generation lifecycle
             -> 15B entitled providers/snapshots -> Claude interpretation -> frozen delivery
 ```
 
-Free preview is architecturally isolated from every source except Companies House and from AI. Ready reports, including their interpretation and generation metadata, are frozen artifacts. Redis is ephemeral infrastructure; PostgreSQL is durable truth.
+Free search, preview, and tabs are architecturally isolated from every source except Companies House and from AI. Ready reports, including their interpretation and generation metadata, are frozen artifacts. Redis is ephemeral infrastructure; PostgreSQL is durable truth.
 
 ---
 
@@ -351,6 +357,17 @@ that Companies House returns. Focused checks passed for integrations tests (16 a
 validation tests (8 assertions), API tests (35 assertions), web tests (38 assertions), typecheck for
 integrations, validation, types, API, and web, and lint for integrations and validation.
 
+2026-07-10 client update recorded: Companies House is a free resource for filing history, charges,
+officers, and insolvency; only CCJs, Fair Payment Code, and AI summaries remain paid. Added 12C/12D
+retrofit plan before continuing to Fair Payment Code work.
+
+2026-07-10 Feature 12C checks: web typecheck passed, web lint passed, and the full web test suite
+passed 44 assertions. Coverage includes every company workspace tab, populated/empty/loading/failed
+fixture coverage for free Companies House tabs, paid placeholders for CCJs, Fair Payment Code, and
+AI Summary, blurred AI Summary placeholder behavior, production fixture-query guards, `aria-current`
+active tabs, native mobile selector accessibility, semantic-token checks, and factual-language
+guards against clean/adverse paid-source conclusions.
+
 ### Coverage Tracking
 
 | System                                    | Current state                                                          |
@@ -359,7 +376,7 @@ integrations, validation, types, API, and web, and lint for integrations and val
 | Gazette normalization                     | Covered                                                                |
 | Insolvency/disqualification normalization | Covered                                                                |
 | Search/free-preview API                   | Covered for Companies House-only response and failure boundaries       |
-| All non-Companies-House free-tier isolation | Covered: excluded from the free-preview dependency graph             |
+| All non-Companies-House free-tier isolation | UI boundary covered for 12C fixtures; provider-call isolation must be extended to free tab routes in 12D |
 | Stripe/webhook/pending-report lifecycle   | Covered for checkout, paid/unpaid events, replay, queueing, and status |
 | Worker generation lifecycle               | Covered for claim, retry, terminal convergence, failure, and delay     |
 | Paid provider/partial/refund outcomes     | Covered by tier, snapshot reuse, recovery, and refund tests              |
@@ -388,6 +405,9 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
   `free-preview-suggestions.png`, `paid-search-result.png`, and `payment-page.png`; registered
   light/dark-surface logo assets under `apps/web/public/`; recorded Companies House-only free tier,
   mandatory pre-payment registration, and paid-report Phase A AI interpretation.
+- 2026-07-10: client clarified that Companies House filing history, charges, officers, and insolvency
+  are free tab data. Only CCJs, Fair Payment Code, and AI summaries are paid. The public AI Summary
+  tab is paid-only and summarizes Companies House overview data.
 - Landing suggestions carry the selected Companies House number to `/search`; display-name query text is contextual only and never canonical identity.
 - Update this tracker and `ui-registry.md` after every feature.
 - V1 context is reference material for depth; the canonical nine files remain the only active source of truth.

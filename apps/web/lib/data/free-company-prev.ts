@@ -42,7 +42,6 @@ export async function requestFreePreview(companyNumber: string): Promise<Preview
     }
 
     const parsed = freePreviewApiResponseSchema.safeParse(body);
-    console.log(parsed);
     return parsed.success
       ? { status: "success", preview: parsed.data.data.preview }
       : { status: "failed", message: "Free preview could not be retrieved right now." };

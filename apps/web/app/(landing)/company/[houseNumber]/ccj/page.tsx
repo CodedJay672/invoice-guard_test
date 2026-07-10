@@ -1,11 +1,5 @@
-import { CompanyRouteState } from "../CompanyRouteState";
+import { CompanyWorkspaceRoute, type CompanyWorkspacePageProps } from "../company-workspace-route";
 
-export default function CCJPage() {
-  return (
-    <CompanyRouteState
-      title="County Court Judgements"
-      status="source_not_yet_checked"
-      description="Registry Trust court records are retrieved only after confirmed payment. No CCJ conclusion is available in the free company view."
-    />
-  );
+export default function CcjPage(props: CompanyWorkspacePageProps) {
+  return <CompanyWorkspaceRoute {...props} activeTab="ccj" />;
 }

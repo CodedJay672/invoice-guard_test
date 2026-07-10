@@ -1,11 +1,5 @@
-import { CompanyRouteState } from "../CompanyRouteState";
+import { CompanyWorkspaceRoute, type CompanyWorkspacePageProps } from "../company-workspace-route";
 
-export default function FilingsPage() {
-  return (
-    <CompanyRouteState
-      title="Filing history"
-      status="source_not_yet_checked"
-      description="Filing history is checked only as part of a paid full report. The free company view remains limited to Companies House profile facts."
-    />
-  );
+export default function FilingHistoryPage(props: CompanyWorkspacePageProps) {
+  return <CompanyWorkspaceRoute {...props} activeTab="filing-history" />;
 }

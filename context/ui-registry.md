@@ -99,7 +99,9 @@ interactive state belongs to the smallest practical client leaf.
 - Last updated: 2026-07-02 (AUTH-C).
 - States: loading, Companies House factual result, non-active company status, and Companies House failure.
 - Facts: `rounded-md border border-line bg-surface p-3` in a one-to-three-column grid.
-- Free preview displays exactly one checked source: Companies House.
+- Free preview and company tabs display exactly one free provider family: Companies House. Overview,
+  filing history, charges, officers, and insolvency are Companies House-backed; CCJs, Fair Payment
+  Code, and AI Summary remain paid placeholders.
 - Paid-only sources use a separate `Not yet checked` Card with `border-line`, `bg-surface`,
   `text-content-muted`, and outline Badges. It never renders clean/adverse conclusions.
 
@@ -125,14 +127,26 @@ interactive state belongs to the smallest practical client leaf.
   then navigates with canonical company number, product code, and display-only company name.
 - Shows exact price and full-report entitlement summary; never introduces subscriptions or report-depth tiers.
 
-### Company Route Locked Source State
+### Company Route Source State
 
-- Path: `apps/web/app/(landing)/company/[houseNumber]/**/page.tsx` and `CompanyRouteState.tsx`.
-- Last updated: 2026-07-09.
-- Purpose: keep public company navigation available while making paid-only source boundaries explicit.
-- Pattern: shared page shell with `bg-page`, source status Cards, semantic Badge/Alert copy, and a return link to the overview.
-- States: Companies House overview, filing history, CCJ, charges, officers, AI summary, insolvency, and Fair Payment Code source-not-yet-checked states.
-- Accessibility: each route has a stable heading and source-state text; no blurred paid data or inferred clean/adverse conclusion is rendered.
+- Path: `apps/web/components/company-workspace/CompanyWorkspace.tsx`,
+  `apps/web/components/company-workspace/MobileTabSelect.tsx`,
+  `apps/web/components/company-workspace/fixtures.ts`, and
+  `apps/web/app/(landing)/company/[houseNumber]/**/page.tsx`.
+- Last updated: 2026-07-10.
+- Purpose: keep public company navigation available while making free Companies House tabs and paid-only source boundaries explicit.
+- Pattern: reusable company workspace shell with `bg-page`, `bg-surface`, `border-line`,
+  semantic Badge/Alert/Card primitives, shared masthead, route-based desktop tabs, and a native
+  mobile selector.
+- States: Companies House overview, filing history, charges, officers, and insolvency render
+  deterministic populated, empty/no-records, loading, and source-failed fixture states. CCJ and Fair
+  Payment Code render paid/not-yet-checked placeholders. AI Summary renders a paid blurred/skeleton
+  placeholder for free users and states that it summarizes Companies House overview data only.
+- Accessibility: desktop links use `aria-current="page"` for the active tab; the mobile selector has
+  an explicit label and native keyboard behavior. Factual Companies House data is never blurred, and
+  no inferred clean/adverse conclusion is rendered from paid sources that were not checked.
+- Fixture guard: `fixture` query states are development/test-only. Production ignores fixture query
+  values and does not expose fake Companies House records before 12D real-data wiring.
 
 ### StatusBadge and Source Banner
 

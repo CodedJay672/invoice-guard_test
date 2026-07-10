@@ -129,10 +129,12 @@ Jobs use centralized names and payload maps. Workers validate IDs, load current 
 - Factory/adapters live in `packages/integrations/src/companies-house`.
 - Mock and live modes share normalized contracts.
 - Company number—not name—is identity.
-- Companies House is foundational for paid reports.
+- Companies House is foundational for free company tabs and paid reports.
+- Companies House is a free source for company overview, registered office address, filing history,
+  registered charges, officers, and company insolvency tabs.
 - Keep deterministic fixtures for local/test flows.
 
-Live configuration includes base URL, API key, and explicit timeout. Normalize search/profile/officers/filings/charges before domain use. A paid-report Companies House failure is foundational and cannot be downgraded to a partial success.
+Live configuration includes base URL, API key, and explicit timeout. Normalize search/profile/officers/filings/charges/insolvency before domain use. A paid-report Companies House failure is foundational and cannot be downgraded to a partial success. A free tab Companies House failure must be surfaced as source failure for that tab, not as a clean or paid-locked state.
 
 ### companies house API endpoints.
 
@@ -149,6 +151,7 @@ companies house endpoints:
 | GET /company/{companyNumber} | search by canonical company number | CompanyProfile |
 | GET /company/{company_number}/officers | List of all company officers. can take items_per_role; register_type  with values like "drectors", "secretary" etc; and register_view: boolean | OfficersList |
 | GET /company/{company_number}/filing-history | Company's filing history | Filing History |
+| GET /company/{company_number}/charges | Company registered charges | ChargesList |
 | GET /company/{company_number}/insolvency | company insolvency resource | CompanyInsolvency |
 
 
@@ -514,7 +517,7 @@ const CompanyInsolvency = {
 ## London Gazette
 
 - Normalize strike-off and winding-up flags.
-- Paid reports may call it when entitled. Free-tier search/preview must not call it.
+- London Gazette is not part of the active free tab data plan. Free-tier search/preview/tabs must not call it.
 - Failure is source-status failure, never a false clean paid result.
 
 Live endpoint behavior, rate limits, response shape, attribution, and terms require production verification.
@@ -522,7 +525,8 @@ Live endpoint behavior, rate limits, response shape, attribution, and terms requ
 ## Insolvency and Disqualified Officers
 
 - Normalize insolvency and director-disqualification flags.
-- Paid reports may call it when entitled. Free-tier search/preview must not call it.
+- The active company insolvency tab uses the free Companies House insolvency endpoint.
+- Any separate insolvency/disqualified-officer provider remains outside free-tier search/preview/tabs unless a later paid entitlement is explicitly approved.
 - Current live-shaped endpoint must be verified before production.
 
 ## Registry Trust
@@ -541,8 +545,9 @@ Every call records operation, company number, report, estimated cost, status, an
   to the web or API runtime.
 - This integration is mandatory Phase A work for every paid report tier.
 - Use exactly `claude-haiku-4-5-20251001` and set `max_tokens` to `1500` on every interpretation request.
-- Invoke Anthropic only in the paid report worker after webhook-confirmed payment, authenticated ownership, entitled source collection, and frozen factual assembly. Free-tier search/preview must have no Anthropic dependency.
-- The model receives only tier-entitled facts and explicit source statuses. Prompts require factual attribution, uncertainty for missing sources, and no invented data, legal/financial advice, credit decisions, risk scores, or safety verdicts.
+- Invoke Anthropic only after payment entitlement is confirmed, authenticated ownership is known, entitled source collection is complete, and factual assembly is frozen. Free-tier search/preview/tabs must have no Anthropic dependency.
+- The `/company/[houseNumber]/ai-summary` tab is a paid overview summary and receives only Companies House overview facts. Free users see only a blurred/skeleton interpretation placeholder.
+- Paid report interpretation may receive all available frozen tab facts and explicit source statuses. Prompts require factual attribution, uncertainty for missing sources, and no invented data, legal/financial advice, credit decisions, risk scores, or safety verdicts.
 - Persist model ID, prompt/template version, generation timestamp, status, and output with the immutable report artifact. Use explicit timeout, bounded retry, idempotency, and visible failure behavior.
 - The v1 implementation uses `output_config.format` with JSON Schema, an explicit 30-second
   request timeout, SDK retries disabled, and BullMQ as the single retry layer. Runtime Zod and

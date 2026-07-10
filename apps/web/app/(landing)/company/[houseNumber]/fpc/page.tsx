@@ -1,11 +1,5 @@
-import { CompanyRouteState } from "../CompanyRouteState";
+import { CompanyWorkspaceRoute, type CompanyWorkspacePageProps } from "../company-workspace-route";
 
-export default function FairPaymentCodePage() {
-  return (
-    <CompanyRouteState
-      title="Fair Payment Code"
-      status="source_not_yet_checked"
-      description="Fair Payment Code status is included only in paid full reports. It is not checked during free search or preview."
-    />
-  );
+export default function FpcPage(props: CompanyWorkspacePageProps) {
+  return <CompanyWorkspaceRoute {...props} activeTab="fpc" />;
 }

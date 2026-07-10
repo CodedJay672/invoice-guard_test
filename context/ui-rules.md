@@ -25,7 +25,7 @@ The brand guide's risk meters, score rings, and risk labels are illustrative bra
 not approved InvoiceGuard product behavior. They must not appear while the no-risk-scoring product
 decision remains active.
 
-Phase A may use logo, navigation, search hero, trust strip, section rhythm, factual company snapshot, one-off report pricing, CTA, report, and footer patterns.
+Phase A may use logo, navigation, search hero, trust strip, section rhythm, factual company snapshot, free Companies House tab navigation, one-off report pricing, CTA, report, and footer patterns.
 
 Do not use the design's risk score, overdue-invoice metrics, Xero/QuickBooks, statutory-interest, demand-letter, escalation, subscription, or recovery-dashboard flows in Phase A. When design and phase scope conflict, phase scope wins.
 
@@ -45,7 +45,7 @@ Do not use the design's risk score, overdue-invoice metrics, Xero/QuickBooks, st
 ### Public Marketing Experience
 
 - Lead with company search rather than recovery automation.
-- Trust claims identify real sources while stating that free-tier search/preview queries Companies House only.
+- Trust claims identify real sources while stating that free-tier search/preview/tabs query Companies House only.
 - Primary CTA is search/select/report purchase; secondary links remain quiet.
 - Figma recovery-focused sections are omitted or rewritten for the active report product.
 
@@ -74,10 +74,12 @@ Every preview shows:
 
 - Registered company name and monospace number.
 - Status, incorporation date/age, registered town/county, and active director count.
+- Free Companies House tab access for filing history, charges, officers, and insolvency.
 - Court Records prompt.
+- Paid AI Summary placeholder for free users.
 - Single Report, Starter Pack, Business Pack, and Agency Pack credit-pack products.
 
-Adverse previews stack every applicable factual banner. Clean previews use the approved reassurance and curiosity cards. Neither path may imply Registry Trust was checked.
+Adverse previews stack every applicable Companies House factual banner. Clean previews use the approved reassurance and curiosity cards only where the checked Companies House data supports them. Neither path may imply Registry Trust/CCJs, Fair Payment Code, or AI was checked.
 
 ---
 
@@ -86,6 +88,8 @@ Adverse previews stack every applicable factual banner. Clean previews use the a
 Every browser report includes reference, timestamp, company identity, product label, source status, entitled sections, paid AI interpretation, disclaimer, issue link, and artifact-driven PDF action.
 
 Every paid report also includes a clearly labelled AI interpretation. It distinguishes facts from interpretation, identifies unavailable sources, and never presents legal/financial advice, a credit decision, or a risk score.
+
+The public AI Summary tab is paid-only. For free users, show a blurred/skeleton interpretation placeholder and upgrade path without making an AI call. The AI Summary tab summarizes Companies House overview data; other paid AI interpretation surfaces may interpret the factual data fetched for their relevant report sections.
 
 Partial reports identify both successful and failed sources.
 
@@ -124,6 +128,7 @@ Use:
 - `No records found in checked sources`
 - `Source not yet checked`
 - `Data could not be retrieved`
+- `Available from Companies House`
 - `Public record position at time of generation`
 
 Never conclude `safe`, `unsafe`, `high risk`, `low risk`, `approved`, `rejected`, `bad payer`, or `creditworthy`.
@@ -135,6 +140,7 @@ Never conclude `safe`, `unsafe`, `high risk`, `low risk`, `approved`, `rejected`
 - No raw Tailwind colours or hardcoded colours. The documented brand gradient may be used sparingly;
   status surfaces remain flat and factual.
 - No hidden provider failures.
+- No blurred factual Companies House tab data; only paid AI placeholder text may be blurred/skeletonized.
 - No colour-only status communication.
 - No raw provider/payment errors shown to users.
 - No invented legal, credit, or report wording.

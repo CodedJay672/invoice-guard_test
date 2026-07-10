@@ -155,13 +155,20 @@ Every provider:
 
 Registry Trust:
 
-- Is paid-only and unreachable from free-preview dependency graphs.
+- Is paid-only and unreachable from free-preview/tab dependency graphs.
 - Runs only after webhook-confirmed payment.
 - Writes every call to `provider_usage_logs`.
 - Uses GBP 0.80 as planning cost until Lucky changes it.
-- Requires tests proving free preview cannot call it.
+- Requires tests proving free preview and free tab routes cannot call it.
 
 Integration modules separate client/factory, live adapter, mock adapter, types, normalization, and tests. Timeouts/retries are explicit; retry behavior respects idempotency and never multiplies paid calls invisibly.
+
+Companies House:
+
+- Is the only free-tier provider and powers overview, filing history, charges, officers, and insolvency tabs.
+- Free-tier Companies House tab routes may fetch only Companies House endpoints and must expose source timestamps/failure states.
+- Companies House tab failures are shown as `Data could not be retrieved`, never as paid-source absence or a clean conclusion.
+- Do not call Registry Trust/CCJs, Fair Payment Code, AI, London Gazette, or other paid/non-Companies-House providers from free-tier tab composition.
 
 ---
 
@@ -191,6 +198,8 @@ Integration modules separate client/factory, live adapter, mock adapter, types, 
 ## AI Interpretation, Legal, and Product Copy
 
 - Paid-report interpretation is required in Phase A and runs only after authenticated payment and frozen factual assembly.
+- The public `/company/[houseNumber]/ai-summary` tab is paid-only and summarizes Companies House overview data. Free users receive only a blurred/skeleton placeholder and upgrade prompt; no model request is made.
+- Paid AI interpretation may interpret all fetched tab data available in the frozen artifact, including Companies House filing history, charges, officers, insolvency, paid CCJs, and Fair Payment Code.
 - Use exactly `claude-haiku-4-5-20251001` with `max_tokens: 1500`; model and output limit are server-controlled validated configuration/constants.
 - Send only product-entitled frozen facts and explicit source statuses. Store model, prompt/template version, generation time, and outcome with the immutable report artifact.
 - AI output must not invent facts, infer from unchecked sources, provide legal/financial advice, make credit decisions, or create risk scores/labels. Provider facts and failures remain independently visible.
@@ -270,7 +279,7 @@ Test naming describes behavior, not implementation. Mock external boundaries, no
 ### Prohibited Practices
 
 - Business logic in routes/components or database queries in UI.
-- Any non-Companies-House provider or AI client in free-tier search/preview composition.
+- Any non-Companies-House provider, Fair Payment Code lookup, CCJ lookup, or AI client in free-tier search/preview/tab composition.
 - Fire-and-forget financial/report effects.
 - Swallowed errors, unbounded retries, arbitrary sleeps, or hidden partial data.
 - Premature microservices, speculative packages/tables, or future-phase implementation.

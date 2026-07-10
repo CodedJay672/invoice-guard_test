@@ -29,9 +29,9 @@ apps/
     (landing)
       /           # landing page with direct search form
       /search     # Companies House result list (`q` query)
-      /company    # company route group with factual overview and locked paid-source states
+      /company    # company route group with free Companies House tabs and paid locked states
       /pricing    # Pricing page
-  api/          # Express routes, services, repositories, composition
+  api/          # Express routes, Companies House tab services, repositories, composition
   worker/       # BullMQ processors and schedulers
 packages/
   config/       # typed environment config
@@ -83,7 +83,7 @@ InvoiceGuard is a modular monolith split into deployable web, API, and worker ru
 
 ```text
 Browser -> Next proxy -> Express route -> validation/rate limit
-        -> CompanyService -> provider adapters -> repository -> typed response
+        -> CompanyService -> Companies House tab adapters -> repository -> typed response
 ```
 
 ```text
@@ -105,16 +105,18 @@ Report job -> generating -> entitled fresh providers
            -> PDF/email/alert jobs
 ```
 
-### Free Preview Isolation
+### Free Company Workspace Isolation
 
-The free-preview dependency graph receives only Companies House. Gazette, insolvency/disqualified-officer client and Registry Trust isolation is architectural, not a conditional inside one provider function.
+The free company workspace dependency graph receives only Companies House. It may fetch company profile/overview, registered office address, filing history, charges, officers, registered charges, and Companies House insolvency data. Registry Trust/CCJs, Fair Payment Code, AI, and any non-Companies-House paid provider remain architecturally isolated from free-tier routes rather than conditionally disabled inside one provider function.
 
 ### Paid AI Interpretation
 
-- AI interpretation is Phase A report-generation work, not a later enhancement.
+- AI interpretation is Phase A paid work, not a later enhancement.
 - Only authenticated, webhook-confirmed paid reports may invoke it.
 - The server/worker uses the exact model `claude-haiku-4-5-20251001` with `max_tokens: 1500`; neither value is client-controlled.
 - Input is limited to the frozen, product-entitled factual report payload and explicit source statuses. Prompting must prohibit invented facts, legal/financial advice, credit decisions, risk scores, and conclusions from unavailable sources.
+- The public company `/ai-summary` tab is paid-only and summarizes Companies House overview data. Free users may see only a blurred or skeleton placeholder with upgrade copy; no AI call is made.
+- Paid report interpretation may also interpret the factual data fetched for filing history, charges, officers, insolvency, CCJs, and Fair Payment Code where those sections exist and are included in the frozen artifact.
 - Store the interpretation with model, generation timestamp, prompt/template version, and status as part of the frozen report artifact. Retries are idempotent and failures are visible.
 
 ### Webhook Flow
@@ -145,8 +147,9 @@ type ProviderResult<T> =
     };
 ```
 
-Current adapters: Companies House, London Gazette, insolvency/disqualified officers, Registry Trust
-mock, and repository-backed Fair Payment Code. Registry Trust live mode is intentionally unavailable
+Current adapters: Companies House, Registry Trust mock, and repository-backed Fair Payment Code.
+Companies House covers overview, registered-office-address, officers, filing history, registered
+charges, and insolvency for free-tier tab data. Registry Trust live mode is intentionally unavailable
 until its verified production contract is supplied.
 
 ---
@@ -221,11 +224,13 @@ Required observability includes structured logs, provider latency/failure, queue
 ## Security and Product Invariants
 
 - Companies House number is canonical identity.
-- Registry Trust is never called before confirmed Stripe payment.
+- Registry Trust/CCJs are never called before confirmed Stripe payment.
+- Fair Payment Code is never checked for free-tier requests.
+- AI is never invoked for free-tier requests, including the public AI Summary tab placeholder.
 - Stripe signature and event idempotency are verified before report creation.
 - Frontend redirects never create purchased reports.
 - Ready report data is immutable; rechecks create new rows.
-- Paid fetches attempt fresh product-entitled data and reject cache older than 24 hours.
+- Paid fetches attempt fresh product-entitled paid data and reject cache older than 24 hours.
 - Checkout and report delivery require an authenticated Clerk owner with a verified primary email; no guest purchase/access path exists.
 - Admin authorization is enforced server-side with Clerk and `ADMIN_EMAIL`.
 - Provider failures remain visible.

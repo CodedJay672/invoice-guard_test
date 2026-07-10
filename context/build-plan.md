@@ -66,10 +66,10 @@ A `B` unit is complete only when:
 - [x] A7 Anonymous rate limit and search logs
 - [x] A8 London Gazette integration
 - [x] A9 Insolvency/disqualified-officer integration
-- [x] A10 Historical free-preview API with three sources; superseded by the Companies House-only client decision and due for narrowing
-- [x] A11 Historical clean/adverse free-preview UI; non-Companies-House conclusions are due for removal
+- [x] A10 Historical free-preview API with three sources; superseded by the Companies House-only client decision and due for narrowing/expansion into free Companies House tabs
+- [x] A11 Historical clean/adverse free-preview UI; non-Companies-House conclusions are due for removal and Companies House tab data is due for free presentation
 
-Existing A0-A11 implementation remains historical, but free-tier orchestration must be narrowed to Companies House only under the current client decision. The current public UI still requires token, component, and design-reference alignment work.
+Existing A0-A11 implementation remains historical, but free-tier orchestration must be narrowed to Companies House only while expanding Companies House coverage beyond overview into filing history, charges, officers, and insolvency tabs. The current public UI still requires token, component, and design-reference alignment work.
 
 ---
 
@@ -81,7 +81,7 @@ Build with mock fixtures:
 
 - Phase A navigation, wordmark, search hero, source-trust strip, factual company snapshot, CTA, and footer.
 - Search idle, typing, loading, results, no-results, invalid-query, rate-limited, and provider-error states.
-- Preview loading, Companies House factual result, standard/non-active, Companies House source-failed, and explicit not-yet-checked states for every non-free source.
+- Preview loading, Companies House factual result, standard/non-active, Companies House source-failed, free Companies House tab affordances, and explicit not-yet-checked states for CCJs, Fair Payment Code, and AI.
 - Court Records unchecked/locked card.
 - Single Report, Starter Pack, Business Pack, and Agency Pack cards with prices, entitlements, disabled/ready CTA states.
 - Responsive mobile, tablet, and desktop layouts.
@@ -97,14 +97,47 @@ Depends on: **12A — UI/Mock Verified**.
 - Consolidate canonical design tokens and remove raw colour classes.
 - Seed/read report products at 2000, 5400, 8000, and 14000 pence.
 - Validate trusted product entitlements and PDF flags server-side.
-- Preserve tests proving free-tier search/preview can call only Companies House and cannot call Gazette, insolvency/disqualification, Registry Trust, Fair Payment Code, or AI.
+- Preserve tests proving free-tier search/preview/tabs can call only Companies House and cannot call Gazette, non-Companies-House insolvency/disqualification, Registry Trust/CCJs, Fair Payment Code, or AI.
 
 #### Landing/Search Refinement
 
 - `/` is the Phase A landing page and keeps interactive search behavior in the smallest client leaf.
 - Landing search submits directly to `/search?q=...`; autocomplete is no longer part of the active landing flow.
-- `/search` loads Companies House matches through the server-only DAL and links results into `/company/[houseNumber]/overview`; source-specific company routes show locked/not-yet-checked states until a paid report exists.
+- `/search` loads Companies House matches through the server-only DAL and links results into `/company/[houseNumber]/overview`; Companies House filing-history, charges, officers, and insolvency routes render free tab data, while CCJ, Fair Payment Code, and AI Summary remain paid states.
 - Landing copy remains limited to Phase A company intelligence and one-off reports. Recovery, subscriptions, accounting sync, watchlists, and risk scores remain excluded.
+
+### 12C — UI/Mock: Free Companies House Tab Workspace
+
+Status: **UI/Mock Verified 2026-07-10**.
+
+Client update retrofit. This unit updates the public company route group before further paid-source work.
+
+- Overview tab with Companies House profile/account/registered-office facts and source-status failure state.
+- Filing history tab with loading, populated, empty, pagination/limited-list, and source-failed states.
+- Charges tab with registered charges present, no charges, satisfied/outstanding distinctions where supplied by Companies House, and source-failed states.
+- Officers tab with active/resigned officers, empty/withheld fields, long names, appointment/resignation dates, and source-failed states.
+- Insolvency tab using Companies House insolvency data with cases present, no cases, and source-failed states.
+- CCJ and Fair Payment Code tabs remain paid/not-yet-checked states.
+- AI Summary tab shows a paid blurred/skeleton placeholder for free users and states that paid overview AI summarizes Companies House overview data.
+- Shared source-status language distinguishes `Available from Companies House`, `Source not yet checked`, and `Data could not be retrieved`.
+- Responsive tab navigation, mobile selector, keyboard/focus behavior, and no horizontal overflow.
+
+Verification: deterministic fixtures for populated/empty/failure states per tab; semantic-token audit; factual-language review; automated responsive/accessibility contracts. Update `ui-registry.md` after implementation.
+
+### 12D — Logic/Data: Companies House Tab Data
+
+Depends on: **12C — UI/Mock Verified**.
+
+- Add/confirm normalized Companies House contracts for profile/overview, registered office address, filing history, charges, officers, and insolvency.
+- Implement Express service methods and thin route handlers for free tab data. Routes must validate company number, enforce anonymous limits where appropriate, and call only Companies House.
+- Add Next.js server-only DAL helpers and route proxies for tab reads; Server Components must use DAL helpers rather than inline fetches.
+- Preserve source timestamps and structured provider failures for each tab.
+- Define cache keys/TTLs if caching is used; cache remains non-canonical and never masks provider failure.
+- Add tests proving free tab composition cannot invoke Registry Trust/CCJs, Fair Payment Code, AI, London Gazette, or non-Companies-House insolvency/disqualification providers.
+- Add normalization tests for Companies House charges, filing history, officers, and insolvency edge cases.
+- Wire tab UI to real data without changing the verified 12C presentation contract.
+
+Acceptance: overview, filing history, charges, officers, and insolvency tabs fetch Companies House data for free; CCJ, Fair Payment Code, and AI remain paid-only; repository typecheck/lint/tests pass.
 
 ---
 
@@ -210,7 +243,7 @@ Depends on: **14A — UI/Mock Verified**.
 - Complete and partial credit-pack product section fixtures.
 - Companies House foundational failure/refund state.
 - Registry Trust recheck states for credit-pack products.
-- AI interpretation loading, ready, unavailable/failed, partial-source, and safety-fallback states for every paid tier. The UI clearly separates source facts from interpretation.
+- AI interpretation loading, ready, unavailable/failed, partial-source, and safety-fallback states for every paid tier. The UI clearly separates source facts from interpretation and supports section-level interpretation of fetched tab data.
 
 Verification: automated tier/state matrix coverage and factual-language review; user manual QA is non-blocking.
 
@@ -218,11 +251,11 @@ Verification: automated tier/state matrix coverage and factual-language review; 
 
 Depends on: **15A — UI/Mock Verified**.
 
-- Implement paid-only Registry Trust and provider usage/cost logging.
+- Implement paid-only Registry Trust/CCJs and provider usage/cost logging.
 - Orchestrate sources from trusted product entitlements.
 - Enforce fresh-data/cache-age rules.
 - Store snapshots, statuses, timestamps, reference, and frozen report JSON.
-- Generate the paid-report interpretation in the worker with exactly `claude-haiku-4-5-20251001` and `max_tokens: 1500` after factual assembly. Persist output plus model, prompt/template version, timestamp, and status in the frozen report artifact.
+- Generate paid AI interpretation in the worker with exactly `claude-haiku-4-5-20251001` and `max_tokens: 1500` after factual assembly. Persist output plus model, prompt/template version, timestamp, and status in the frozen report artifact. Paid report interpretation may interpret all fetched tab data in the artifact; the public AI Summary tab remains an overview-only summary.
 - Enforce paid/authenticated-only invocation, tier-safe inputs, timeout/bounded retry/idempotency, visible failure, and prompt/output safety tests. AI must never invent missing facts or issue legal, financial, credit, or risk verdicts.
 - Implement Companies House refund-required and non-critical partial-report behavior.
 - Alert admin and test report immutability.

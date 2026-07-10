@@ -4,7 +4,7 @@
 
 InvoiceGuard is a UK company-intelligence platform for SMEs, freelancers, agencies, and contractors who need to check a company before deciding whether to work with it.
 
-The active commercial build is Phase A: search for a UK company, review a Companies House-only free preview, register or sign in, purchase one of four credit-pack products, and receive a frozen, timestamped report assembled from public and paid sources. Every paid report includes full report entitlements and an AI interpretation generated with `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Guest purchases are not supported.
+The active commercial build is Phase A: search for a UK company, review a free Companies House company workspace, register or sign in, purchase one of four credit-pack products, and receive paid-only CCJ, Fair Payment Code, and AI interpretation access where entitled. Companies House is a free source for company overview, filing history, charges, officers, and insolvency tabs. Every paid report includes AI interpretation generated with `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Guest purchases are not supported.
 
 Invoice chasing and late-payment recovery belong to a future phase.
 
@@ -23,9 +23,11 @@ InvoiceGuard does not issue credit scores, approve or reject companies, or provi
 ```text
 /                                      -> Phase A landing page with direct company search form
 /search?q=                             -> Company search results from Companies House public register
-/company/[houseNumber]/overview        -> Company route shell for Companies House factual overview
-/company/[houseNumber]/{filing-history,ccj,charges,officers,ai-summary,insolvency,fpc}
-                                       -> Locked/not-yet-checked source states
+/company/[houseNumber]/overview        -> Companies House factual overview
+/company/[houseNumber]/{filing-history,charges,officers,insolvency}
+                                       -> Free Companies House tab data
+/company/[houseNumber]/{ccj,fpc}       -> Paid locked/not-yet-checked source states
+/company/[houseNumber]/ai-summary      -> Paid AI overview summary; blurred placeholder for free users
 /api/companies/search                  -> Next.js proxy to Express
 /api/companies/[companyNumber]/free-preview
                                        -> Next.js proxy to Express
@@ -61,8 +63,8 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 1. Visitor searches by registered name or Companies House number from the landing page or search page.
 2. The landing page submits a plain query to `/search?q=...`; no autocomplete or browser-side provider call is used there.
 3. Anonymous visitors are limited to five searches per hashed IP per 24 hours.
-4. Free-tier search and preview call Companies House only. London Gazette, insolvency/disqualified-officer sources, Registry Trust, and AI are never called for free-tier requests.
-5. The UI presents Companies House facts, clearly labels all other checks as not yet checked, and shows the four credit-pack products.
+4. Free-tier company routes call Companies House only, including overview, filing history, charges, officers, and Companies House insolvency endpoints. Registry Trust/CCJs, Fair Payment Code, non-Companies-House paid sources, and AI are never called for free-tier requests.
+5. The UI presents Companies House facts in their relevant tabs, clearly labels CCJs and Fair Payment Code as paid/not yet checked, and shows the four credit-pack products.
 
 ### Purchase and Generation
 
@@ -71,7 +73,7 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 3. The server requires an authenticated Clerk user with a verified primary email, then creates a one-off Stripe Checkout Session.
 4. Stripe webhook signature and event idempotency are verified.
 5. The webhook—not the redirect—creates one pending report owned by that Clerk user and enqueues generation.
-6. The worker fetches fresh entitled provider data, stores snapshots and statuses, generates the bounded AI interpretation, and assembles frozen report data.
+6. The worker fetches fresh entitled paid data, stores snapshots and statuses, generates bounded AI interpretations from the factual report data, and assembles frozen report data.
 7. Companies House failure enters the automatic refund path; other failures produce a visible partial report.
 
 ### Delivery
@@ -89,7 +91,7 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 - Searches without an account within anonymous limits.
 - Selects the correct Companies House entity before purchase.
-- Sees only Companies House results before payment.
+- Sees Companies House overview, filing history, charges, officers, and insolvency data before payment.
 - Must register or sign in before checkout and cannot purchase as a guest.
 
 ### Authenticated Business User
@@ -106,11 +108,10 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 ### External Providers
 
-- Companies House supplies canonical identity and core company records.
-- London Gazette supplies strike-off and winding-up notices.
-- The configured insolvency/disqualified-officer route supplies paid-report flags when entitled.
+- Companies House supplies canonical identity, filing history, registered charges, officers, and company insolvency records as free source data.
 - Registry Trust supplies paid CCJ data only after payment.
-- Fair Payment Code is a paid-report source when implemented and is never called during free preview.
+- Fair Payment Code is a paid-report source when implemented and is never called for free-tier requests.
+- AI summaries are paid-only interpretation features. The AI Summary tab summarizes the Companies House overview data; other paid AI interpretation surfaces may interpret the factual data fetched for their relevant tabs.
 
 ---
 
@@ -118,7 +119,7 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 | Product | Price | Scope |
 | --- | ---: | --- |
-| Free Preview | GBP 0 | Companies House company identity, status, incorporation, industry, partial address, and active director count. No other provider or AI call. |
+| Free Preview | GBP 0 | Companies House overview, filing history, registered charges, officers, and Companies House insolvency data. No CCJ, Fair Payment Code, or AI call. |
 | Single Report | GBP 20.00 | One full report credit. |
 | Starter Pack | GBP 54.00 | Three full report credits. |
 | Business Pack | GBP 80.00 | Five full report credits. |
@@ -126,13 +127,13 @@ Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptio
 
 The public pricing section is the authoritative product display for these four credit packs. The database and API store the matching product codes `single_report`, `starter_pack`, `business_pack`, and `agency_pack` with integer pence prices 2000, 5400, 8000, and 14000. All four products currently grant the same full-report source entitlements; pack size changes credit quantity and price, not report depth.
 
-The AI interpretation is mandatory Phase A scope for paid reports. It uses `claude-haiku-4-5-20251001` with `max_tokens: 1500`, interprets only frozen factual report data, and must remain clearly labelled as an interpretation rather than legal, credit, or financial advice. `ENABLE_FLAG_SUMMARY` continues to govern the separate legacy approved-template flag summary and defaults to `false`.
+The AI interpretation is mandatory Phase A scope for paid reports. It uses `claude-haiku-4-5-20251001` with `max_tokens: 1500`, interprets only frozen factual report data, and must remain clearly labelled as an interpretation rather than legal, credit, or financial advice. The `/ai-summary` company tab is a paid overview summary: it summarizes the Companies House overview data only. Paid report AI interpretation may also summarize or interpret the factual data fetched for filing history, charges, officers, insolvency, CCJs, and Fair Payment Code where those sections are available. `ENABLE_FLAG_SUMMARY` continues to govern the separate legacy approved-template flag summary and defaults to `false`.
 
 ### Free Preview Presentation
 
-Always show registered name, company number, status, incorporation date and age, registered town/county, active-director count, Court Records prompt, and paid product options.
+Always show registered name, company number, status, incorporation date and age, registered town/county, active-director count, Companies House filing history, registered charges, officers, insolvency tab access, Court Records prompt, AI Summary paid placeholder, and paid product options.
 
-The free preview makes no adverse or clean conclusion from Gazette, insolvency, disqualification, court, or other paid sources because they are not queried. Those sources are shown as not yet checked. Companies House failure must not be represented as a clean check.
+The free preview makes no adverse or clean conclusion from court records, Fair Payment Code, AI, or other paid sources because they are not queried. CCJs and Fair Payment Code are shown as not yet checked/paid. The AI Summary tab shows a blurred paid-feature placeholder for free users rather than generated text. Companies House failure must not be represented as a clean check.
 
 ### Paid Data Freshness and Failure
 
@@ -151,10 +152,11 @@ In scope:
 
 - Company search, free preview, and anonymous rate limiting.
 - One-off credit-pack products and Stripe payment.
-- Paid-only Registry Trust boundary.
+- Free Companies House tab data for overview, filing history, charges, officers, and insolvency.
+- Paid-only Registry Trust/CCJ boundary.
 - BullMQ report generation, provider snapshots, and partial reports.
 - Authenticated owner-only delivery, Postmark notifications, and artifact-driven PDF access.
-- Paid-report AI interpretation using the fixed Claude model and output limit.
+- Paid-only AI interpretation using the fixed Claude model and output limit, including a paid overview summary tab.
 - Mandatory disclaimer, issue reporting, approved copy templates, and Fair Payment Code refresh.
 - Clerk-protected admin operations, refunds, conversion analytics, and maintenance jobs.
 
@@ -205,7 +207,7 @@ Phase A measures searches, selected companies, checkout starts, paid/delivered r
 ## Success and Launch Criteria
 
 - Users can identify the correct company and understand checked versus unchecked sources.
-- Registry Trust is technically unreachable from free preview.
+- Registry Trust/CCJs, Fair Payment Code, and AI are technically unreachable from free preview and free company tabs.
 - A payment creates exactly one report through the webhook path.
 - Paid reports use fresh entitled data and expose provider failures.
 - Owner access, admin authorization, refunds, and report immutability are secure and tested.
