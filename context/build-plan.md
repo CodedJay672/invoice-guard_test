@@ -126,6 +126,8 @@ Verification: deterministic fixtures for populated/empty/failure states per tab;
 
 ### 12D — Logic/Data: Companies House Tab Data
 
+Status: **Complete 2026-07-10**.
+
 Depends on: **12C — UI/Mock Verified**.
 
 - Add/confirm normalized Companies House contracts for profile/overview, registered office address, filing history, charges, officers, and insolvency.

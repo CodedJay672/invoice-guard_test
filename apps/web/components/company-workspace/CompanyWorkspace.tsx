@@ -46,6 +46,7 @@ type CompanyWorkspaceProps = {
   houseNumber: string;
   fixture: CompanyWorkspaceFixture;
   previewResult: PreviewRequestResult;
+  fixtureMode: boolean;
 };
 
 export function CompanyWorkspace({
@@ -53,13 +54,18 @@ export function CompanyWorkspace({
   houseNumber,
   fixture,
   previewResult,
+  fixtureMode,
 }: CompanyWorkspaceProps) {
   const company =
-    previewResult.status === "success" ? previewResult.preview.company : fixtureCompany;
+    previewResult.status === "success"
+      ? previewResult.preview.company
+      : fixtureMode
+        ? fixtureCompany
+        : undefined;
 
   return (
     <main className="min-h-svh bg-page text-content">
-      <CompanyMasthead company={company} previewResult={previewResult} />
+      {company ? <CompanyMasthead company={company} previewResult={previewResult} /> : null}
       <CompanyTabs activeTab={activeTab} houseNumber={houseNumber} />
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         {previewResult.status === "failed" ? (
@@ -67,12 +73,40 @@ export function CompanyWorkspace({
             <CircleAlert aria-hidden="true" />
             <AlertTitle>Company overview could not be refreshed</AlertTitle>
             <AlertDescription>
-              {previewResult.message} Fixture content below is for the 12C UI state only.
+              {previewResult.message} No company identity or unchecked facts are shown.
             </AlertDescription>
           </Alert>
         ) : null}
         <SourceStatusCard source={fixture.source} />
         <TabPanel fixture={fixture} />
+        {fixture.pagination && fixture.pagination.totalPages > 1 ? (
+          <nav aria-label="Tab result pages" className="flex items-center justify-between gap-4">
+            <Link
+              className={cn(
+                "text-sm font-semibold text-brand-teal",
+                fixture.pagination.page <= 1 && "pointer-events-none opacity-50",
+              )}
+              aria-disabled={fixture.pagination.page <= 1}
+              href={`/company/${houseNumber}/${activeTab}?page=${Math.max(1, fixture.pagination.page - 1)}`}
+            >
+              Previous
+            </Link>
+            <span className="text-sm text-content-muted">
+              Page {fixture.pagination.page} of {fixture.pagination.totalPages}
+            </span>
+            <Link
+              className={cn(
+                "text-sm font-semibold text-brand-teal",
+                fixture.pagination.page >= fixture.pagination.totalPages &&
+                "pointer-events-none opacity-50",
+              )}
+              aria-disabled={fixture.pagination.page >= fixture.pagination.totalPages}
+              href={`/company/${houseNumber}/${activeTab}?page=${Math.min(fixture.pagination.totalPages, fixture.pagination.page + 1)}`}
+            >
+              Next
+            </Link>
+          </nav>
+        ) : null}
       </section>
     </main>
   );
@@ -308,10 +342,10 @@ function FactsPanel({ fixture, icon: Icon }: FactsPanelProps) {
 
 function FactGrid({ facts }: { facts: WorkspaceFact[] }) {
   return (
-    <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <dl className="grid gap-3 grid-cols-1">
       {facts.map((fact) => (
-        <div key={fact.label} className="rounded-md border border-line bg-surface-subtle p-3">
-          <dt className="mb-1 text-xs font-semibold text-content-muted uppercase">{fact.label}</dt>
+        <div key={fact.label} className="w-full rounded-md border bg-transparent p-3">
+          <dt className="mb-1 text-xs font-medium text-content-muted uppercase">{fact.label}</dt>
           <dd className="text-sm font-semibold break-words text-content">{fact.value}</dd>
         </div>
       ))}
@@ -362,8 +396,9 @@ function ChargesPanel({ fixture }: TabPanelProps) {
 
   return (
     <RecordCard title={fixture.title} description={fixture.description} icon={Landmark}>
+      {fixture.summary ? <p className="text-sm text-content-muted">{fixture.summary}</p> : null}
       {charges.length ? (
-        <div className="grid gap-3">
+        <div className="grid gap-4">
           {charges.map((charge) => (
             <ChargeCard key={`${charge.createdOn}-${charge.personsEntitled}`} charge={charge} />
           ))}
@@ -371,28 +406,59 @@ function ChargesPanel({ fixture }: TabPanelProps) {
       ) : (
         <EmptyState />
       )}
+      <LockedInterpretationPanel fixture={fixture} />
     </RecordCard>
   );
 }
 
 function ChargeCard({ charge }: { charge: ChargeRecord }) {
+  const isOutstanding = charge.status.toLowerCase().includes("outstanding");
   return (
-    <article className="rounded-lg border border-line bg-surface p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold text-content">{charge.classification}</h3>
-          <p className="mt-1 text-sm text-content-muted">{charge.description}</p>
-        </div>
-        <Badge variant={charge.status === "Satisfied" ? "positive" : "caution"}>
-          {charge.status}
-        </Badge>
+    <article
+      className={cn(
+        "overflow-hidden rounded-lg border bg-surface shadow-sm",
+        isOutstanding ? "border-critical" : "border-line",
+      )}
+    >
+      <div
+        className={cn(
+          "flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3",
+          isOutstanding
+            ? "border-critical bg-critical-surface text-critical-content"
+            : "border-line bg-surface-subtle text-content",
+        )}
+      >
+        <h3 className="font-semibold">{charge.classification}</h3>
+        {charge.chargeCode ? (
+          <span className="font-mono text-xs text-content-muted">{charge.chargeCode}</span>
+        ) : null}
       </div>
-      <FactGrid
-        facts={[
-          { label: "Created", value: formatDisplayDate(charge.createdOn) },
-          { label: "Persons entitled", value: charge.personsEntitled },
-        ]}
-      />
+      <div className="grid gap-4 p-4">
+        <FactGrid
+          facts={[
+            { label: "Charge holder", value: charge.personsEntitled },
+            { label: "Status", value: sentenceCase(charge.status) },
+            { label: "Created", value: formatDisplayDate(charge.createdOn) },
+            { label: "Delivered to CH", value: formatDisplayDate(charge.deliveredOn) },
+          ]}
+        />
+        {charge.tags?.length ? (
+          <div>
+            <p className="mb-2 text-xs font-semibold text-content-muted uppercase">
+              Charge description
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {charge.tags.map((tag) => (
+                <Badge key={tag} variant="caution">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-content-muted">{charge.description}</p>
+        )}
+      </div>
     </article>
   );
 }
@@ -402,39 +468,60 @@ function OfficersPanel({ fixture }: TabPanelProps) {
 
   return (
     <RecordCard title={fixture.title} description={fixture.description} icon={Users}>
+      {fixture.summary ? <p className="text-sm text-content-muted">{fixture.summary}</p> : null}
       {officers.length ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {officers.map((officer) => (
-            <OfficerCard key={`${officer.name}-${officer.appointedOn}`} officer={officer} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          {officers.map((officer, idx) => (
+            <OfficerCard key={`${officer.name}-${officer.appointedOn}-${idx}`} officer={officer} />
           ))}
         </div>
       ) : (
         <EmptyState />
       )}
+      <LockedInterpretationPanel fixture={fixture} />
     </RecordCard>
   );
 }
 
 function OfficerCard({ officer }: { officer: OfficerRecord }) {
   return (
-    <article className="rounded-lg border border-line bg-surface p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <article className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm">
+      <div
+        className={cn(
+          "flex flex-wrap items-start justify-between gap-3 border-b px-4 py-3",
+          officer.resignedOn
+            ? "border-line bg-surface-subtle"
+            : "border-positive bg-positive-surface",
+        )}
+      >
         <div className="min-w-0">
           <h3 className="font-semibold break-words text-content">{officer.name}</h3>
-          <p className="mt-1 text-sm text-content-muted">{officer.role}</p>
         </div>
         <Badge variant={officer.resignedOn ? "outline" : "positive"}>
           {officer.resignedOn ? "Resigned" : "Active"}
         </Badge>
       </div>
-      <FactGrid
-        facts={[
-          { label: "Appointed", value: formatDisplayDate(officer.appointedOn) },
-          { label: "Resigned", value: formatDisplayDate(officer.resignedOn) },
-          { label: "Occupation", value: officer.occupation ?? "Not listed" },
-          { label: "Residence", value: officer.residence ?? "Not listed" },
-        ]}
-      />
+      <div className="grid gap-4 p-4">
+        <FactGrid
+          facts={[
+            { label: "Role", value: officer.role },
+            { label: "Appointed", value: formatDisplayDate(officer.appointedOn) },
+            { label: "Date of birth", value: officer.dateOfBirth ?? "Not listed" },
+            { label: "Nationality", value: officer.nationality ?? "Not listed" },
+            { label: "Country of residence", value: officer.residence ?? "Not listed" },
+            { label: "Resigned", value: formatDisplayDate(officer.resignedOn) },
+          ]}
+        />
+        {officer.identityVerificationDueOn ? (
+          <Alert variant="caution">
+            <CircleAlert aria-hidden="true" />
+            <AlertTitle>ID Verification due</AlertTitle>
+            <AlertDescription>
+              {formatDisplayDate(officer.identityVerificationDueOn)}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -445,7 +532,7 @@ function InsolvencyPanel({ fixture }: TabPanelProps) {
   return (
     <RecordCard title={fixture.title} description={fixture.description} icon={Scale}>
       {cases.length ? (
-        <div className="grid gap-3">
+        <div className="grid gap-4">
           {cases.map((item) => (
             <InsolvencyCaseCard key={`${item.type}-${item.startedOn}`} item={item} />
           ))}
@@ -453,26 +540,50 @@ function InsolvencyPanel({ fixture }: TabPanelProps) {
       ) : (
         <EmptyState />
       )}
+      <LockedInterpretationPanel fixture={fixture} />
     </RecordCard>
   );
 }
 
 function InsolvencyCaseCard({ item }: { item: InsolvencyCaseRecord }) {
   return (
-    <article className="rounded-lg border border-line bg-surface p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold text-content">{item.type}</h3>
-          <p className="mt-1 text-sm text-content-muted">{item.notes}</p>
-        </div>
-        <Badge variant="caution">{item.status}</Badge>
+    <article className="overflow-hidden rounded-lg border border-critical bg-surface shadow-sm">
+      <div className="border-b border-critical bg-critical-surface px-4 py-3 text-critical-content">
+        <h3 className="font-semibold text-content">{item.type}</h3>
       </div>
-      <FactGrid
-        facts={[
-          { label: "Started", value: formatDisplayDate(item.startedOn) },
-          { label: "Practitioner", value: item.practitioner },
-        ]}
-      />
+      <div className="grid gap-4 p-4">
+        <FactGrid
+          facts={[
+            { label: "Winding up commenced", value: formatDisplayDate(item.startedOn) },
+            { label: "Process type", value: item.type },
+            { label: "Status", value: sentenceCase(item.status) },
+          ]}
+        />
+        <div>
+          <p className="mb-2 text-xs font-semibold text-content-muted uppercase">
+            Insolvency practitioners
+          </p>
+          {item.practitioners?.length ? (
+            <div className="grid gap-2">
+              {item.practitioners.map((practitioner) => (
+                <div
+                  key={`${practitioner.name}-${practitioner.appointedOn ?? ""}`}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-surface-subtle px-3 py-2"
+                >
+                  <span className="font-semibold text-content">{practitioner.name}</span>
+                  <span className="text-sm text-content-muted">
+                    {practitioner.appointedOn
+                      ? `Appointed ${formatDisplayDate(practitioner.appointedOn)}`
+                      : (practitioner.role ?? "Appointment date not listed")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-content-muted">{item.practitioner}</p>
+          )}
+        </div>
+      </div>
     </article>
   );
 }
@@ -496,8 +607,30 @@ function RecordCard({ title, description, icon: Icon, children }: RecordCardProp
           </div>
         </div>
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="grid gap-4">{children}</CardContent>
     </Card>
+  );
+}
+
+function LockedInterpretationPanel({ fixture }: TabPanelProps) {
+  const placeholder = fixture.lockedInterpretation;
+  if (!placeholder) return null;
+
+  return (
+    <div className="rounded-lg border border-line bg-surface-subtle p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Badge variant="outline">AI</Badge>
+        <p className="text-sm font-semibold text-content">{placeholder.title}</p>
+      </div>
+      <p className="mb-3 text-sm text-content-muted">{placeholder.body}</p>
+      <div className="space-y-2 blur-sm select-none" aria-hidden="true">
+        {placeholder.blurredLines.map((line) => (
+          <p key={line} className="rounded-md border border-line bg-surface px-3 py-2 text-sm">
+            {line}
+          </p>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -578,4 +711,9 @@ function formatDisplayDate(value: string | undefined): string {
     month: "short",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function sentenceCase(value: string): string {
+  if (!value) return "Not listed";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }

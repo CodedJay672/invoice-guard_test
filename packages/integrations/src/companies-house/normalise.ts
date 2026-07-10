@@ -5,6 +5,7 @@ import type {
   CompaniesHouseCompanyProfile,
   CompaniesHouseCompanySummary,
   CompaniesHouseFilingHistoryFoundation,
+  CompaniesHousePagination,
   CompaniesHouseOfficerCount,
   CompaniesHouseOfficers,
   CompaniesHouseInsolvencyFoundation,
@@ -75,7 +76,11 @@ interface RawCompaniesHouseProfile {
 
 interface RawCompaniesHouseOfficerResponse {
   active_count?: unknown;
+  resigned_count?: unknown;
   items?: unknown;
+  items_per_page?: unknown;
+  start_index?: unknown;
+  total_results?: unknown;
 }
 
 interface RawCompaniesHouseOfficer {
@@ -83,15 +88,70 @@ interface RawCompaniesHouseOfficer {
   officer_role?: unknown;
   appointed_on?: unknown;
   resigned_on?: unknown;
+  occupation?: unknown;
+  country_of_residence?: unknown;
+  nationality?: unknown;
+  date_of_birth?: {
+    month?: unknown;
+    year?: unknown;
+  };
+  identity_verification_details?: {
+    appointment_verification_end_on?: unknown;
+    appointment_verification_start_on?: unknown;
+    appointment_verification_statement_due_on?: unknown;
+    identity_verified_on?: unknown;
+    preferred_name?: unknown;
+  };
 }
 
 interface RawCompaniesHouseListResponse {
   items?: unknown;
+  items_per_page?: unknown;
+  start_index?: unknown;
+  total_count?: unknown;
+  total_results?: unknown;
 }
 
 interface RawCompaniesHouseInsolvencyResponse {
   cases?: unknown;
   status?: unknown;
+}
+
+interface RawCompaniesHouseFiling {
+  date?: unknown;
+  type?: unknown;
+  description?: unknown;
+  category?: unknown;
+  pages?: unknown;
+  transaction_id?: unknown;
+}
+
+interface RawCompaniesHouseCharge {
+  created_on?: unknown;
+  delivered_on?: unknown;
+  satisfied_on?: unknown;
+  status?: unknown;
+  charge_code?: unknown;
+  classification?: unknown;
+  persons_entitled?: unknown;
+  particulars?: unknown;
+}
+
+interface RawCompaniesHouseInsolvencyCase {
+  type?: unknown;
+  number?: unknown;
+  status?: unknown;
+  dates?: unknown;
+  practitioners?: unknown;
+  notes?: unknown;
+}
+
+interface RawCompaniesHouseInsolvencyPractitioner {
+  name?: unknown;
+  role?: unknown;
+  appointed_on?: unknown;
+  ceased_to_act_on?: unknown;
+  address?: unknown;
 }
 
 function asString(value: unknown): string | undefined {
@@ -121,6 +181,30 @@ function asNumber(value: unknown): number | undefined {
 
 function asBoolean(value: unknown): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function pagination(
+  response: RawCompaniesHouseListResponse,
+  page: number,
+  limit: number,
+): CompaniesHousePagination {
+  const totalResults = asNumber(response.total_results) ?? asNumber(response.total_count) ?? 0;
+  return {
+    page,
+    limit,
+    totalResults,
+    totalPages: totalResults === 0 ? 0 : Math.ceil(totalResults / limit),
+  };
+}
+
+function normaliseOptionalAddress(
+  value: unknown,
+): CompaniesHouseRegisteredOfficeAddress | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  return normaliseAddress(value as RawCompaniesHouseAddress);
 }
 
 function normaliseAddress(rawAddress: RawCompaniesHouseAddress | undefined): {
@@ -224,7 +308,39 @@ export function normaliseCompaniesHouseInsolvencyResponse(
 
   return createProviderSuccess(provider, {
     companiesHouseNumber: companyNumber,
-    cases: Array.isArray(response.cases) ? response.cases : [],
+    cases: Array.isArray(response.cases)
+      ? response.cases.map((value) => {
+          const item = value as RawCompaniesHouseInsolvencyCase;
+          const dates = Array.isArray(item.dates)
+            ? item.dates.map((entry) => entry as { date?: unknown; type?: unknown })
+            : [];
+          return {
+            type: asString(item.type),
+            number: asString(item.number),
+            status: asString(item.status) ?? asString(response.status),
+            startedOn: asString(dates[0]?.date),
+            practitioners: Array.isArray(item.practitioners)
+              ? item.practitioners
+                  .map((entry) => {
+                    const practitioner = entry as RawCompaniesHouseInsolvencyPractitioner;
+                    return {
+                      name: asString(practitioner.name),
+                      role: asString(practitioner.role),
+                      appointedOn: asString(practitioner.appointed_on),
+                      ceasedToActOn: asString(practitioner.ceased_to_act_on),
+                      address: normaliseOptionalAddress(
+                        Array.isArray(practitioner.address)
+                          ? practitioner.address[0]
+                          : practitioner.address,
+                      ),
+                    };
+                  })
+                  .filter((practitioner) => practitioner.name !== undefined)
+              : [],
+            notes: asStringArray(item.notes),
+          };
+        })
+      : [],
     status: asString(response.status),
   });
 }
@@ -328,8 +444,11 @@ export function normaliseCompaniesHouseOfficerCountResponse(
 export function normaliseCompaniesHouseOfficersResponse(
   companyNumber: string,
   payload: unknown,
+  page = 1,
+  limit = 25,
 ): ProviderResult<CompaniesHouseOfficers> {
-  const items = (payload as RawCompaniesHouseOfficerResponse).items;
+  const rawResponse = payload as RawCompaniesHouseOfficerResponse;
+  const items = rawResponse.items;
   if (!Array.isArray(items)) {
     return createProviderFailure(provider, {
       code: "integration_invalid_response",
@@ -347,30 +466,96 @@ export function normaliseCompaniesHouseOfficersResponse(
         role: asString(item.officer_role),
         appointedOn: asString(item.appointed_on),
         resignedOn: asString(item.resigned_on),
+        occupation: asString(item.occupation),
+        countryOfResidence: asString(item.country_of_residence),
+        nationality: asString(item.nationality),
+        dateOfBirth: item.date_of_birth
+          ? {
+              month: asNumber(item.date_of_birth.month),
+              year: asNumber(item.date_of_birth.year),
+            }
+          : undefined,
+        identityVerificationDetails: item.identity_verification_details
+          ? {
+              appointmentVerificationEndOn: asString(
+                item.identity_verification_details.appointment_verification_end_on,
+              ),
+              appointmentVerificationStartOn: asString(
+                item.identity_verification_details.appointment_verification_start_on,
+              ),
+              appointmentVerificationStatementDueOn: asString(
+                item.identity_verification_details.appointment_verification_statement_due_on,
+              ),
+              identityVerifiedOn: asString(item.identity_verification_details.identity_verified_on),
+              preferredName: asString(item.identity_verification_details.preferred_name),
+            }
+          : undefined,
       })),
+    activeCount: asNumber(rawResponse.active_count),
+    resignedCount: asNumber(rawResponse.resigned_count),
+    pagination: pagination(rawResponse, page, limit),
   });
 }
 
 export function normaliseCompaniesHouseFilingHistoryResponse(
   companyNumber: string,
   payload: unknown,
+  page = 1,
+  limit = 25,
 ): ProviderResult<CompaniesHouseFilingHistoryFoundation> {
   const items = (payload as RawCompaniesHouseListResponse | undefined)?.items;
 
   return createProviderSuccess(provider, {
     companiesHouseNumber: companyNumber,
-    filings: Array.isArray(items) ? items : [],
+    filings: Array.isArray(items)
+      ? items.map((value) => {
+          const item = value as RawCompaniesHouseFiling;
+          return {
+            date: asString(item.date),
+            type: asString(item.type),
+            description: asString(item.description),
+            category: asString(item.category),
+            pages: asNumber(item.pages),
+            transactionId: asString(item.transaction_id),
+          };
+        })
+      : [],
+    pagination: pagination(payload as RawCompaniesHouseListResponse, page, limit),
   });
 }
 
 export function normaliseCompaniesHouseChargesResponse(
   companyNumber: string,
   payload: unknown,
+  page = 1,
+  limit = 25,
 ): ProviderResult<CompaniesHouseChargesFoundation> {
   const items = (payload as RawCompaniesHouseListResponse | undefined)?.items;
 
   return createProviderSuccess(provider, {
     companiesHouseNumber: companyNumber,
-    charges: Array.isArray(items) ? items : [],
+    charges: Array.isArray(items)
+      ? items.map((value) => {
+          const item = value as RawCompaniesHouseCharge;
+          const classification = item.classification as { description?: unknown } | undefined;
+          const particulars = item.particulars as { description?: unknown } | undefined;
+          const satisfiedOn = asString(item.satisfied_on);
+          return {
+            createdOn: asString(item.created_on),
+            deliveredOn: asString(item.delivered_on),
+            satisfiedOn,
+            status: asString(item.status) ?? (satisfiedOn ? "satisfied" : "outstanding"),
+            classification: asString(classification?.description),
+            personsEntitled: Array.isArray(item.persons_entitled)
+              ? item.persons_entitled
+                  .map((entry) => asString((entry as { name?: unknown }).name))
+                  .filter((v): v is string => Boolean(v))
+              : [],
+            description: asString(particulars?.description),
+            chargeCode: asString(item.charge_code),
+          };
+        })
+      : [],
+    pagination: pagination(payload as RawCompaniesHouseListResponse, page, limit),
   });
 }

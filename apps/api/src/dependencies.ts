@@ -21,6 +21,8 @@ import {
   InMemorySearchLogRepository,
 } from "./companies/repository.js";
 import { CompanyService } from "./companies/service.js";
+import { InMemoryCompanyTabCache, RedisCompanyTabCache } from "./companies/tab-cache.js";
+import { CompanyTabService } from "./companies/tab-service.js";
 import { DrizzleCheckoutRepository } from "./checkout/repository.js";
 import { CheckoutService } from "./checkout/service.js";
 import { StripeSdkGateway } from "./checkout/stripe-gateway.js";
@@ -41,6 +43,7 @@ function isPdfComplianceResolved(config: AppConfig): boolean {
 
 export interface ApiDependencies {
   companyService: CompanyService;
+  companyTabService?: CompanyTabService | undefined;
   anonymousSearchRateLimiter: InMemoryAnonymousSearchRateLimiter | RedisAnonymousSearchRateLimiter;
   requestIdentityResolver: RequestIdentityResolver;
   checkoutService?: CheckoutService | undefined;
@@ -65,6 +68,11 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
       companyRepository: new DrizzleCompanyRepository(db),
       searchLogRepository: new DrizzleSearchLogRepository(db),
       reportProductRepository,
+    });
+    const companyTabService = new CompanyTabService({
+      companiesHouseClient,
+      companyRepository: new DrizzleCompanyRepository(db),
+      cache: createCompanyTabCache(config),
     });
     const checkoutService =
       config.redisUrl && config.stripeSecretKey && config.stripeWebhookSecret
@@ -94,6 +102,7 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
         : undefined;
     return {
       companyService,
+      companyTabService,
       anonymousSearchRateLimiter: createAnonymousSearchRateLimiter(config),
       requestIdentityResolver: createRequestIdentityResolver({
         webApiSharedSecret: config.webApiSharedSecret,
@@ -105,12 +114,18 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
     };
   }
 
+  const companyRepository = new InMemoryCompanyRepository();
   return {
     companyService: new CompanyService({
       companiesHouseClient,
-      companyRepository: new InMemoryCompanyRepository(),
+      companyRepository,
       searchLogRepository: new InMemorySearchLogRepository(),
       reportProductRepository: new InMemoryReportProductRepository(),
+    }),
+    companyTabService: new CompanyTabService({
+      companiesHouseClient,
+      companyRepository,
+      cache: createCompanyTabCache(config),
     }),
     anonymousSearchRateLimiter: createAnonymousSearchRateLimiter(config),
     requestIdentityResolver: createRequestIdentityResolver({
@@ -118,6 +133,12 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
       searchIpHashSecret: config.searchIpHashSecret,
     }),
   };
+}
+
+function createCompanyTabCache(config: AppConfig): InMemoryCompanyTabCache | RedisCompanyTabCache {
+  return config.redisUrl
+    ? new RedisCompanyTabCache(new Redis(config.redisUrl))
+    : new InMemoryCompanyTabCache();
 }
 
 function createCheckoutService(

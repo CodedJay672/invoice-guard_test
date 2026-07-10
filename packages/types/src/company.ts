@@ -121,3 +121,117 @@ export interface FreePreviewPayload {
   tierCards: FreePreviewTierCardPayload[];
   sourceStatuses: FreePreviewSourceStatus[];
 }
+
+export type FreeCompanyTab = "overview" | "filing-history" | "charges" | "officers" | "insolvency";
+
+export interface FreeCompanyTabSource {
+  provider: "companies_house";
+  checkedAt: string;
+}
+
+export interface FreeCompanyTabPagination {
+  page: number;
+  limit: number;
+  totalResults: number;
+  totalPages: number;
+}
+
+export interface FreeCompanyFiling {
+  date?: string | undefined;
+  type?: string | undefined;
+  description?: string | undefined;
+  category?: string | undefined;
+  pages?: number | undefined;
+  transactionId?: string | undefined;
+}
+
+export interface FreeCompanyCharge {
+  createdOn?: string | undefined;
+  deliveredOn?: string | undefined;
+  satisfiedOn?: string | undefined;
+  status?: string | undefined;
+  classification?: string | undefined;
+  personsEntitled: string[];
+  description?: string | undefined;
+  chargeCode?: string | undefined;
+}
+
+export interface FreeCompanyOfficer {
+  name: string;
+  role?: string | undefined;
+  appointedOn?: string | undefined;
+  resignedOn?: string | undefined;
+  occupation?: string | undefined;
+  countryOfResidence?: string | undefined;
+  nationality?: string | undefined;
+  dateOfBirth?:
+    | {
+        month?: number | undefined;
+        year?: number | undefined;
+      }
+    | undefined;
+  identityVerificationDetails?:
+    | {
+        appointmentVerificationEndOn?: string | undefined;
+        appointmentVerificationStartOn?: string | undefined;
+        appointmentVerificationStatementDueOn?: string | undefined;
+        identityVerifiedOn?: string | undefined;
+        preferredName?: string | undefined;
+      }
+    | undefined;
+}
+
+export interface FreeCompanyInsolvencyCase {
+  type?: string | undefined;
+  number?: string | undefined;
+  status?: string | undefined;
+  startedOn?: string | undefined;
+  practitioners: FreeCompanyInsolvencyPractitioner[];
+  notes: string[];
+}
+
+export interface FreeCompanyInsolvencyPractitioner {
+  name?: string | undefined;
+  role?: string | undefined;
+  appointedOn?: string | undefined;
+  ceasedToActOn?: string | undefined;
+  address?: CompanyAddressPayload | undefined;
+}
+
+export type FreeCompanyTabPayload =
+  | {
+      tab: "overview";
+      companyNumber: string;
+      source: FreeCompanyTabSource;
+      company: CompanyPayload;
+    }
+  | {
+      tab: "filing-history";
+      companyNumber: string;
+      source: FreeCompanyTabSource;
+      filings: FreeCompanyFiling[];
+      pagination: FreeCompanyTabPagination;
+    }
+  | {
+      tab: "charges";
+      companyNumber: string;
+      source: FreeCompanyTabSource;
+      charges: FreeCompanyCharge[];
+      pagination: FreeCompanyTabPagination;
+    }
+  | {
+      tab: "officers";
+      companyNumber: string;
+      source: FreeCompanyTabSource;
+      officers: FreeCompanyOfficer[];
+      activeCount?: number | undefined;
+      resignedCount?: number | undefined;
+      pagination: FreeCompanyTabPagination;
+    }
+  | {
+      tab: "insolvency";
+      companyNumber: string;
+      source: FreeCompanyTabSource;
+      cases: FreeCompanyInsolvencyCase[];
+      status?: string | undefined;
+    };

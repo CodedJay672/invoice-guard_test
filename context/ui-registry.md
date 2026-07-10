@@ -133,20 +133,35 @@ interactive state belongs to the smallest practical client leaf.
   `apps/web/components/company-workspace/MobileTabSelect.tsx`,
   `apps/web/components/company-workspace/fixtures.ts`, and
   `apps/web/app/(landing)/company/[houseNumber]/**/page.tsx`.
-- Last updated: 2026-07-10.
+- Last updated: 2026-07-10 (12D design refinement).
 - Purpose: keep public company navigation available while making free Companies House tabs and paid-only source boundaries explicit.
 - Pattern: reusable company workspace shell with `bg-page`, `bg-surface`, `border-line`,
   semantic Badge/Alert/Card primitives, shared masthead, route-based desktop tabs, and a native
   mobile selector.
-- States: Companies House overview, filing history, charges, officers, and insolvency render
-  deterministic populated, empty/no-records, loading, and source-failed fixture states. CCJ and Fair
-  Payment Code render paid/not-yet-checked placeholders. AI Summary renders a paid blurred/skeleton
-  placeholder for free users and states that it summarizes Companies House overview data only.
+- States: Companies House overview, charges, insolvency, officers, and filing history render live
+  Companies House data in production with deterministic populated, empty/no-records, loading, and
+  source-failed fixtures only in development/test. Tab order is Overview, AI Summary, Charges,
+  Insolvency, Officers, Filing History, CCJs, Fair Payment Code. Filing history, charges, and
+  officers use compact server-pagination links with the existing
+  `rounded-md border border-line bg-surface px-3 py-2` navigation pattern and
+  `focus-visible:ring-2 focus-visible:ring-focus`. CCJ and Fair Payment Code render
+  paid/not-yet-checked placeholders. AI Summary renders a paid blurred/skeleton placeholder for free
+  users and states that it summarizes Companies House overview data only.
+- Record cards: Charges, insolvency, and officers use `overflow-hidden rounded-lg border bg-surface
+  shadow-sm`, `p-4` content, and `gap-4` stacks. Outstanding charges and insolvency cases use
+  `border-critical bg-critical-surface text-critical-content`; active officers use
+  `border-positive bg-positive-surface`; resigned officers fall back to
+  `border-line bg-surface-subtle`. Detail rows use the shared fact-grid cells and compact practitioner
+  rows use `rounded-md border border-line bg-surface-subtle px-3 py-2`.
+- Paid interpretation placeholders inside free tabs use `rounded-lg border border-line
+  bg-surface-subtle p-4`; only the teaser lines receive `blur-sm select-none`. Official Companies
+  House facts must remain readable, unblurred, and source-attributed.
 - Accessibility: desktop links use `aria-current="page"` for the active tab; the mobile selector has
   an explicit label and native keyboard behavior. Factual Companies House data is never blurred, and
   no inferred clean/adverse conclusion is rendered from paid sources that were not checked.
-- Fixture guard: `fixture` query states are development/test-only. Production ignores fixture query
-  values and does not expose fake Companies House records before 12D real-data wiring.
+- Fixture guard: `fixture` query states are development/test-only. Production free-tab requests go
+  through the same-origin proxy/DAL and must show a failure state if Companies House fails; no ACME
+  identity or fixture facts may replace a real request.
 
 ### StatusBadge and Source Banner
 

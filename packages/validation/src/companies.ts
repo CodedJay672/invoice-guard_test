@@ -20,6 +20,18 @@ export const companiesHouseNumberSchema = z
   .regex(/^[A-Z0-9]{2,16}$/i, "Companies House number must be 2-16 letters or numbers.")
   .transform((value) => value.toUpperCase());
 
+export const freeCompanyTabSchema = z.enum([
+  "overview",
+  "filing-history",
+  "charges",
+  "officers",
+  "insolvency",
+]);
+export const freeCompanyTabPaginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(25),
+});
+
 export const companyAddressPayloadSchema = z.object({
   addressLine1: z.string().optional(),
   addressLine2: z.string().optional(),
@@ -106,64 +118,61 @@ export const freePreviewSourceStatusSchema = z.discriminatedUnion("status", [
   }),
 ]);
 
-export const freePreviewPayloadSchema: z.ZodType<
-  SharedFreePreviewPayload,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  company: companyPayloadSchema,
-  companyAge: z.string().optional(),
-  notYetCheckedSources: z.array(
-    z.object({
-      source: z.enum([
-        "london_gazette",
-        "insolvency_disqualified_officers",
-        "registry_trust",
-        "fair_payment_code",
-        "ai_interpretation",
-      ]),
+export const freePreviewPayloadSchema: z.ZodType<SharedFreePreviewPayload, z.ZodTypeDef, unknown> =
+  z.object({
+    company: companyPayloadSchema,
+    companyAge: z.string().optional(),
+    notYetCheckedSources: z.array(
+      z.object({
+        source: z.enum([
+          "london_gazette",
+          "insolvency_disqualified_officers",
+          "registry_trust",
+          "fair_payment_code",
+          "ai_interpretation",
+        ]),
+        label: z.string(),
+        status: z.literal("not_yet_checked"),
+        message: z.string(),
+      }),
+    ),
+    courtRecordsPrompt: z.object({
       label: z.string(),
-      status: z.literal("not_yet_checked"),
-      message: z.string(),
-    }),
-  ),
-  courtRecordsPrompt: z.object({
-    label: z.string(),
-    heading: z.string(),
-    body: z.string(),
-    questionLine: z.string(),
-    button: z.string(),
-    smallText: z.string(),
-  }),
-  curiosityCards: z.array(
-    z.object({
-      kind: z.enum(["director_network", "recent_activity"]),
-      heading: z.string().optional(),
-      question: z.string().optional(),
-      blurredAnswer: z.string().optional(),
-      lockTag: z.string().optional(),
+      heading: z.string(),
       body: z.string(),
-      button: z.string().optional(),
-      smallText: z.string().optional(),
+      questionLine: z.string(),
+      button: z.string(),
+      smallText: z.string(),
     }),
-  ),
-  tierCards: z.array(
-    z.object({
-      tier: z.enum([
-        "single_report",
-        "starter_pack",
-        "business_pack",
-        "agency_pack",
-      ]) satisfies z.ZodType<ReportProductCode>,
-      name: z.string(),
-      price: z.string(),
-      includesPdf: z.boolean(),
-      includedItems: z.array(z.string()),
-      cta: z.string(),
-    }),
-  ),
-  sourceStatuses: z.array(freePreviewSourceStatusSchema),
-});
+    curiosityCards: z.array(
+      z.object({
+        kind: z.enum(["director_network", "recent_activity"]),
+        heading: z.string().optional(),
+        question: z.string().optional(),
+        blurredAnswer: z.string().optional(),
+        lockTag: z.string().optional(),
+        body: z.string(),
+        button: z.string().optional(),
+        smallText: z.string().optional(),
+      }),
+    ),
+    tierCards: z.array(
+      z.object({
+        tier: z.enum([
+          "single_report",
+          "starter_pack",
+          "business_pack",
+          "agency_pack",
+        ]) satisfies z.ZodType<ReportProductCode>,
+        name: z.string(),
+        price: z.string(),
+        includesPdf: z.boolean(),
+        includedItems: z.array(z.string()),
+        cta: z.string(),
+      }),
+    ),
+    sourceStatuses: z.array(freePreviewSourceStatusSchema),
+  });
 
 export const companySearchApiResponseSchema = z.object({
   data: z.object({ matches: z.array(companySearchMatchPayloadSchema) }),
@@ -171,6 +180,121 @@ export const companySearchApiResponseSchema = z.object({
 
 export const freePreviewApiResponseSchema = z.object({
   data: z.object({ preview: freePreviewPayloadSchema }),
+});
+
+const freeCompanyTabSourceSchema = z.object({
+  provider: z.literal("companies_house"),
+  checkedAt: z.string(),
+});
+const freeCompanyTabPaginationSchema = z.object({
+  page: z.number().int().min(1),
+  limit: z.number().int().min(1).max(50),
+  totalResults: z.number().int().nonnegative(),
+  totalPages: z.number().int().nonnegative(),
+});
+const optionalString = z.string().optional();
+export const freeCompanyTabPayloadSchema = z.discriminatedUnion("tab", [
+  z.object({
+    tab: z.literal("overview"),
+    companyNumber: z.string(),
+    source: freeCompanyTabSourceSchema,
+    company: companyPayloadSchema,
+  }),
+  z.object({
+    tab: z.literal("filing-history"),
+    companyNumber: z.string(),
+    source: freeCompanyTabSourceSchema,
+    pagination: freeCompanyTabPaginationSchema,
+    filings: z.array(
+      z.object({
+        date: optionalString,
+        type: optionalString,
+        description: optionalString,
+        category: optionalString,
+        pages: z.number().int().nonnegative().optional(),
+        transactionId: optionalString,
+      }),
+    ),
+  }),
+  z.object({
+    tab: z.literal("charges"),
+    companyNumber: z.string(),
+    source: freeCompanyTabSourceSchema,
+    pagination: freeCompanyTabPaginationSchema,
+    charges: z.array(
+      z.object({
+        createdOn: optionalString,
+        deliveredOn: optionalString,
+        satisfiedOn: optionalString,
+        status: optionalString,
+        classification: optionalString,
+        personsEntitled: z.array(z.string()),
+        description: optionalString,
+        chargeCode: optionalString,
+      }),
+    ),
+  }),
+  z.object({
+    tab: z.literal("officers"),
+    companyNumber: z.string(),
+    source: freeCompanyTabSourceSchema,
+    pagination: freeCompanyTabPaginationSchema,
+    activeCount: z.number().int().nonnegative().optional(),
+    resignedCount: z.number().int().nonnegative().optional(),
+    officers: z.array(
+      z.object({
+        name: z.string(),
+        role: optionalString,
+        appointedOn: optionalString,
+        resignedOn: optionalString,
+        occupation: optionalString,
+        countryOfResidence: optionalString,
+        nationality: optionalString,
+        dateOfBirth: z
+          .object({
+            month: z.number().int().min(1).max(12).optional(),
+            year: z.number().int().positive().optional(),
+          })
+          .optional(),
+        identityVerificationDetails: z
+          .object({
+            appointmentVerificationEndOn: optionalString,
+            appointmentVerificationStartOn: optionalString,
+            appointmentVerificationStatementDueOn: optionalString,
+            identityVerifiedOn: optionalString,
+            preferredName: optionalString,
+          })
+          .optional(),
+      }),
+    ),
+  }),
+  z.object({
+    tab: z.literal("insolvency"),
+    companyNumber: z.string(),
+    source: freeCompanyTabSourceSchema,
+    status: optionalString,
+    cases: z.array(
+      z.object({
+        type: optionalString,
+        number: optionalString,
+        status: optionalString,
+        startedOn: optionalString,
+        practitioners: z.array(
+          z.object({
+            name: optionalString,
+            role: optionalString,
+            appointedOn: optionalString,
+            ceasedToActOn: optionalString,
+            address: companyAddressPayloadSchema.optional(),
+          }),
+        ),
+        notes: z.array(z.string()),
+      }),
+    ),
+  }),
+]);
+export const freeCompanyTabApiResponseSchema = z.object({
+  data: z.object({ tab: freeCompanyTabPayloadSchema }),
 });
 
 export const apiErrorResponseSchema = z.object({

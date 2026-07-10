@@ -3,6 +3,10 @@ import test from "node:test";
 
 import { LiveCompaniesHouseClient } from "./live-client.js";
 import {
+  normaliseCompaniesHouseChargesResponse,
+  normaliseCompaniesHouseFilingHistoryResponse,
+  normaliseCompaniesHouseInsolvencyResponse,
+  normaliseCompaniesHouseOfficersResponse,
   normaliseCompaniesHouseProfileResponse,
   normaliseCompaniesHouseSearchResponse,
 } from "./normalise.js";
@@ -122,4 +126,111 @@ void test("maps missing live API key to an auth provider failure", async () => {
 
   assert.equal(result.status, "failed");
   assert.equal(result.errorCode, "integration_auth_error");
+});
+
+void test("normalises paginated filing history, charges, officers, and insolvency tab data", () => {
+  const filings = normaliseCompaniesHouseFilingHistoryResponse(
+    "12345678",
+    {
+      total_count: 2,
+      items: [
+        {
+          transaction_id: "MzAw",
+          type: "AA",
+          description: "accounts-with-accounts-type-full",
+          category: "accounts",
+          date: "2026-01-31",
+          pages: 12,
+        },
+      ],
+    },
+    2,
+    25,
+  );
+  const charges = normaliseCompaniesHouseChargesResponse(
+    "12345678",
+    {
+      total_count: 1,
+      items: [
+        {
+          charge_code: "001",
+          created_on: "2024-04-01",
+          delivered_on: "2024-04-05",
+          satisfied_on: "2025-01-01",
+          classification: { description: "A registered charge" },
+          persons_entitled: [{ name: "Example Bank PLC" }],
+        },
+      ],
+    },
+    1,
+    25,
+  );
+  const officers = normaliseCompaniesHouseOfficersResponse(
+    "12345678",
+    {
+      active_count: 0,
+      resigned_count: 1,
+      total_results: 1,
+      items: [
+        {
+          name: "A VERY LONG OFFICER NAME WITH MULTIPLE GIVEN NAMES AND SUFFIX",
+          officer_role: "director",
+          appointed_on: "2020-01-01",
+          resigned_on: "2024-01-01",
+          occupation: "Engineer",
+          date_of_birth: { month: 4, year: 1981 },
+          nationality: "British",
+          country_of_residence: "England",
+          identity_verification_details: {
+            appointment_verification_statement_due_on: "2025-11-18",
+          },
+        },
+      ],
+    },
+    1,
+    25,
+  );
+  const insolvency = normaliseCompaniesHouseInsolvencyResponse("12345678", {
+    status: "active",
+    cases: [
+      {
+        type: "administration",
+        number: "1",
+        dates: [{ type: "administration-started-on", date: "2025-05-01" }],
+        practitioners: [
+          {
+            name: "Jane Practitioner",
+            role: "practitioner",
+            appointed_on: "2025-05-02",
+            ceased_to_act_on: "2026-01-01",
+          },
+        ],
+        notes: ["Case note"],
+      },
+    ],
+  });
+
+  assert.equal(filings.status, "success");
+  assert.deepEqual(filings.data.pagination, { page: 2, limit: 25, totalResults: 2, totalPages: 1 });
+  assert.equal(filings.data.filings[0]?.pages, 12);
+  assert.equal(charges.status, "success");
+  assert.equal(charges.data.charges[0]?.status, "satisfied");
+  assert.equal(charges.data.charges[0]?.deliveredOn, "2024-04-05");
+  assert.equal(charges.data.charges[0]?.chargeCode, "001");
+  assert.deepEqual(charges.data.charges[0]?.personsEntitled, ["Example Bank PLC"]);
+  assert.equal(officers.status, "success");
+  assert.equal(officers.data.activeCount, 0);
+  assert.equal(officers.data.resignedCount, 1);
+  assert.equal(officers.data.officers[0]?.resignedOn, "2024-01-01");
+  assert.deepEqual(officers.data.officers[0]?.dateOfBirth, { month: 4, year: 1981 });
+  assert.equal(officers.data.officers[0]?.nationality, "British");
+  assert.equal(
+    officers.data.officers[0]?.identityVerificationDetails?.appointmentVerificationStatementDueOn,
+    "2025-11-18",
+  );
+  assert.equal(insolvency.status, "success");
+  assert.equal(insolvency.data.cases[0]?.practitioners[0]?.name, "Jane Practitioner");
+  assert.equal(insolvency.data.cases[0]?.practitioners[0]?.role, "practitioner");
+  assert.equal(insolvency.data.cases[0]?.practitioners[0]?.appointedOn, "2025-05-02");
+  assert.equal(insolvency.data.cases[0]?.practitioners[0]?.ceasedToActOn, "2026-01-01");
 });

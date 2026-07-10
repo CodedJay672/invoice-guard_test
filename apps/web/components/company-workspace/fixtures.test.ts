@@ -12,10 +12,10 @@ import {
 
 const freeTabs: CompanyWorkspaceTab[] = [
   "overview",
-  "filing-history",
   "charges",
-  "officers",
   "insolvency",
+  "officers",
+  "filing-history",
 ];
 
 const paidTabs: CompanyWorkspaceTab[] = ["ccj", "fpc", "ai-summary"];
@@ -23,7 +23,7 @@ const paidTabs: CompanyWorkspaceTab[] = ["ccj", "fpc", "ai-summary"];
 void test("declares every public company workspace tab", () => {
   assert.deepEqual(
     companyWorkspaceTabs.map((tab) => tab.id),
-    ["overview", "filing-history", "charges", "officers", "insolvency", "ccj", "fpc", "ai-summary"],
+    ["overview", "ai-summary", "charges", "insolvency", "officers", "filing-history", "ccj", "fpc"],
   );
 });
 
@@ -59,6 +59,26 @@ void test("provides deterministic records for Companies House-backed fixture tab
   );
 });
 
+void test("surfaces design-visible Companies House fixture fields with paid interpretation locked", () => {
+  const charges = getCompanyWorkspaceFixture("charges", "populated", "test");
+  assert.equal(charges.charges?.[0]?.personsEntitled, "Swishfund LTD");
+  assert.equal(charges.charges?.[0]?.deliveredOn, "2021-08-23");
+  assert.equal(charges.charges?.[0]?.chargeCode, "1266 2009 0001");
+  assert.ok((charges.charges?.[0]?.tags ?? []).includes("Negative pledge"));
+  assert.equal(charges.lockedInterpretation?.title, "InvoiceGuard Interpretation");
+
+  const officers = getCompanyWorkspaceFixture("officers", "populated", "test");
+  assert.equal(officers.officers?.[0]?.dateOfBirth, "May 1985");
+  assert.equal(officers.officers?.[0]?.nationality, "British");
+  assert.equal(officers.officers?.[0]?.identityVerificationDueOn, "2025-11-18");
+  assert.equal(officers.lockedInterpretation?.title, "InvoiceGuard Interpretation");
+
+  const insolvency = getCompanyWorkspaceFixture("insolvency", "populated", "test");
+  assert.equal(insolvency.insolvencyCases?.[0]?.type, "Creditors Voluntary Liquidation");
+  assert.equal(insolvency.insolvencyCases?.[0]?.practitioners?.[0]?.appointedOn, "2024-02-26");
+  assert.equal(insolvency.lockedInterpretation?.title, "InvoiceGuard Interpretation");
+});
+
 void test("keeps CCJ, Fair Payment Code, and AI Summary as paid placeholders", () => {
   for (const tab of paidTabs) {
     const fixture = getCompanyWorkspaceFixture(tab, "populated", "development");
@@ -79,10 +99,9 @@ void test("guards fixture query states in production", () => {
   assert.equal(resolveCompanyWorkspaceFixtureName(["failed"], "development"), undefined);
   assert.equal(resolveCompanyWorkspaceFixtureName("failed", "development"), "failed");
 
-  const productionFixture = getCompanyWorkspaceFixture("charges", "populated", "production");
-  assert.equal(productionFixture.charges?.length, 0);
-  assert.equal(productionFixture.pendingPlaceholder?.title, "Companies House tab data pending");
-  assert.doesNotMatch(JSON.stringify(productionFixture), /Example Bank PLC/);
+  const productionFallback = getCompanyWorkspaceFixture("charges", undefined, "production");
+  assert.equal(productionFallback.charges?.length, 0);
+  assert.doesNotMatch(JSON.stringify(productionFallback), /Example Bank PLC/);
 });
 
 void test("keeps workspace UI accessible, semantic, and fixture-safe", () => {
@@ -102,6 +121,8 @@ void test("keeps workspace UI accessible, semantic, and fixture-safe", () => {
   assert.match(mobile, /<select/);
   assert.match(mobile, /focus-visible:ring-2 focus-visible:ring-focus/);
   assert.match(route, /resolveCompanyWorkspaceFixtureName\(query\.fixture, environment\)/);
+  assert.match(route, /requestFreeCompanyTab/);
+  assert.match(route, /isPaidTab \|\| fixtureName/);
   assert.match(fixtures, /Available from Companies House/);
   assert.match(shell, /No records found in checked sources/);
   assert.match(shell, /Data could not be retrieved/);

@@ -15,6 +15,7 @@ import type {
   CompaniesHouseClient,
   CompaniesHouseClientConfig,
   CompaniesHouseCompanyNumberInput,
+  CompaniesHousePaginatedInput,
   CompaniesHouseCompanyProfile,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
@@ -110,14 +111,17 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
   }
 
   async getOfficers(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseOfficers>> {
+    const page = input.page ?? 1;
+    const limit = input.limit ?? 25;
+    const startIndex = (page - 1) * limit;
     const payload = await this.request(
-      `/company/${encodeURIComponent(input.companyNumber)}/officers?items_per_page=100`,
+      `/company/${encodeURIComponent(input.companyNumber)}/officers?items_per_page=${limit}&start_index=${startIndex}`,
     );
     return payload.status === "failed"
       ? payload
-      : normaliseCompaniesHouseOfficersResponse(input.companyNumber, payload.data);
+      : normaliseCompaniesHouseOfficersResponse(input.companyNumber, payload.data, page, limit);
   }
 
   async getRegisteredOfficeAddressHistory(
@@ -154,31 +158,40 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
   }
 
   async getFilingHistory(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseFilingHistoryFoundation>> {
+    const page = input.page ?? 1;
+    const limit = input.limit ?? 25;
     const payload = await this.request(
-      `/company/${encodeURIComponent(input.companyNumber)}/filing-history?items_per_page=25`,
+      `/company/${encodeURIComponent(input.companyNumber)}/filing-history?items_per_page=${limit}&start_index=${(page - 1) * limit}`,
     );
 
     if (payload.status === "failed") {
       return payload;
     }
 
-    return normaliseCompaniesHouseFilingHistoryResponse(input.companyNumber, payload.data);
+    return normaliseCompaniesHouseFilingHistoryResponse(
+      input.companyNumber,
+      payload.data,
+      page,
+      limit,
+    );
   }
 
   async getCharges(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseChargesFoundation>> {
+    const page = input.page ?? 1;
+    const limit = input.limit ?? 25;
     const payload = await this.request(
-      `/company/${encodeURIComponent(input.companyNumber)}/charges?items_per_page=25`,
+      `/company/${encodeURIComponent(input.companyNumber)}/charges?items_per_page=${limit}&start_index=${(page - 1) * limit}`,
     );
 
     if (payload.status === "failed") {
       return payload;
     }
 
-    return normaliseCompaniesHouseChargesResponse(input.companyNumber, payload.data);
+    return normaliseCompaniesHouseChargesResponse(input.companyNumber, payload.data, page, limit);
   }
 
   async getInsolvency(

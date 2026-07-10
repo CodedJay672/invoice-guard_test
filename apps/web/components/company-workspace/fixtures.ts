@@ -1,4 +1,8 @@
-import type { FreePreviewPayload } from "@workspace/types";
+import type {
+  FreeCompanyCharge,
+  FreeCompanyTabPayload,
+  FreePreviewPayload,
+} from "@workspace/types";
 
 export type CompanyWorkspaceTab =
   | "overview"
@@ -42,10 +46,13 @@ export interface FilingRecord {
 
 export interface ChargeRecord {
   createdOn: string;
+  deliveredOn?: string;
   status: string;
   classification: string;
   personsEntitled: string;
   description: string;
+  chargeCode?: string;
+  tags?: string[];
 }
 
 export interface OfficerRecord {
@@ -55,6 +62,9 @@ export interface OfficerRecord {
   resignedOn?: string;
   occupation?: string;
   residence?: string;
+  nationality?: string;
+  dateOfBirth?: string;
+  identityVerificationDueOn?: string;
 }
 
 export interface InsolvencyCaseRecord {
@@ -62,6 +72,12 @@ export interface InsolvencyCaseRecord {
   status: string;
   startedOn: string;
   practitioner: string;
+  practitioners?: Array<{
+    name: string;
+    role?: string;
+    appointedOn?: string;
+    ceasedToActOn?: string;
+  }>;
   notes: string;
 }
 
@@ -75,6 +91,15 @@ export interface CompanyWorkspaceFixture {
   charges?: ChargeRecord[] | undefined;
   officers?: OfficerRecord[] | undefined;
   insolvencyCases?: InsolvencyCaseRecord[] | undefined;
+  summary?: string | undefined;
+  lockedInterpretation?:
+    | {
+        title: string;
+        body: string;
+        blurredLines: string[];
+      }
+    | undefined;
+  pagination?: { page: number; totalPages: number } | undefined;
   pendingPlaceholder?:
     | {
         title: string;
@@ -97,13 +122,13 @@ export const companyWorkspaceTabs: Array<{
   href: string;
 }> = [
   { id: "overview", label: "Overview", href: "overview" },
-  { id: "filing-history", label: "Filing History", href: "filing-history" },
+  { id: "ai-summary", label: "AI Summary", href: "ai-summary" },
   { id: "charges", label: "Charges", href: "charges" },
-  { id: "officers", label: "Officers", href: "officers" },
   { id: "insolvency", label: "Insolvency", href: "insolvency" },
+  { id: "officers", label: "Officers", href: "officers" },
+  { id: "filing-history", label: "Filing History", href: "filing-history" },
   { id: "ccj", label: "CCJs", href: "ccj" },
   { id: "fpc", label: "Fair Payment Code", href: "fpc" },
-  { id: "ai-summary", label: "AI Summary", href: "ai-summary" },
 ];
 
 export const companyWorkspaceFixtureNames: CompanyWorkspaceFixtureName[] = [
@@ -196,6 +221,128 @@ export function getCompanyWorkspaceFixture(
   return populatedFixture(tab);
 }
 
+export function toCompanyWorkspaceFixture(payload: FreeCompanyTabPayload): CompanyWorkspaceFixture {
+  const base = {
+    tab: payload.tab,
+    source: {
+      status: "available" as const,
+      label: "Available from Companies House",
+      detail: "Public record returned by Companies House.",
+      checkedAt: payload.source.checkedAt,
+    },
+  };
+  if (payload.tab === "overview") {
+    const company = payload.company;
+    return {
+      ...base,
+      title: "Company overview",
+      description: "Core profile, address, accounts, and filing indicators from Companies House.",
+      facts: [
+        { label: "Company number", value: company.companiesHouseNumber },
+        { label: "Company status", value: company.companyStatus },
+        { label: "Company type", value: company.companyType?.toUpperCase() ?? "Not listed" },
+        { label: "Incorporated", value: formatDisplayDate(company.incorporationDate) },
+        { label: "Active officers", value: String(company.activeDirectorCount ?? 0) },
+        { label: "SIC codes", value: company.sicCodes.join(", ") || "Not listed" },
+        { label: "Next accounts due", value: formatDisplayDate(company.accounts?.next_due) },
+        { label: "Accounts overdue", value: company.accounts?.overdue ? "Yes" : "No" },
+      ],
+    };
+  }
+  if (payload.tab === "filing-history")
+    return {
+      ...base,
+      title: "Filing history",
+      description: "Recent filings returned by Companies House.",
+      pagination: payload.pagination,
+      filings: payload.filings.map((item) => ({
+        date: item.date ?? "",
+        type: item.type ?? "Not listed",
+        description: item.description ?? "Description not listed",
+        category: item.category ?? "Not listed",
+        pages: item.pages === undefined ? "Not listed" : `${item.pages} pages`,
+      })),
+    };
+  if (payload.tab === "charges")
+    return {
+      ...base,
+      title: "Registered charges",
+      description: "Charges registered at Companies House.",
+      pagination: payload.pagination,
+      charges: payload.charges.map((item) => ({
+        createdOn: item.createdOn ?? "",
+        ...(item.deliveredOn ? { deliveredOn: item.deliveredOn } : {}),
+        status: item.status ?? (item.satisfiedOn ? "Satisfied" : "Status not listed"),
+        classification: item.classification ?? "Registered charge",
+        personsEntitled: item.personsEntitled.join(", ") || "Not listed",
+        description: item.description ?? "Description not listed",
+        ...(item.chargeCode ? { chargeCode: item.chargeCode } : {}),
+        tags: chargeTags(item),
+      })),
+      summary: `${payload.pagination.totalResults} charge${payload.pagination.totalResults === 1 ? "" : "s"} total`,
+      lockedInterpretation: lockedInterpretation("charges"),
+    };
+  if (payload.tab === "officers")
+    return {
+      ...base,
+      title: "Officers",
+      description: "Current and resigned officers listed by Companies House.",
+      pagination: payload.pagination,
+      officers: payload.officers.map((item) => {
+        const dateOfBirth = formatDateOfBirth(item.dateOfBirth);
+        return {
+          name: item.name,
+          role: item.role ?? "Role not listed",
+          appointedOn: item.appointedOn ?? "",
+          ...(item.resignedOn ? { resignedOn: item.resignedOn } : {}),
+          ...(item.occupation ? { occupation: item.occupation } : {}),
+          ...(item.countryOfResidence ? { residence: item.countryOfResidence } : {}),
+          ...(item.nationality ? { nationality: item.nationality } : {}),
+          ...(dateOfBirth ? { dateOfBirth } : {}),
+          ...(item.identityVerificationDetails?.appointmentVerificationStatementDueOn
+            ? {
+                identityVerificationDueOn:
+                  item.identityVerificationDetails.appointmentVerificationStatementDueOn,
+              }
+            : {}),
+        };
+      }),
+      summary: `${payload.activeCount ?? payload.officers.filter((item) => !item.resignedOn).length} active director${(payload.activeCount ?? payload.officers.filter((item) => !item.resignedOn).length) === 1 ? "" : "s"} - ${payload.resignedCount ?? payload.officers.filter((item) => item.resignedOn).length} resignation${(payload.resignedCount ?? payload.officers.filter((item) => item.resignedOn).length) === 1 ? "" : "s"}`,
+      lockedInterpretation: lockedInterpretation("officers"),
+    };
+  return {
+    ...base,
+    title: "Insolvency",
+    description: "Companies House insolvency cases associated with this company.",
+    insolvencyCases: payload.cases.map((item) => ({
+      type: item.type ?? "Case type not listed",
+      status: item.status ?? payload.status ?? "Status not listed",
+      startedOn: item.startedOn ?? "",
+      practitioner:
+        item.practitioners
+          .map((practitioner) => practitioner.name)
+          .filter((name): name is string => Boolean(name))
+          .join(", ") || "Not listed",
+      practitioners: item.practitioners
+        .filter((practitioner) => practitioner.name)
+        .map((practitioner) => ({
+          name: practitioner.name ?? "Not listed",
+          ...(practitioner.role ? { role: practitioner.role } : {}),
+          ...(practitioner.appointedOn ? { appointedOn: practitioner.appointedOn } : {}),
+          ...(practitioner.ceasedToActOn ? { ceasedToActOn: practitioner.ceasedToActOn } : {}),
+        })),
+      notes: item.notes.join(" ") || "No notes supplied.",
+    })),
+    lockedInterpretation: lockedInterpretation("insolvency"),
+  };
+}
+
+export function failedCompanyWorkspaceFixture(
+  tab: Exclude<CompanyWorkspaceTab, "ccj" | "fpc" | "ai-summary">,
+): CompanyWorkspaceFixture {
+  return failedFixture(tab);
+}
+
 function isPaidTab(tab: CompanyWorkspaceTab): boolean {
   return tab === "ccj" || tab === "fpc" || tab === "ai-summary";
 }
@@ -272,52 +419,56 @@ function populatedFixture(tab: CompanyWorkspaceTab): CompanyWorkspaceFixture {
         ...base,
         title: "Registered charges",
         description: "Charges registered at Companies House.",
+        summary: "1 charge total - 1 outstanding - 0 satisfied",
         charges: [
           {
-            createdOn: "2023-09-14",
-            status: "Outstanding",
-            classification: "A registered charge",
-            personsEntitled: "Example Bank PLC",
-            description: "Fixed and floating charge over company assets.",
-          },
-          {
-            createdOn: "2021-02-03",
-            status: "Satisfied",
-            classification: "Debenture",
-            personsEntitled: "Northern Finance Limited",
-            description: "Charge satisfied in full on 16 June 2024.",
+            createdOn: "2021-08-17",
+            deliveredOn: "2021-08-23",
+            status: "outstanding",
+            classification: "Outstanding Charge",
+            personsEntitled: "Swishfund LTD",
+            description:
+              "Charge over all assets of the company under a fixed and floating arrangement.",
+            chargeCode: "1266 2009 0001",
+            tags: [
+              "Fixed charge",
+              "Floating charge",
+              "All property and undertaking",
+              "Negative pledge",
+            ],
           },
         ],
+        lockedInterpretation: lockedInterpretation("charges"),
       };
     case "officers":
       return {
         ...base,
         title: "Officers",
         description: "Current and resigned officers listed by Companies House.",
+        summary: "2 active directors - 0 resignations",
         officers: [
           {
-            name: "PRIYA SHAH",
+            name: "BROWN, Daniel Tony",
             role: "Director",
-            appointedOn: "2025-11-18",
-            occupation: "Operations Director",
-            residence: "England",
-          },
-          {
-            name: "MARTIN HUGHES",
-            role: "Director",
-            appointedOn: "2018-04-12",
-            occupation: "Company Director",
+            appointedOn: "2020-06-11",
+            occupation: "Company director",
             residence: "United Kingdom",
+            nationality: "British",
+            dateOfBirth: "May 1985",
+            identityVerificationDueOn: "2025-11-18",
           },
           {
-            name: "ELENA CARTER",
-            role: "Director",
-            appointedOn: "2019-06-20",
-            resignedOn: "2024-12-01",
-            occupation: "Finance Consultant",
+            name: "HANLON, Reece Dean",
+            role: "Director & PSC",
+            appointedOn: "2021-10-18",
+            occupation: "Director",
             residence: "England",
+            nationality: "British",
+            dateOfBirth: "March 1991",
+            identityVerificationDueOn: "2025-11-18",
           },
         ],
+        lockedInterpretation: lockedInterpretation("officers"),
       };
     case "insolvency":
       return {
@@ -326,13 +477,18 @@ function populatedFixture(tab: CompanyWorkspaceTab): CompanyWorkspaceFixture {
         description: "Companies House insolvency cases associated with this company.",
         insolvencyCases: [
           {
-            type: "Creditors voluntary liquidation",
-            status: "Records found",
-            startedOn: "2024-03-22",
-            practitioner: "Jordan Blake, Example Insolvency LLP",
-            notes: "Case details returned by Companies House.",
+            type: "Creditors Voluntary Liquidation",
+            status: "active",
+            startedOn: "2024-02-26",
+            practitioner: "Steven Phillip Ross, Allan David Kelly",
+            practitioners: [
+              { name: "Steven Phillip Ross", appointedOn: "2024-02-26" },
+              { name: "Allan David Kelly", appointedOn: "2024-02-26" },
+            ],
+            notes: "Creditors Voluntary Liquidation (CVL)",
           },
         ],
+        lockedInterpretation: lockedInterpretation("insolvency"),
       };
     default:
       return paidFixture(tab);
@@ -463,6 +619,62 @@ function paidFixture(tab: CompanyWorkspaceTab): CompanyWorkspaceFixture {
       body: "This source remains paid-only and is not called for free users.",
     },
   };
+}
+
+function lockedInterpretation(
+  tab: "charges" | "insolvency" | "officers",
+): NonNullable<CompanyWorkspaceFixture["lockedInterpretation"]> {
+  const labels = {
+    charges: {
+      title: "InvoiceGuard Interpretation",
+      body: "Charge interpretation is generated only in paid reports.",
+      blurredLines: [
+        "This paid interpretation explains the charge holder, security type, and what the registered charge may mean for unpaid invoices.",
+        "It uses Companies House charge facts and does not replace legal or financial advice.",
+      ],
+    },
+    insolvency: {
+      title: "InvoiceGuard Interpretation",
+      body: "Insolvency interpretation is generated only in paid reports.",
+      blurredLines: [
+        "This paid interpretation explains the insolvency process, practitioner appointments, and source limitations.",
+        "It uses Companies House insolvency facts and does not replace legal or financial advice.",
+      ],
+    },
+    officers: {
+      title: "InvoiceGuard Interpretation",
+      body: "Officer interpretation is generated only in paid reports.",
+      blurredLines: [
+        "This paid interpretation summarizes director tenure, resignations, verification due dates, and source limitations.",
+        "It uses Companies House officer facts and does not replace legal or financial advice.",
+      ],
+    },
+  };
+
+  return labels[tab];
+}
+
+function chargeTags(item: FreeCompanyCharge): string[] {
+  const text = [item.classification, item.description].filter(Boolean).join(" ").toLowerCase();
+  return [
+    text.includes("fixed") ? "Fixed charge" : undefined,
+    text.includes("floating") ? "Floating charge" : undefined,
+    text.includes("undertaking") || text.includes("property")
+      ? "All property and undertaking"
+      : undefined,
+    text.includes("negative pledge") ? "Negative pledge" : undefined,
+  ].filter((tag): tag is string => Boolean(tag));
+}
+
+function formatDateOfBirth(
+  value: { month?: number | undefined; year?: number | undefined } | undefined,
+): string | undefined {
+  if (!value?.month && !value?.year) return undefined;
+  if (!value.month) return value.year ? String(value.year) : undefined;
+  const month = new Intl.DateTimeFormat("en-GB", { month: "long" }).format(
+    new Date(Date.UTC(2000, value.month - 1, 1)),
+  );
+  return value.year ? `${month} ${value.year}` : month;
 }
 
 function tabLabels(

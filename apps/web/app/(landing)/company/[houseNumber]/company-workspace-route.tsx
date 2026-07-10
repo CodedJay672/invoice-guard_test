@@ -3,14 +3,17 @@ import { loadWebProxyConfig } from "@workspace/config/web";
 import { CompanyWorkspace } from "@/components/company-workspace/CompanyWorkspace";
 import {
   getCompanyWorkspaceFixture,
+  failedCompanyWorkspaceFixture,
   resolveCompanyWorkspaceFixtureName,
+  toCompanyWorkspaceFixture,
   type CompanyWorkspaceTab,
 } from "@/components/company-workspace/fixtures";
 import { requestFreePreview } from "@/lib/data/free-company-prev";
+import { requestFreeCompanyTab } from "@/lib/data/free-company-tab";
 
 export type CompanyWorkspacePageProps = {
   params: Promise<{ houseNumber: string }>;
-  searchParams?: Promise<{ fixture?: string | string[] }>;
+  searchParams?: Promise<{ fixture?: string | string[]; page?: string | string[] }>;
 };
 
 type CompanyWorkspaceRouteProps = CompanyWorkspacePageProps & {
@@ -26,14 +29,31 @@ export async function CompanyWorkspaceRoute({
   const query = searchParams ? await searchParams : {};
   const environment = loadWebProxyConfig().environment;
   const fixtureName = resolveCompanyWorkspaceFixtureName(query.fixture, environment);
-  const [previewResult] = await Promise.all([requestFreePreview(houseNumber)]);
+  const isPaidTab = activeTab === "ccj" || activeTab === "fpc" || activeTab === "ai-summary";
+  const page =
+    typeof query.page === "string" && /^\d+$/.test(query.page)
+      ? Math.max(1, Number(query.page))
+      : 1;
+  const [previewResult, tabResult] = await Promise.all([
+    requestFreePreview(houseNumber),
+    isPaidTab || fixtureName
+      ? Promise.resolve(undefined)
+      : requestFreeCompanyTab(houseNumber, activeTab, page),
+  ]);
+  const fixture =
+    isPaidTab || fixtureName
+      ? getCompanyWorkspaceFixture(activeTab, fixtureName, environment)
+      : tabResult?.status === "success"
+        ? toCompanyWorkspaceFixture(tabResult.tab)
+        : failedCompanyWorkspaceFixture(activeTab);
 
   return (
     <CompanyWorkspace
       activeTab={activeTab}
-      fixture={getCompanyWorkspaceFixture(activeTab, fixtureName, environment)}
+      fixture={fixture}
       houseNumber={houseNumber}
       previewResult={previewResult}
+      fixtureMode={Boolean(fixtureName)}
     />
   );
 }

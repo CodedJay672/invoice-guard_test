@@ -16,6 +16,18 @@ export interface CompaniesHouseCompanyNumberInput {
   companyNumber: string;
 }
 
+export interface CompaniesHousePaginatedInput extends CompaniesHouseCompanyNumberInput {
+  page?: number;
+  limit?: number;
+}
+
+export interface CompaniesHousePagination {
+  page: number;
+  limit: number;
+  totalResults: number;
+  totalPages: number;
+}
+
 export interface CompaniesHouseRegisteredOfficeAddress {
   addressLine_1: string | undefined;
   addressLine_2: string | undefined;
@@ -28,7 +40,7 @@ export interface CompaniesHouseRegisteredOfficeAddress {
 
 export interface CompaniesHouseInsolvencyFoundation {
   companiesHouseNumber: string;
-  cases: unknown[];
+  cases: CompaniesHouseInsolvencyCase[];
   status: string | undefined;
 }
 
@@ -87,11 +99,32 @@ export interface CompaniesHouseOfficer {
   role: string | undefined;
   appointedOn: string | undefined;
   resignedOn: string | undefined;
+  occupation: string | undefined;
+  countryOfResidence: string | undefined;
+  nationality: string | undefined;
+  dateOfBirth:
+    | {
+        month: number | undefined;
+        year: number | undefined;
+      }
+    | undefined;
+  identityVerificationDetails:
+    | {
+        appointmentVerificationEndOn: string | undefined;
+        appointmentVerificationStartOn: string | undefined;
+        appointmentVerificationStatementDueOn: string | undefined;
+        identityVerifiedOn: string | undefined;
+        preferredName: string | undefined;
+      }
+    | undefined;
 }
 
 export interface CompaniesHouseOfficers {
   companiesHouseNumber: string;
   officers: CompaniesHouseOfficer[];
+  activeCount: number | undefined;
+  resignedCount: number | undefined;
+  pagination: CompaniesHousePagination;
 }
 
 export interface CompaniesHouseAddressHistoryEntry {
@@ -105,14 +138,53 @@ export interface CompaniesHouseAddressHistory {
   changeFilings: CompaniesHouseAddressHistoryEntry[];
 }
 
+export interface CompaniesHouseFiling {
+  date: string | undefined;
+  type: string | undefined;
+  description: string | undefined;
+  category: string | undefined;
+  pages: number | undefined;
+  transactionId: string | undefined;
+}
+
 export interface CompaniesHouseFilingHistoryFoundation {
   companiesHouseNumber: string;
-  filings: unknown[];
+  filings: CompaniesHouseFiling[];
+  pagination: CompaniesHousePagination;
+}
+
+export interface CompaniesHouseCharge {
+  createdOn: string | undefined;
+  deliveredOn: string | undefined;
+  satisfiedOn: string | undefined;
+  status: string | undefined;
+  classification: string | undefined;
+  personsEntitled: string[];
+  description: string | undefined;
+  chargeCode: string | undefined;
 }
 
 export interface CompaniesHouseChargesFoundation {
   companiesHouseNumber: string;
-  charges: unknown[];
+  charges: CompaniesHouseCharge[];
+  pagination: CompaniesHousePagination;
+}
+
+export interface CompaniesHouseInsolvencyCase {
+  type: string | undefined;
+  number: string | undefined;
+  status: string | undefined;
+  startedOn: string | undefined;
+  practitioners: CompaniesHouseInsolvencyPractitioner[];
+  notes: string[];
+}
+
+export interface CompaniesHouseInsolvencyPractitioner {
+  name: string | undefined;
+  role: string | undefined;
+  appointedOn: string | undefined;
+  ceasedToActOn: string | undefined;
+  address: CompaniesHouseRegisteredOfficeAddress | undefined;
 }
 
 export interface CompaniesHouseClient {
@@ -128,17 +200,15 @@ export interface CompaniesHouseClient {
   getActiveOfficerCount(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseOfficerCount>>;
-  getOfficers(
-    input: CompaniesHouseCompanyNumberInput,
-  ): Promise<ProviderResult<CompaniesHouseOfficers>>;
+  getOfficers(input: CompaniesHousePaginatedInput): Promise<ProviderResult<CompaniesHouseOfficers>>;
   getRegisteredOfficeAddressHistory(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseAddressHistory>>;
   getFilingHistory(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseFilingHistoryFoundation>>;
   getCharges(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseChargesFoundation>>;
   getInsolvency(
     input: CompaniesHouseCompanyNumberInput,

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { freePreviewApiResponseSchema } from "./companies.js";
+import {
+  freeCompanyTabApiResponseSchema,
+  freeCompanyTabPaginationQuerySchema,
+  freePreviewApiResponseSchema,
+} from "./companies.js";
 
 void test("free preview response accepts normalized Companies House account fields", () => {
   const result = freePreviewApiResponseSchema.safeParse({
@@ -129,4 +133,118 @@ void test("free preview response coerces live Companies House account reference 
   if (!result.success) return;
   assert.equal(result.data.data.preview.company.accounts?.accounting_reference_date.day, 31);
   assert.equal(result.data.data.preview.company.accounts?.accounting_reference_date.month, 12);
+});
+
+void test("free tab response accepts typed Companies House filing payloads with pagination", () => {
+  const result = freeCompanyTabApiResponseSchema.safeParse({
+    data: {
+      tab: {
+        tab: "filing-history",
+        companyNumber: "12345678",
+        source: { provider: "companies_house", checkedAt: "2026-07-10T10:00:00.000Z" },
+        pagination: { page: 2, limit: 25, totalResults: 51, totalPages: 3 },
+        filings: [
+          {
+            date: "2026-01-31",
+            type: "AA",
+            description: "Accounts",
+            category: "accounts",
+            pages: 12,
+            transactionId: "MzAw",
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(result.success, true);
+});
+
+void test("free tab response accepts design-visible Companies House tab fields", () => {
+  const baseSource = { provider: "companies_house", checkedAt: "2026-07-10T10:00:00.000Z" };
+
+  const charges = freeCompanyTabApiResponseSchema.safeParse({
+    data: {
+      tab: {
+        tab: "charges",
+        companyNumber: "12345678",
+        source: baseSource,
+        pagination: { page: 1, limit: 25, totalResults: 1, totalPages: 1 },
+        charges: [
+          {
+            chargeCode: "1266 2009 0001",
+            createdOn: "2021-08-17",
+            deliveredOn: "2021-08-23",
+            status: "outstanding",
+            personsEntitled: ["Swishfund LTD"],
+            classification: "A registered charge",
+            description: "Fixed and floating charge over company assets.",
+          },
+        ],
+      },
+    },
+  });
+
+  const officers = freeCompanyTabApiResponseSchema.safeParse({
+    data: {
+      tab: {
+        tab: "officers",
+        companyNumber: "12345678",
+        source: baseSource,
+        activeCount: 1,
+        resignedCount: 1,
+        pagination: { page: 1, limit: 25, totalResults: 2, totalPages: 1 },
+        officers: [
+          {
+            name: "BROWN, Daniel Tony",
+            role: "director",
+            appointedOn: "2021-09-15",
+            nationality: "British",
+            countryOfResidence: "England",
+            dateOfBirth: { month: 2, year: 1985 },
+            identityVerificationDetails: {
+              appointmentVerificationStatementDueOn: "2025-11-18",
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  const insolvency = freeCompanyTabApiResponseSchema.safeParse({
+    data: {
+      tab: {
+        tab: "insolvency",
+        companyNumber: "12345678",
+        source: baseSource,
+        cases: [
+          {
+            type: "Creditors Voluntary Liquidation",
+            status: "active",
+            startedOn: "2024-02-26",
+            practitioners: [
+              {
+                name: "Steven Phillip Ross",
+                role: "practitioner",
+                appointedOn: "2024-02-26",
+                ceasedToActOn: "2025-02-01",
+                address: { locality: "London", country: "England" },
+              },
+            ],
+            notes: [],
+          },
+        ],
+      },
+    },
+  });
+
+  assert.equal(charges.success, true);
+  assert.equal(officers.success, true);
+  assert.equal(insolvency.success, true);
+});
+
+void test("free tab pagination bounds page and limit values", () => {
+  assert.deepEqual(freeCompanyTabPaginationQuerySchema.parse({}), { page: 1, limit: 25 });
+  assert.equal(freeCompanyTabPaginationQuerySchema.safeParse({ page: 0 }).success, false);
+  assert.equal(freeCompanyTabPaginationQuerySchema.safeParse({ limit: 51 }).success, false);
 });

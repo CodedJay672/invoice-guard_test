@@ -35,6 +35,7 @@ export function createApiApp(
 
   registerCompanyRoutes(app, {
     companyService: dependencies.companyService,
+    companyTabService: dependencies.companyTabService,
     anonymousSearchRateLimiter: dependencies.anonymousSearchRateLimiter,
     requestIdentityResolver: dependencies.requestIdentityResolver,
   });

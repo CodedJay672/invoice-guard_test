@@ -9,6 +9,7 @@ import type {
   CompaniesHouseChargesFoundation,
   CompaniesHouseClient,
   CompaniesHouseCompanyNumberInput,
+  CompaniesHousePaginatedInput,
   CompaniesHouseCompanyProfile,
   CompaniesHouseFilingHistoryFoundation,
   CompaniesHouseOfficerCount,
@@ -136,7 +137,7 @@ export class MockCompaniesHouseClient implements CompaniesHouseClient {
   }
 
   getOfficers(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseOfficers>> {
     const company = findMockCompany(input.companyNumber);
     return Promise.resolve(
@@ -147,7 +148,26 @@ export class MockCompaniesHouseClient implements CompaniesHouseClient {
           role: "director",
           appointedOn: "2020-01-01",
           resignedOn: undefined,
+          occupation: "Company director",
+          countryOfResidence: "United Kingdom",
+          nationality: "British",
+          dateOfBirth: { month: 6, year: 1985 },
+          identityVerificationDetails: {
+            appointmentVerificationEndOn: undefined,
+            appointmentVerificationStartOn: undefined,
+            appointmentVerificationStatementDueOn: "2025-11-18",
+            identityVerifiedOn: undefined,
+            preferredName: undefined,
+          },
         })),
+        activeCount: company.activeDirectorCount ?? 0,
+        resignedCount: 0,
+        pagination: {
+          page: input.page ?? 1,
+          limit: input.limit ?? 25,
+          totalResults: company.activeDirectorCount ?? 0,
+          totalPages: (company.activeDirectorCount ?? 0) ? 1 : 0,
+        },
       }),
     );
   }
@@ -177,23 +197,35 @@ export class MockCompaniesHouseClient implements CompaniesHouseClient {
   }
 
   getFilingHistory(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseFilingHistoryFoundation>> {
     return Promise.resolve(
       createProviderSuccess(this.provider, {
         companiesHouseNumber: input.companyNumber,
         filings: [],
+        pagination: {
+          page: input.page ?? 1,
+          limit: input.limit ?? 25,
+          totalResults: 0,
+          totalPages: 0,
+        },
       }),
     );
   }
 
   getCharges(
-    input: CompaniesHouseCompanyNumberInput,
+    input: CompaniesHousePaginatedInput,
   ): Promise<ProviderResult<CompaniesHouseChargesFoundation>> {
     return Promise.resolve(
       createProviderSuccess(this.provider, {
         companiesHouseNumber: input.companyNumber,
         charges: [],
+        pagination: {
+          page: input.page ?? 1,
+          limit: input.limit ?? 25,
+          totalResults: 0,
+          totalPages: 0,
+        },
       }),
     );
   }

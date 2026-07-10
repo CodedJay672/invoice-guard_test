@@ -31,10 +31,13 @@ import {
   CompaniesHouseCompanyProfile,
   CompaniesHouseInsolvencyFoundation,
   CompaniesHouseOfficers,
+  CompaniesHousePaginatedInput,
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
   CompaniesHouseSearchResult,
 } from "@workspace/types";
+import { InMemoryCompanyTabCache } from "./tab-cache.js";
+import { CompanyTabService } from "./tab-service.js";
 
 const testHashSecret = "invoiceguard-test-search-hash-secret-123456";
 const testProxySecret = "invoiceguard-test-proxy-shared-secret-123456";
@@ -327,6 +330,120 @@ void test("free preview selections store a hashed IP and selected company number
   await close();
 });
 
+void test("GET /companies/:companyNumber/tabs/:tab returns paginated free tab data", async () => {
+  const companiesHouseClient = new CountingCompaniesHouseClient();
+  const companyRepository = new InMemoryCompanyRepository();
+  const companyService = new CompanyService({
+    companiesHouseClient,
+    companyRepository,
+    searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
+  });
+  const companyTabService = new CompanyTabService({
+    companiesHouseClient,
+    companyRepository,
+    cache: new InMemoryCompanyTabCache(),
+  });
+  const app = createApiApp({
+    companyService,
+    companyTabService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(5),
+    requestIdentityResolver: createTestIdentityResolver(),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const response = await fetch(`${baseUrl}/companies/12345678/tabs/filing-history?page=2&limit=10`);
+  const body = (await response.json()) as {
+    data: {
+      tab: { tab: string; companyNumber: string; pagination: { page: number; limit: number } };
+    };
+  };
+
+  assert.equal(response.status, 200);
+  assert.equal(body.data.tab.tab, "filing-history");
+  assert.equal(body.data.tab.companyNumber, "12345678");
+  assert.equal(body.data.tab.pagination.page, 2);
+  assert.equal(body.data.tab.pagination.limit, 10);
+  assert.deepEqual(companiesHouseClient.filingInputs, [
+    { companyNumber: "12345678", page: 2, limit: 10 },
+  ]);
+
+  await close();
+});
+
+void test("anonymous tab cache hits still consume the daily allowance", async () => {
+  const companiesHouseClient = new CountingCompaniesHouseClient();
+  const companyRepository = new InMemoryCompanyRepository();
+  const companyService = new CompanyService({
+    companiesHouseClient,
+    companyRepository,
+    searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
+  });
+  const companyTabService = new CompanyTabService({
+    companiesHouseClient,
+    companyRepository,
+    cache: new InMemoryCompanyTabCache(),
+  });
+  const app = createApiApp({
+    companyService,
+    companyTabService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(1),
+    requestIdentityResolver: createTestIdentityResolver(),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const firstResponse = await fetch(`${baseUrl}/companies/12345678/tabs/filing-history`);
+  const secondResponse = await fetch(`${baseUrl}/companies/12345678/tabs/filing-history`);
+  const body = (await secondResponse.json()) as { error: { code: string } };
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(secondResponse.status, 429);
+  assert.equal(body.error.code, "anonymous_search_rate_limited");
+  assert.equal(companiesHouseClient.filingInputs.length, 1);
+
+  await close();
+});
+
+void test("trusted authenticated tab requests bypass anonymous allowance", async () => {
+  const companiesHouseClient = new CountingCompaniesHouseClient();
+  const companyRepository = new InMemoryCompanyRepository();
+  const companyService = new CompanyService({
+    companiesHouseClient,
+    companyRepository,
+    searchLogRepository: new InMemorySearchLogRepository(),
+    reportProductRepository: new InMemoryReportProductRepository(),
+  });
+  const companyTabService = new CompanyTabService({
+    companiesHouseClient,
+    companyRepository,
+    cache: new InMemoryCompanyTabCache(),
+  });
+  const app = express();
+
+  app.use(express.json());
+  app.use((request, _response, next) => {
+    request.clerkUserId = "clerk_user_123";
+    next();
+  });
+  registerCompanyRoutes(app, {
+    companyService,
+    companyTabService,
+    anonymousSearchRateLimiter: new InMemoryAnonymousSearchRateLimiter(1),
+    requestIdentityResolver: createTestIdentityResolver(),
+  });
+  const { baseUrl, close } = await listen(app);
+
+  const firstResponse = await fetch(`${baseUrl}/companies/12345678/tabs/officers`);
+  const secondResponse = await fetch(`${baseUrl}/companies/12345678/tabs/officers`);
+
+  assert.equal(firstResponse.status, 200);
+  assert.equal(secondResponse.status, 200);
+  assert.equal(companiesHouseClient.officerInputs.length, 1);
+
+  await close();
+});
+
 async function startTestServer(
   searchLogRepository = new InMemorySearchLogRepository(),
   anonymousSearchRateLimiter = new InMemoryAnonymousSearchRateLimiter(),
@@ -395,31 +512,40 @@ class SingleCompanyCompaniesHouseClient implements CompaniesHouseClient {
     );
   }
 
-  getOfficers(): Promise<ProviderResult<CompaniesHouseOfficers>> {
+  getOfficers(
+    _input?: CompaniesHousePaginatedInput,
+  ): Promise<ProviderResult<CompaniesHouseOfficers>> {
     return Promise.resolve(
       createProviderSuccess(this.provider, {
         companiesHouseNumber: this.company.companiesHouseNumber,
         officers: [],
+        activeCount: 0,
+        resignedCount: 0,
+        pagination: { page: 1, limit: 25, totalResults: 0, totalPages: 0 },
       }),
     );
   }
 
-  getFilingHistory(): Promise<
-    ProviderResult<{ companiesHouseNumber: string; filings: unknown[] }>
-  > {
+  getFilingHistory(
+    _input?: CompaniesHousePaginatedInput,
+  ): ReturnType<CompaniesHouseClient["getFilingHistory"]> {
     return Promise.resolve(
       createProviderSuccess(this.provider, {
         companiesHouseNumber: this.company.companiesHouseNumber,
         filings: [],
+        pagination: { page: 1, limit: 25, totalResults: 0, totalPages: 0 },
       }),
     );
   }
 
-  getCharges(): Promise<ProviderResult<{ companiesHouseNumber: string; charges: unknown[] }>> {
+  getCharges(
+    _input?: CompaniesHousePaginatedInput,
+  ): ReturnType<CompaniesHouseClient["getCharges"]> {
     return Promise.resolve(
       createProviderSuccess(this.provider, {
         companiesHouseNumber: this.company.companiesHouseNumber,
         charges: [],
+        pagination: { page: 1, limit: 25, totalResults: 0, totalPages: 0 },
       }),
     );
   }
@@ -437,6 +563,8 @@ class SingleCompanyCompaniesHouseClient implements CompaniesHouseClient {
 
 class CountingCompaniesHouseClient extends SingleCompanyCompaniesHouseClient {
   profileCalls = 0;
+  readonly filingInputs: CompaniesHousePaginatedInput[] = [];
+  readonly officerInputs: CompaniesHousePaginatedInput[] = [];
 
   constructor() {
     super({
@@ -470,6 +598,43 @@ class CountingCompaniesHouseClient extends SingleCompanyCompaniesHouseClient {
     this.profileCalls += 1;
 
     return super.getCompanyProfile(input);
+  }
+
+  override getFilingHistory(
+    input: CompaniesHousePaginatedInput,
+  ): ReturnType<CompaniesHouseClient["getFilingHistory"]> {
+    this.filingInputs.push(input);
+
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        companiesHouseNumber: input.companyNumber,
+        filings: [
+          {
+            transactionId: "MzAw",
+            type: "AA",
+            description: "accounts-with-accounts-type-full",
+            category: "accounts",
+            date: "2025-01-31",
+            pages: 12,
+            barcode: "X1",
+          },
+        ],
+        pagination: {
+          page: input.page ?? 1,
+          limit: input.limit ?? 25,
+          totalResults: 1,
+          totalPages: 1,
+        },
+      }),
+    );
+  }
+
+  override getOfficers(
+    input: CompaniesHousePaginatedInput,
+  ): ReturnType<CompaniesHouseClient["getOfficers"]> {
+    this.officerInputs.push(input);
+
+    return super.getOfficers(input);
   }
 }
 
