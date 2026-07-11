@@ -15,6 +15,7 @@ import {
   type SendAdminAlertJobData,
   type GenerateReportPdfJobData,
   type SendOwnerReportNotificationJobData,
+  type ProcessCreditRefundJobData,
 } from "@workspace/queues";
 
 import { AnthropicAiInterpretationClient } from "./ai-interpretation/client.js";
@@ -37,6 +38,9 @@ import { CodeOwnedReportReadyEmailRenderer } from "./report-notification/rendere
 import { DrizzleReportNotificationRepository } from "./report-notification/repository.js";
 import { OwnerReportNotificationService } from "./report-notification/service.js";
 import { createOwnerReportNotificationWorker } from "./report-notification/worker.js";
+import { CreditRefundPublisher } from "./refund/publisher.js";
+import { CreditRefundService } from "./refund/service.js";
+import { createCreditRefundWorker } from "./refund/worker.js";
 
 const config = loadAppConfig();
 assertWorkerProductionConfig(config);
@@ -107,14 +111,27 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
     },
     logger,
   });
+  const refundQueue = createQueue<ProcessCreditRefundJobData, void, string>({
+    name: QUEUE_NAMES.refund,
+    connectionString: config.redisUrl,
+  });
+  const refundPublisher = new CreditRefundPublisher(db, refundQueue);
   const service = new ReportGenerationService(
     new DrizzleReportGenerationRepository(db),
     handler,
     logger,
     notificationPublisher,
     pdfPublisher,
+    refundPublisher,
   );
   createReportGenerationWorker({ connectionString: config.redisUrl, service, logger });
+  if (config.stripeSecretKey) {
+    createCreditRefundWorker({
+      connectionString: config.redisUrl,
+      service: new CreditRefundService(db, config.stripeSecretKey),
+    });
+    await refundPublisher.reconcile();
+  }
   try {
     const reconciledNotifications = await notificationPublisher.reconcileQueued();
     logger.info({ reconciledNotifications }, "Queued owner notifications reconciled");

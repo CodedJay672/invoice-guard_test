@@ -5,6 +5,8 @@ import type {
   CreateCheckoutSessionInput,
   PaidReportEntitlements,
   ReportTier,
+  RedeemCreditResult,
+  RefundRequest,
 } from "@workspace/validation";
 
 export interface CheckoutSessionResult {
@@ -38,6 +40,9 @@ export interface StripeGateway {
 export interface ReportGenerationQueue {
   enqueue(reportId: string): Promise<void>;
 }
+export interface RefundQueue {
+  enqueue(refundRequestId: string): Promise<void>;
+}
 
 export interface PaidReportEventInput {
   eventId: string;
@@ -52,19 +57,53 @@ export interface PaidReportEventInput {
   amountPaidPence: number;
   currency: string;
   entitlements: PaidReportEntitlements;
+  creditQuantity: number;
   eventPayload: Record<string, unknown>;
 }
 
 export interface PaidReportEventResult {
   reportId: string;
+  purchaseId: string;
   alreadyProcessed: boolean;
 }
 
 export interface CheckoutRepository {
+  getCreditBalance(
+    clerkUserId: string,
+  ): Promise<{ availableCredits: number; eligiblePurchaseCount: number }>;
+  redeemCredit(input: {
+    clerkUserId: string;
+    companyNumber: string;
+    companyName: string;
+    idempotencyKey: string;
+    entitlements: PaidReportEntitlements;
+  }): Promise<RedeemCreditResult & { reportId: string }>;
+  createUnusedCreditRefund(
+    input: RefundRequest & { requestedByClerkUserId: string },
+  ): Promise<{ refundRequestId: string }>;
+  getRefundStatus(
+    refundRequestId: string,
+  ): Promise<
+    { status: "queued" | "processing" | "succeeded" | "failed"; amountPence: number } | undefined
+  >;
+  confirmRefund(input: {
+    refundRequestId: string;
+    stripeRefundId: string;
+    succeeded: boolean;
+    failureCode?: string;
+  }): Promise<void>;
   findReportBySessionId(
     sessionId: string,
     clerkUserId: string,
-  ): Promise<{ id: string } | undefined>;
+  ): Promise<
+    | {
+        id: string;
+        purchaseId: string | null;
+        creditQuantity: number | null;
+        remainingCredits: number | null;
+      }
+    | undefined
+  >;
   recordHandledEvent(input: {
     eventId: string;
     eventType: string;
@@ -76,6 +115,16 @@ export interface CheckoutRepository {
 
 export interface CheckoutStatusResult {
   status: CheckoutStatus;
+  purchase?: {
+    purchaseId: string;
+    creditsPurchased: number;
+    creditsUsed: 1;
+    remainingCredits: number;
+  };
+}
+
+export interface CreditBalanceResult {
+  availableCredits: number;
 }
 
 export class CheckoutUnavailableError extends Error {}

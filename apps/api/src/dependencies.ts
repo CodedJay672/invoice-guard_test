@@ -8,6 +8,7 @@ import {
   QUEUE_NAMES,
   type GeneratePaidReportJobData,
   type GenerateReportPdfJobData,
+  type ProcessCreditRefundJobData,
 } from "@workspace/queues";
 
 import {
@@ -151,6 +152,10 @@ function createCheckoutService(
     name: QUEUE_NAMES.reportGeneration,
     connectionString: config.redisUrl!,
   });
+  const refundQueue = createQueue<ProcessCreditRefundJobData, void, string>({
+    name: QUEUE_NAMES.refund,
+    connectionString: config.redisUrl!,
+  });
   return new CheckoutService({
     appUrl: config.appUrl,
     companyService,
@@ -162,6 +167,16 @@ function createCheckoutService(
         await queue.add(QUEUE_JOB_NAMES.generatePaidReport, { reportId }, { jobId: reportId });
       },
     },
+    refundQueue: {
+      async enqueue(refundRequestId: string): Promise<void> {
+        await refundQueue.add(
+          QUEUE_JOB_NAMES.processCreditRefund,
+          { refundRequestId },
+          { jobId: refundRequestId },
+        );
+      },
+    },
+    ...(config.adminEmail ? { adminEmail: config.adminEmail } : {}),
   });
 }
 

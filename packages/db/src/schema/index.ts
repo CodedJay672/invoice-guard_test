@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -51,6 +52,24 @@ export const reportPdfStatusEnum = pgEnum("report_pdf_status", [
   "queued",
   "generating",
   "ready",
+  "failed",
+]);
+
+export const creditLedgerEntryTypeEnum = pgEnum("credit_ledger_entry_type", [
+  "purchase_grant",
+  "report_redemption",
+  "refund_reversal",
+]);
+export const creditPurchaseStatusEnum = pgEnum("credit_purchase_status", [
+  "active",
+  "refund_pending",
+  "partially_refunded",
+  "refunded",
+]);
+export const creditRefundStatusEnum = pgEnum("credit_refund_status", [
+  "queued",
+  "processing",
+  "succeeded",
   "failed",
 ]);
 
@@ -157,6 +176,7 @@ export const reportProducts = pgTable(
     tier: reportTierEnum("tier").notNull(),
     name: text("name").notNull(),
     pricePence: integer("price_pence").notNull(),
+    creditQuantity: integer("credit_quantity").notNull().default(1),
     currency: varchar("currency", { length: 3 }).notNull().default("GBP"),
     includesPdf: boolean("includes_pdf").notNull().default(false),
     isActive: boolean("is_active").notNull().default(true),
@@ -173,6 +193,59 @@ export const reportProducts = pgTable(
   }),
 );
 
+export const creditAccounts = pgTable(
+  "credit_accounts",
+  {
+    clerkUserId: varchar("clerk_user_id", { length: 128 }).primaryKey(),
+    availableCredits: integer("available_credits").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    nonNegativeBalance: check(
+      "credit_accounts_non_negative_balance",
+      sql`${table.availableCredits} >= 0`,
+    ),
+  }),
+);
+
+export const creditPurchases = pgTable(
+  "credit_purchases",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clerkUserId: varchar("clerk_user_id", { length: 128 })
+      .notNull()
+      .references(() => creditAccounts.clerkUserId),
+    reportTier: reportTierEnum("report_tier").notNull(),
+    originalQuantity: integer("original_quantity").notNull(),
+    availableQuantity: integer("available_quantity").notNull(),
+    unitPricePence: integer("unit_price_pence").notNull(),
+    amountPaidPence: integer("amount_paid_pence").notNull(),
+    amountRefundedPence: integer("amount_refunded_pence").notNull().default(0),
+    currency: varchar("currency", { length: 3 }).notNull(),
+    stripePaymentId: varchar("stripe_payment_id", { length: 128 }),
+    stripeCheckoutSessionId: varchar("stripe_checkout_session_id", { length: 128 }).notNull(),
+    status: creditPurchaseStatusEnum("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    checkoutSessionUnique: uniqueIndex("credit_purchases_checkout_session_unique").on(
+      table.stripeCheckoutSessionId,
+    ),
+    paymentUnique: uniqueIndex("credit_purchases_payment_unique").on(table.stripePaymentId),
+    ownerAvailableIndex: index("credit_purchases_owner_available_idx").on(
+      table.clerkUserId,
+      table.availableQuantity,
+      table.createdAt,
+    ),
+    validQuantities: check(
+      "credit_purchases_valid_quantities",
+      sql`${table.originalQuantity} > 0 AND ${table.availableQuantity} >= 0 AND ${table.availableQuantity} <= ${table.originalQuantity}`,
+    ),
+  }),
+);
+
 export const purchasedReports = pgTable(
   "purchased_reports",
   {
@@ -182,6 +255,8 @@ export const purchasedReports = pgTable(
     companiesHouseNumber: varchar("companies_house_number", { length: 16 }).notNull(),
     companyName: text("company_name").notNull(),
     reportTier: reportTierEnum("report_tier").notNull(),
+    creditPurchaseId: uuid("credit_purchase_id").references(() => creditPurchases.id),
+    creditRedemptionAttemptId: uuid("credit_redemption_attempt_id"),
     entitlements: jsonb("entitlements").$type<PaidReportEntitlements>().notNull(),
     stripePaymentId: varchar("stripe_payment_id", { length: 128 }),
     stripeCheckoutSessionId: varchar("stripe_checkout_session_id", { length: 128 }),
@@ -208,7 +283,85 @@ export const purchasedReports = pgTable(
       table.stripeCheckoutSessionId,
     ),
     companyIndex: index("purchased_reports_company_idx").on(table.companiesHouseNumber),
+    creditPurchaseIndex: index("purchased_reports_credit_purchase_idx").on(table.creditPurchaseId),
+    creditRedemptionAttemptUnique: uniqueIndex(
+      "purchased_reports_credit_redemption_attempt_unique",
+    ).on(table.creditRedemptionAttemptId),
     statusIndex: index("purchased_reports_status_idx").on(table.status),
+  }),
+);
+
+export const creditLedgerEntries = pgTable(
+  "credit_ledger_entries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    clerkUserId: varchar("clerk_user_id", { length: 128 })
+      .notNull()
+      .references(() => creditAccounts.clerkUserId),
+    entryType: creditLedgerEntryTypeEnum("entry_type").notNull(),
+    creditPurchaseId: uuid("credit_purchase_id")
+      .notNull()
+      .references(() => creditPurchases.id),
+    creditDelta: integer("credit_delta").notNull(),
+    reportTier: reportTierEnum("report_tier").notNull(),
+    stripeCheckoutSessionId: varchar("stripe_checkout_session_id", { length: 128 }),
+    reportId: uuid("report_id").references(() => purchasedReports.id),
+    refundReference: varchar("refund_reference", { length: 128 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    ownerCreatedIndex: index("credit_ledger_entries_owner_created_idx").on(
+      table.clerkUserId,
+      table.createdAt,
+    ),
+    purchaseSessionUnique: uniqueIndex("credit_ledger_entries_purchase_session_unique").on(
+      table.stripeCheckoutSessionId,
+      table.entryType,
+    ),
+    reportEntryUnique: uniqueIndex("credit_ledger_entries_report_type_unique").on(
+      table.reportId,
+      table.entryType,
+    ),
+    nonZeroDelta: check("credit_ledger_entries_non_zero_delta", sql`${table.creditDelta} <> 0`),
+    validShape: check(
+      "credit_ledger_entries_valid_shape",
+      sql`(${table.entryType} = 'purchase_grant' AND ${table.creditDelta} > 0 AND ${table.stripeCheckoutSessionId} IS NOT NULL AND ${table.reportId} IS NULL AND ${table.refundReference} IS NULL) OR (${table.entryType} = 'report_redemption' AND ${table.creditDelta} = -1 AND ${table.reportId} IS NOT NULL AND ${table.refundReference} IS NULL) OR (${table.entryType} = 'refund_reversal' AND ${table.creditDelta} < 0 AND ${table.refundReference} IS NOT NULL)`,
+    ),
+  }),
+);
+
+export const creditRefundRequests = pgTable(
+  "credit_refund_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    creditPurchaseId: uuid("credit_purchase_id")
+      .notNull()
+      .references(() => creditPurchases.id),
+    reportId: uuid("report_id").references(() => purchasedReports.id),
+    requestedByClerkUserId: varchar("requested_by_clerk_user_id", { length: 128 }),
+    creditQuantity: integer("credit_quantity").notNull(),
+    amountPence: integer("amount_pence").notNull(),
+    reason: text("reason").notNull(),
+    idempotencyKey: uuid("idempotency_key").notNull().defaultRandom(),
+    stripeRefundId: varchar("stripe_refund_id", { length: 128 }),
+    status: creditRefundStatusEnum("status").notNull().default("queued"),
+    failureCode: varchar("failure_code", { length: 80 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    idempotencyUnique: uniqueIndex("credit_refund_requests_idempotency_unique").on(
+      table.idempotencyKey,
+    ),
+    stripeRefundUnique: uniqueIndex("credit_refund_requests_stripe_refund_unique").on(
+      table.stripeRefundId,
+    ),
+    reportUnique: uniqueIndex("credit_refund_requests_report_unique").on(table.reportId),
+    statusIndex: index("credit_refund_requests_status_idx").on(table.status),
+    positiveValues: check(
+      "credit_refund_requests_positive_values",
+      sql`${table.creditQuantity} > 0 AND ${table.amountPence} > 0`,
+    ),
   }),
 );
 

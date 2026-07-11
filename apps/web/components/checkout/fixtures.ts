@@ -33,6 +33,8 @@ export interface ReportProductFixture {
   tier: ReportTier;
   name: string;
   price: string;
+  pricePence: number;
+  creditQuantity: number;
   includesPdf: boolean;
   includedItems: string[];
   active: boolean;
@@ -43,6 +45,8 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
     tier: "single_report",
     name: "Single Report",
     price: "GBP 20",
+    pricePence: 2000,
+    creditQuantity: 1,
     includesPdf: false,
     includedItems: [
       "All 6 data sources",
@@ -57,6 +61,8 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
     tier: "starter_pack",
     name: "Starter Pack",
     price: "GBP 54",
+    pricePence: 5400,
+    creditQuantity: 3,
     includesPdf: false,
     includedItems: [
       "Everything in Single Report",
@@ -70,6 +76,8 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
     tier: "business_pack",
     name: "Business Pack",
     price: "GBP 80",
+    pricePence: 8000,
+    creditQuantity: 5,
     includesPdf: false,
     includedItems: [
       "Everything in Starter Pack",
@@ -83,6 +91,8 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
     tier: "agency_pack",
     name: "Agency Pack",
     price: "GBP 140",
+    pricePence: 14000,
+    creditQuantity: 10,
     includesPdf: false,
     includedItems: [
       "Everything in Business Pack",

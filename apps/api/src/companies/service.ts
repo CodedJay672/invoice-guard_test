@@ -105,6 +105,8 @@ export class CompanyService {
         tier: product.tier,
         name: product.name,
         price: formatPrice(product.pricePence),
+        pricePence: product.pricePence,
+        creditQuantity: product.creditQuantity,
         includesPdf: product.includesPdf,
         includedItems: product.includedItems,
         cta: product.tier === "single_report" ? "Buy 1 Report" : `Buy ${product.name}`,

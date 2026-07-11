@@ -4,10 +4,37 @@ import test from "node:test";
 import {
   checkoutSelectionSchema,
   checkoutSessionIdSchema,
+  creditBalanceSchema,
+  redeemCreditInputSchema,
+  refundRequestSchema,
   createCheckoutSessionSchema,
   verifiedEmailSchema,
   reportTierSchema,
 } from "./checkout.js";
+
+void test("credit contracts reject client-controlled commercial values", () => {
+  assert.deepEqual(creditBalanceSchema.parse({ availableCredits: 2, eligiblePurchaseCount: 1 }), {
+    availableCredits: 2,
+    eligiblePurchaseCount: 1,
+  });
+  assert.equal(
+    redeemCreditInputSchema.safeParse({
+      companyNumber: "12345678",
+      idempotencyKey: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
+      pricePence: 1,
+    }).success,
+    true,
+  );
+  assert.equal(
+    refundRequestSchema.safeParse({
+      purchaseId: "4f90d0e1-6241-45db-995e-b30c3e45aa93",
+      creditQuantity: 1,
+      reason: "Customer requested unused credit refund",
+      idempotencyKey: "5f90d0e1-6241-45db-995e-b30c3e45aa93",
+    }).success,
+    true,
+  );
+});
 
 void test("checkout selection normalises canonical identity and display context", () => {
   const result = checkoutSelectionSchema.parse({

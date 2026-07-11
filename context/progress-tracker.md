@@ -1,5 +1,32 @@
 # Progress Tracker
 
+## 2026-07-11 — Credit Redemption and Refund Integrity
+
+- Added durable credit purchases linked to reports and ledger entries, oldest-purchase redemption,
+  idempotent owner-authorized redemption endpoints/actions, and an explicit review page showing the
+  balance before and after one credit is used.
+- Added queued Stripe partial-refund processing for foundational report failures and admin-requested
+  unused credits, refund webhook convergence, purchase/refund status, audit logging, and deterministic
+  reconciliation jobs.
+- Added migration backfill for existing paid sessions, commercial-shape constraints, non-negative
+  projections, and a database trigger that prevents credit-ledger updates or deletes.
+- Checkout now rejects inactive live tiers, payment status exposes purchased/used/remaining credits,
+  and empty or unavailable data fails visibly.
+- Affected API, worker, web, database, queue, and validation typechecks pass. API (40), worker (37),
+  web (45), database (9), and validation (12) tests pass.
+
+## 2026-07-11 — Paid Report Unlock and Credit Packs
+
+- Rebuilt authenticated `/checkout` around live company-preview product data with four selectable
+  credit packs, identical full-report inclusions, unit pricing, immediate redemption, retained-credit
+  totals, verified owner identity, cancellation recovery, and Stripe-hosted payment handoff.
+- Added authoritative `credit_quantity` product data plus durable owner credit accounts and an
+  append-only ledger. Stripe-confirmed report creation, pack grant, initial one-credit redemption,
+  and balance update now commit in one idempotent database transaction.
+- Added an authenticated owner-only credit balance endpoint and additive Drizzle migration with
+  non-negative balance and purchase/report uniqueness constraints.
+- Focused API, database, and web tests pass; web, API, and database typechecks pass.
+
 Update after every completed feature. Record actual state only.
 
 ---

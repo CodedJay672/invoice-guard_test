@@ -13,6 +13,7 @@ export interface ReportProductSummary {
   tier: ReportProductTier;
   name: string;
   pricePence: number;
+  creditQuantity: number;
   includesPdf: boolean;
   includedItems: string[];
   entitlements: PaidReportEntitlements;
@@ -28,6 +29,7 @@ export const canonicalReportProducts: readonly ReportProductSummary[] = [
     tier: "single_report",
     name: "Single Report",
     pricePence: 2000,
+    creditQuantity: 1,
     includesPdf: false,
     includedItems: [
       "All 6 data sources",
@@ -42,6 +44,7 @@ export const canonicalReportProducts: readonly ReportProductSummary[] = [
     tier: "starter_pack",
     name: "Starter Pack",
     pricePence: 5400,
+    creditQuantity: 3,
     includesPdf: false,
     includedItems: [
       "Everything in Single Report",
@@ -55,6 +58,7 @@ export const canonicalReportProducts: readonly ReportProductSummary[] = [
     tier: "business_pack",
     name: "Business Pack",
     pricePence: 8000,
+    creditQuantity: 5,
     includesPdf: false,
     includedItems: [
       "Everything in Starter Pack",
@@ -68,6 +72,7 @@ export const canonicalReportProducts: readonly ReportProductSummary[] = [
     tier: "agency_pack",
     name: "Agency Pack",
     pricePence: 14000,
+    creditQuantity: 10,
     includesPdf: false,
     includedItems: [
       "Everything in Business Pack",
@@ -104,6 +109,7 @@ export class DrizzleReportProductRepository implements ReportProductRepository {
       tier: row.tier,
       name: row.name,
       pricePence: row.pricePence,
+      creditQuantity: row.creditQuantity,
       includesPdf: row.includesPdf,
       includedItems: readIncludedItems(row.entitlements),
       entitlements: readEntitlements(row.entitlements, row.tier),
@@ -122,6 +128,7 @@ export class DrizzleReportProductRepository implements ReportProductRepository {
           tier: row.tier,
           name: row.name,
           pricePence: row.pricePence,
+          creditQuantity: row.creditQuantity,
           includesPdf: row.includesPdf,
           includedItems: readIncludedItems(row.entitlements),
           entitlements: readEntitlements(row.entitlements, row.tier),

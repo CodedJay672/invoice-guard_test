@@ -83,6 +83,8 @@ const tierCards: FreePreviewPayload["tierCards"] = [
     tier: "single_report",
     name: "Single Report",
     price: "GBP 20",
+    pricePence: 2000,
+    creditQuantity: 1,
     includesPdf: false,
     includedItems: [
       "All 6 data sources",
@@ -97,6 +99,8 @@ const tierCards: FreePreviewPayload["tierCards"] = [
     tier: "starter_pack",
     name: "Starter Pack",
     price: "GBP 54",
+    pricePence: 5400,
+    creditQuantity: 3,
     includesPdf: false,
     includedItems: [
       "Everything in Single Report",
@@ -110,6 +114,8 @@ const tierCards: FreePreviewPayload["tierCards"] = [
     tier: "business_pack",
     name: "Business Pack",
     price: "GBP 80",
+    pricePence: 8000,
+    creditQuantity: 5,
     includesPdf: false,
     includedItems: [
       "Everything in Starter Pack",
@@ -123,6 +129,8 @@ const tierCards: FreePreviewPayload["tierCards"] = [
     tier: "agency_pack",
     name: "Agency Pack",
     price: "GBP 140",
+    pricePence: 14000,
+    creditQuantity: 10,
     includesPdf: false,
     includedItems: [
       "Everything in Business Pack",

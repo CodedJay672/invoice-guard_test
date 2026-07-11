@@ -67,6 +67,8 @@ void test("free preview response accepts normalized Companies House account fiel
             tier: "single_report",
             name: "Single Report",
             price: "GBP 20",
+            pricePence: 2000,
+            creditQuantity: 1,
             includesPdf: false,
             includedItems: ["Full report"],
             cta: "Buy 1 Report",

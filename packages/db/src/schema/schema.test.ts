@@ -4,6 +4,10 @@ import test from "node:test";
 
 import {
   companyDataSnapshots,
+  creditAccounts,
+  creditLedgerEntries,
+  creditPurchases,
+  creditRefundRequests,
   fairPaymentCodeStatuses,
   providerUsageLogs,
   purchasedReports,
@@ -19,6 +23,34 @@ void test("Phase A report and snapshot enums contain only approved lifecycle val
   assert.deepEqual(snapshotSourceContextEnum.enumValues, ["free_preview", "paid_report"]);
   assert.equal("reportTier" in providerUsageLogs, true);
   assert.equal("subscriptionTier" in providerUsageLogs, false);
+});
+
+void test("credit redemption and refund migration backfills purchases and protects the ledger", async () => {
+  assert.equal("availableQuantity" in creditPurchases, true);
+  assert.equal("idempotencyKey" in creditRefundRequests, true);
+  assert.equal("creditPurchaseId" in purchasedReports, true);
+  const migration = await readFile(
+    new URL("../../drizzle/0009_credit_redemption_refunds.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /Credit purchase backfill incomplete/);
+  assert.match(migration, /credit_ledger_entries_valid_shape/);
+  assert.match(migration, /credit_ledger_entries_append_only/);
+  assert.match(migration, /credit_refund_requests_report_unique/);
+});
+
+void test("credit-pack migration stores durable balances and an append-only audit ledger", async () => {
+  assert.equal("availableCredits" in creditAccounts, true);
+  assert.equal("creditDelta" in creditLedgerEntries, true);
+  assert.equal("stripeCheckoutSessionId" in creditLedgerEntries, true);
+  assert.equal("reportId" in creditLedgerEntries, true);
+  const migration = await readFile(
+    new URL("../../drizzle/0008_credit_packs.sql", import.meta.url),
+    "utf8",
+  );
+  assert.match(migration, /credit_quantity/);
+  assert.match(migration, /credit_accounts_non_negative_balance/);
+  assert.match(migration, /credit_ledger_entries_purchase_session_unique/);
 });
 
 void test("18B migration creates one durable PDF artifact per report", async () => {

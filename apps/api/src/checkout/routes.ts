@@ -1,4 +1,9 @@
-import { checkoutSessionIdSchema, createCheckoutSessionSchema } from "@workspace/validation";
+import {
+  checkoutSessionIdSchema,
+  createCheckoutSessionSchema,
+  redeemCreditInputSchema,
+  refundRequestSchema,
+} from "@workspace/validation";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import Stripe from "stripe";
 
@@ -35,6 +40,90 @@ export function registerCheckoutRoutes(
     "/checkout/sessions/:sessionId/status",
     (request: Request, response: Response, next: NextFunction) => {
       void handleStatus(request, response, checkoutService, requestIdentityResolver).catch(next);
+    },
+  );
+  app.get("/credits/balance", (request: Request, response: Response, next: NextFunction) => {
+    const identity = requestIdentityResolver(request);
+    if (!identity.clerkUserId || !identity.verifiedEmail) {
+      sendApiError(response, 401, "authentication_required", "Sign in with a verified email.");
+      return;
+    }
+    void checkoutService
+      .getCreditBalance(identity.clerkUserId)
+      .then((data) => response.json({ data }))
+      .catch(next);
+  });
+  app.post("/credits/redemptions", (request: Request, response: Response, next: NextFunction) => {
+    const input = redeemCreditInputSchema.safeParse(request.body);
+    if (!input.success) {
+      sendApiError(response, 400, "invalid_credit_redemption", "Check the company details.");
+      return;
+    }
+    const identity = requestIdentityResolver(request);
+    if (!identity.clerkUserId || !identity.verifiedEmail) {
+      sendApiError(response, 401, "authentication_required", "Sign in with a verified email.");
+      return;
+    }
+    void checkoutService
+      .redeemCredit({ ...input.data, clerkUserId: identity.clerkUserId })
+      .then((data) => response.status(201).json({ data }))
+      .catch((error: unknown) => {
+        try {
+          handleCheckoutError(error, response);
+        } catch (unhandled) {
+          next(unhandled);
+        }
+      });
+  });
+  app.post("/admin/refunds", (request: Request, response: Response, next: NextFunction) => {
+    const input = refundRequestSchema.safeParse(request.body);
+    const identity = requestIdentityResolver(request);
+    if (!input.success) {
+      sendApiError(response, 400, "invalid_refund", "Check the refund request.");
+      return;
+    }
+    if (!identity.clerkUserId || !identity.verifiedEmail) {
+      sendApiError(response, 401, "authentication_required", "Sign in with a verified email.");
+      return;
+    }
+    void checkoutService
+      .createAdminRefund({
+        ...input.data,
+        clerkUserId: identity.clerkUserId,
+        verifiedEmail: identity.verifiedEmail,
+      })
+      .then((data) => response.status(202).json({ data }))
+      .catch((error: unknown) => {
+        try {
+          handleCheckoutError(error, response);
+        } catch (unhandled) {
+          next(unhandled);
+        }
+      });
+  });
+  app.get(
+    "/admin/refunds/:refundRequestId",
+    (request: Request, response: Response, next: NextFunction) => {
+      const refundRequestId = request.params["refundRequestId"];
+      const identity = requestIdentityResolver(request);
+      if (!refundRequestId || !/^[0-9a-f-]{36}$/i.test(refundRequestId)) {
+        sendApiError(response, 400, "invalid_refund", "Refund request is invalid.");
+        return;
+      }
+      if (!identity.verifiedEmail) {
+        sendApiError(response, 401, "authentication_required", "Sign in with a verified email.");
+        return;
+      }
+      void checkoutService
+        .getAdminRefundStatus({ refundRequestId, verifiedEmail: identity.verifiedEmail })
+        .then((data) => response.json({ data }))
+        .catch((error: unknown) => {
+          try {
+            handleCheckoutError(error, response);
+          } catch (unhandled) {
+            next(unhandled);
+          }
+        });
     },
   );
 }

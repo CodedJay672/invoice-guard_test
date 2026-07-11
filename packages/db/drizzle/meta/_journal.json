@@ -57,6 +57,20 @@
       "when": 1783604033655,
       "tag": "0007_worthless_loa",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783770594843,
+      "tag": "0008_credit_packs",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783773210945,
+      "tag": "0009_credit_redemption_refunds",
+      "breakpoints": true
     }
   ]
 }

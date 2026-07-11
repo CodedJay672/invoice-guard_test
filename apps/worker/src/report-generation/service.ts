@@ -5,6 +5,7 @@ import type {
   ReportGenerationRepository,
   OwnerNotificationPublisher,
   PdfPublisher,
+  RefundPublisher,
 } from "./types.js";
 import { ReportGenerationError } from "./types.js";
 
@@ -26,6 +27,7 @@ export class ReportGenerationService {
     private readonly logger: GenerationLogger,
     private readonly ownerNotifications?: OwnerNotificationPublisher,
     private readonly pdfPublisher?: PdfPublisher,
+    private readonly refundPublisher?: RefundPublisher,
   ) {}
 
   async process(input: ProcessReportGenerationInput): Promise<ProcessReportGenerationResult> {
@@ -68,6 +70,7 @@ export class ReportGenerationService {
         await this.publishOwnerNotification(input.reportId, context);
         await this.publishPdf(input.reportId, context);
       }
+      if (status === "refund_required") await this.refundPublisher?.publish(input.reportId);
       return { state: "completed", status };
     } catch (error) {
       const retryable = !(error instanceof ReportGenerationError) || error.retryable;

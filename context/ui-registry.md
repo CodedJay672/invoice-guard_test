@@ -537,6 +537,51 @@ idempotent Server Action retry. Signed provider URLs and storage keys never ente
 caption remains `text-xs text-content-subtle`; no new colour, radius, shadow, or spacing pattern was
 introduced.
 
+## Paid Report Unlock Checkout
+
+### Retained-Credit Redemption Review
+
+File: `apps/web/components/checkout/CreditRedemptionForm.tsx`
+Last updated: 2026-07-11
+
+| Property           | Class/pattern                                                        |
+| ------------------ | -------------------------------------------------------------------- |
+| Background         | page `bg-page`; Card `bg-surface`; company inset `bg-surface-subtle` |
+| Border             | shared `border-line`                                                  |
+| Border radius      | shared Card `rounded-lg`; inset `rounded-md`                         |
+| Text — primary     | headings `text-brand-navy`; balances `text-content`                  |
+| Text — secondary   | descriptions and labels `text-content-muted`                        |
+| Spacing            | wrapper `px-4 py-10`; Card content `gap-5`; inset `p-4`              |
+| Interactive states | authoritative confirmation and outline secondary Button patterns     |
+| Shadow             | shared Card subtle elevation                                         |
+| Accent usage       | positive Badge communicates an available owned credit                |
+
+**Pattern notes:** Credit redemption is always an explicit review step. Company identity, current
+balance, one-credit cost, and resulting balance are visible before mutation. The primary action is
+single-use while pending; purchasing another pack remains secondary.
+
+### Credit-Pack Tier Selector and Order Summary
+
+File: `apps/web/components/checkout/CheckoutForm.tsx`
+Last updated: 2026-07-11
+
+| Property           | Class/pattern                                                                  |
+| ------------------ | ------------------------------------------------------------------------------ |
+| Background         | page `bg-page`; tier and summary Cards `bg-surface`; company inset `bg-surface-subtle` |
+| Border             | default `border-line`; selected/hover tier `border-brand-teal`                 |
+| Border radius      | tier cards `rounded-lg`; summary insets `rounded-md`                           |
+| Text — primary     | headings `text-brand-navy`; prices and values `text-content`                   |
+| Text — secondary   | descriptions and helper copy `text-content-muted`                             |
+| Spacing            | page `px-4 py-8`; sections `gap-6`; tier cards `p-4`; summary content `gap-5`  |
+| Interactive states | native radio labels use `focus-within:ring-2 focus-within:ring-focus`          |
+| Shadow             | tier cards and shared Cards use subtle `shadow-sm`                             |
+| Accent usage       | teal selection border; positive Badge marks the recommended business pack     |
+
+**Pattern notes:** Every credit pack unlocks the same report depth. Selection always repeats tier
+name, credit quantity, total price, and per-report price, while the sticky summary states one credit
+is used immediately and how many remain. Payment identity is read-only and Stripe confirmation is
+described as the authority. Source failures are described as explicit states rather than clean results.
+
 ## Authenticated Report Notifications
 
 ### Report Notification Status

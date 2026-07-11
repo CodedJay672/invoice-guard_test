@@ -26,6 +26,7 @@
     "bullmq": "^5.77.3",
     "drizzle-orm": "^0.45.2",
     "playwright": "^1.61.1"
+    ,"stripe": "^20.3.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

@@ -166,6 +166,8 @@ export const freePreviewPayloadSchema: z.ZodType<SharedFreePreviewPayload, z.Zod
         ]) satisfies z.ZodType<ReportProductCode>,
         name: z.string(),
         price: z.string(),
+        pricePence: z.number().int().positive(),
+        creditQuantity: z.number().int().positive(),
         includesPdf: z.boolean(),
         includedItems: z.array(z.string()),
         cta: z.string(),

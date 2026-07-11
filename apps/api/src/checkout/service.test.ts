@@ -36,6 +36,7 @@ const productRepository: ReportProductRepository = {
       tier,
       name: "Single Report",
       pricePence: 2000,
+      creditQuantity: 1,
       includesPdf: false,
       includedItems: [],
       entitlements: entitlementsForTier(tier),
@@ -43,17 +44,48 @@ const productRepository: ReportProductRepository = {
 };
 
 class MemoryCheckoutRepository implements CheckoutRepository {
-  report: { id: string } | undefined;
+  report:
+    | {
+        id: string;
+        purchaseId: string | null;
+        creditQuantity: number | null;
+        remainingCredits: number | null;
+      }
+    | undefined;
   reportOwner = "user_owner_123";
   handledEvents: string[] = [];
   prepared: PaidReportEventInput[] = [];
   processedEvents: string[] = [];
   alreadyProcessed = false;
 
+  getCreditBalance(): Promise<{ availableCredits: number; eligiblePurchaseCount: number }> {
+    return Promise.resolve({ availableCredits: 0, eligiblePurchaseCount: 0 });
+  }
+  redeemCredit(): Promise<never> {
+    return Promise.reject(new Error("Not used"));
+  }
+  createUnusedCreditRefund(): Promise<never> {
+    return Promise.reject(new Error("Not used"));
+  }
+  getRefundStatus(): Promise<undefined> {
+    return Promise.resolve(undefined);
+  }
+  confirmRefund(): Promise<void> {
+    return Promise.resolve();
+  }
+
   findReportBySessionId(
     _sessionId: string,
     clerkUserId: string,
-  ): Promise<{ id: string } | undefined> {
+  ): Promise<
+    | {
+        id: string;
+        purchaseId: string | null;
+        creditQuantity: number | null;
+        remainingCredits: number | null;
+      }
+    | undefined
+  > {
     return Promise.resolve(clerkUserId === this.reportOwner ? this.report : undefined);
   }
   recordHandledEvent(input: { eventId: string }): Promise<void> {
@@ -62,7 +94,11 @@ class MemoryCheckoutRepository implements CheckoutRepository {
   }
   preparePaidReport(input: PaidReportEventInput): Promise<PaidReportEventResult> {
     this.prepared.push(input);
-    return Promise.resolve({ reportId: "report-1", alreadyProcessed: this.alreadyProcessed });
+    return Promise.resolve({
+      reportId: "report-1",
+      purchaseId: "purchase-1",
+      alreadyProcessed: this.alreadyProcessed,
+    });
   }
   markEventProcessed(eventId: string): Promise<void> {
     this.processedEvents.push(eventId);
@@ -197,7 +233,12 @@ void test("status is paid only after the pending report exists", async () => {
   assert.deepEqual(await harness.service.getStatus("cs_test_one", "user_owner_123"), {
     status: "confirming",
   });
-  harness.repository.report = { id: "report-1" };
+  harness.repository.report = {
+    id: "report-1",
+    purchaseId: null,
+    creditQuantity: null,
+    remainingCredits: null,
+  };
   assert.deepEqual(await harness.service.getStatus("cs_test_one", "user_owner_123"), {
     status: "paid_pending",
   });

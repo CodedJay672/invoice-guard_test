@@ -107,6 +107,8 @@ export interface FreePreviewTierCardPayload {
   tier: ReportProductCode;
   name: string;
   price: string;
+  pricePence: number;
+  creditQuantity: number;
   includesPdf: boolean;
   includedItems: string[];
   cta: string;

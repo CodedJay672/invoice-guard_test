@@ -51,8 +51,36 @@ export const checkoutStatusSchema = z.enum([
   "failed",
 ]);
 
+export const creditBalanceSchema = z.object({
+  availableCredits: z.number().int().nonnegative(),
+  eligiblePurchaseCount: z.number().int().nonnegative(),
+});
+
+export const redeemCreditInputSchema = z.object({
+  companyNumber: checkoutCompanyNumberSchema,
+  idempotencyKey: z.string().uuid(),
+});
+
+export const redeemCreditResultSchema = z.object({
+  reportReference: z.string(),
+  remainingCredits: z.number().int().nonnegative(),
+  lifecycleUrl: z.string(),
+});
+
+export const refundRequestSchema = z.object({
+  purchaseId: z.string().uuid(),
+  reportReference: z.string().optional(),
+  creditQuantity: z.number().int().positive(),
+  reason: z.string().trim().min(8).max(500),
+  idempotencyKey: z.string().uuid(),
+});
+
 export type CheckoutSelection = z.infer<typeof checkoutSelectionSchema>;
 export type ReportTier = z.infer<typeof reportProductCodeSchema>;
 export type ReportProductCodeInput = ReportTier;
 export type CreateCheckoutSessionInput = z.infer<typeof createCheckoutSessionSchema>;
 export type CheckoutStatus = z.infer<typeof checkoutStatusSchema>;
+export type CreditBalance = z.infer<typeof creditBalanceSchema>;
+export type RedeemCreditInput = z.infer<typeof redeemCreditInputSchema>;
+export type RedeemCreditResult = z.infer<typeof redeemCreditResultSchema>;
+export type RefundRequest = z.infer<typeof refundRequestSchema>;

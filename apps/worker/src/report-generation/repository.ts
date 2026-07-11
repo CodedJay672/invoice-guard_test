@@ -72,6 +72,34 @@ export class DrizzleReportGenerationRepository implements ReportGenerationReposi
             target: [schema.reportNotifications.reportId, schema.reportNotifications.type],
           });
       }
+      if (rows[0]?.status === "refund_required") {
+        const purchase = (
+          await tx
+            .select({
+              purchaseId: schema.creditPurchases.id,
+              unitPricePence: schema.creditPurchases.unitPricePence,
+            })
+            .from(schema.purchasedReports)
+            .innerJoin(
+              schema.creditPurchases,
+              eq(schema.creditPurchases.id, schema.purchasedReports.creditPurchaseId),
+            )
+            .where(eq(schema.purchasedReports.id, reportId))
+            .limit(1)
+        )[0];
+        if (purchase) {
+          await tx
+            .insert(schema.creditRefundRequests)
+            .values({
+              creditPurchaseId: purchase.purchaseId,
+              reportId,
+              creditQuantity: 1,
+              amountPence: purchase.unitPricePence,
+              reason: "Foundational Companies House report generation failure",
+            })
+            .onConflictDoNothing({ target: schema.creditRefundRequests.reportId });
+        }
+      }
       return rows;
     });
     if (completed[0]) return completed[0].status;

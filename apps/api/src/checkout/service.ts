@@ -10,6 +10,7 @@ import type {
   CheckoutStatusResult,
   AuthenticatedCreateCheckoutSessionInput,
   ReportGenerationQueue,
+  RefundQueue,
   StripeGateway,
 } from "./types.js";
 import {
@@ -25,6 +26,8 @@ export interface CheckoutServiceDependencies {
   checkoutRepository: CheckoutRepository;
   stripeGateway: StripeGateway;
   reportGenerationQueue: ReportGenerationQueue;
+  refundQueue?: RefundQueue;
+  adminEmail?: string;
 }
 
 export class CheckoutService {
@@ -59,7 +62,19 @@ export class CheckoutService {
       sessionId,
       clerkUserId,
     );
-    if (report) return { status: "paid_pending" };
+    if (report) {
+      return report.purchaseId && report.creditQuantity !== null && report.remainingCredits !== null
+        ? {
+            status: "paid_pending",
+            purchase: {
+              purchaseId: report.purchaseId,
+              creditsPurchased: report.creditQuantity,
+              creditsUsed: 1,
+              remainingCredits: report.remainingCredits,
+            },
+          }
+        : { status: "paid_pending" };
+    }
 
     try {
       const session = await this.dependencies.stripeGateway.retrieveSession(sessionId);
@@ -77,12 +92,103 @@ export class CheckoutService {
     }
   }
 
+  async getCreditBalance(clerkUserId: string): Promise<{ availableCredits: number }> {
+    return this.dependencies.checkoutRepository.getCreditBalance(clerkUserId);
+  }
+
+  async redeemCredit(input: {
+    clerkUserId: string;
+    companyNumber: string;
+    idempotencyKey: string;
+  }): Promise<import("@workspace/validation").RedeemCreditResult> {
+    const company = await this.dependencies.companyService.getCompanyProfile(input.companyNumber);
+    const entitlements = (
+      await this.dependencies.reportProductRepository.findActiveByTier("single_report")
+    )?.entitlements;
+    if (!entitlements) throw new CheckoutUnavailableError("Report entitlement is unavailable.");
+    const redeemed = await this.dependencies.checkoutRepository.redeemCredit({
+      clerkUserId: input.clerkUserId,
+      companyNumber: company.companiesHouseNumber,
+      companyName: company.companyName,
+      idempotencyKey: input.idempotencyKey,
+      entitlements,
+    });
+    await this.dependencies.reportGenerationQueue.enqueue(redeemed.reportId);
+    return {
+      reportReference: redeemed.reportReference,
+      remainingCredits: redeemed.remainingCredits,
+      lifecycleUrl: redeemed.lifecycleUrl,
+    };
+  }
+
+  async createAdminRefund(
+    input: import("@workspace/validation").RefundRequest & {
+      clerkUserId: string;
+      verifiedEmail: string;
+    },
+  ): Promise<{ refundRequestId: string }> {
+    if (
+      !this.dependencies.adminEmail ||
+      input.verifiedEmail.toLowerCase() !== this.dependencies.adminEmail.toLowerCase()
+    )
+      throw new CheckoutAuthorizationError("Admin access is denied.");
+    if (!this.dependencies.refundQueue)
+      throw new CheckoutUnavailableError("Refund processing is unavailable.");
+    const created = await this.dependencies.checkoutRepository.createUnusedCreditRefund({
+      ...input,
+      requestedByClerkUserId: input.clerkUserId,
+    });
+    await this.dependencies.refundQueue.enqueue(created.refundRequestId);
+    return created;
+  }
+  async getAdminRefundStatus(input: { refundRequestId: string; verifiedEmail: string }): Promise<{ status: "queued" | "processing" | "succeeded" | "failed"; amountPence: number }> {
+    if (
+      !this.dependencies.adminEmail ||
+      input.verifiedEmail.toLowerCase() !== this.dependencies.adminEmail.toLowerCase()
+    )
+      throw new CheckoutAuthorizationError("Admin access is denied.");
+    const result = await this.dependencies.checkoutRepository.getRefundStatus(
+      input.refundRequestId,
+    );
+    if (!result) throw new CheckoutValidationError("Refund request was not found.");
+    return result;
+  }
+
   constructEvent(payload: Buffer, signature: string): Stripe.Event {
     return this.dependencies.stripeGateway.constructEvent(payload, signature);
   }
 
   async processEvent(event: Stripe.Event): Promise<void> {
     const payload = { livemode: event.livemode, created: event.created };
+    if (event.type === "refund.updated" || event.type === "refund.created") {
+      const refund = event.data.object;
+      const refundRequestId = refund.metadata?.["refundRequestId"];
+      if (
+        refundRequestId &&
+        /^[0-9a-f-]{36}$/i.test(refundRequestId) &&
+        (refund.status === "succeeded" ||
+          refund.status === "failed" ||
+          refund.status === "canceled")
+      ) {
+        await this.dependencies.checkoutRepository.confirmRefund({
+          refundRequestId,
+          stripeRefundId: refund.id,
+          succeeded: refund.status === "succeeded",
+          failureCode: refund.failure_reason ?? refund.status,
+        });
+      }
+      await this.dependencies.checkoutRepository.recordHandledEvent({
+        eventId: event.id,
+        eventType: event.type,
+        payload: {
+          ...payload,
+          refundRequestId,
+          stripeRefundId: refund.id,
+          refundStatus: refund.status,
+        },
+      });
+      return;
+    }
     if (!isCheckoutEvent(event.type)) {
       await this.dependencies.checkoutRepository.recordHandledEvent({
         eventId: event.id,
@@ -154,6 +260,7 @@ export class CheckoutService {
       amountPaidPence,
       currency,
       entitlements: product.entitlements,
+      creditQuantity: product.creditQuantity,
       eventPayload: {
         ...payload,
         checkoutSessionId: session.id,

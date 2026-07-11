@@ -29,7 +29,15 @@ import type { PaymentStatusFixtureName } from "./fixtures";
 
 type PaymentState =
   | { status: "confirming"; attempt: number }
-  | { status: "paid_pending" }
+  | {
+      status: "paid_pending";
+      purchase?: {
+        purchaseId: string;
+        creditsPurchased: number;
+        creditsUsed: 1;
+        remainingCredits: number;
+      };
+    }
   | { status: "delayed"; attempt: number }
   | { status: "cancelled" }
   | { status: "failed" }
@@ -78,11 +86,26 @@ export function PaymentStatusPanel({
       })
         .then(async (response) => {
           if (!response.ok) return { status: "failed" as CheckoutStatus };
-          const payload = (await response.json()) as { data?: { status?: CheckoutStatus } };
-          return { status: payload.data?.status ?? "failed" };
+          const payload = (await response.json()) as {
+            data?: {
+              status?: CheckoutStatus;
+              purchase?: {
+                purchaseId: string;
+                creditsPurchased: number;
+                creditsUsed: 1;
+                remainingCredits: number;
+              };
+            };
+          };
+          return { status: payload.data?.status ?? "failed", purchase: payload.data?.purchase };
         })
         .then((result) => {
-          if (result.status === "paid_pending") setState({ status: "paid_pending" });
+          if (result.status === "paid_pending")
+            setState(
+              result.purchase
+                ? { status: "paid_pending", purchase: result.purchase }
+                : { status: "paid_pending" },
+            );
           else if (result.status === "failed") setState({ status: "failed" });
           else if (result.status === "cancelled") setState({ status: "cancelled" });
           else if (result.status === "delayed" || state.attempt >= 3) {
@@ -136,6 +159,22 @@ export function PaymentStatusPanel({
             <p className="text-sm text-content-muted">
               Checking again is safe. It does not start another checkout or create another charge.
             </p>
+          ) : null}
+          {state.status === "paid_pending" && state.purchase ? (
+            <dl className="grid gap-3 rounded-md border border-line bg-surface-subtle p-4 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-content-muted">Credits purchased</dt>
+                <dd className="font-semibold text-content">{state.purchase.creditsPurchased}</dd>
+              </div>
+              <div>
+                <dt className="text-content-muted">Used now</dt>
+                <dd className="font-semibold text-content">{state.purchase.creditsUsed}</dd>
+              </div>
+              <div>
+                <dt className="text-content-muted">Credits remaining</dt>
+                <dd className="font-semibold text-content">{state.purchase.remainingCredits}</dd>
+              </div>
+            </dl>
           ) : null}
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-3 sm:flex-row">

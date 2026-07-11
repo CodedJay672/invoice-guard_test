@@ -342,11 +342,11 @@ function FactsPanel({ fixture, icon: Icon }: FactsPanelProps) {
 
 function FactGrid({ facts }: { facts: WorkspaceFact[] }) {
   return (
-    <dl className="grid gap-3 grid-cols-1">
+    <dl className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
       {facts.map((fact) => (
         <div key={fact.label} className="w-full rounded-md border bg-transparent p-3">
           <dt className="mb-1 text-xs font-medium text-content-muted uppercase">{fact.label}</dt>
-          <dd className="text-sm font-semibold break-words text-content">{fact.value}</dd>
+          <dd className="text-sm font-semibold wrap-break-word text-content">{fact.value}</dd>
         </div>
       ))}
     </dl>
@@ -374,9 +374,9 @@ function FilingList({ filings }: { filings: FilingRecord[] }) {
         <span>Pages</span>
       </div>
       <div className="divide-y divide-line">
-        {filings.map((filing) => (
+        {filings.map((filing, idx) => (
           <article
-            key={`${filing.date}-${filing.type}`}
+            key={`${filing.date}-${filing.type}-${idx}`}
             className="grid gap-2 px-4 py-4 text-sm md:grid-cols-[120px_90px_minmax(0,1fr)_120px_90px] md:gap-3"
           >
             <span className="font-medium text-content">{formatDisplayDate(filing.date)}</span>
@@ -495,7 +495,7 @@ function OfficerCard({ officer }: { officer: OfficerRecord }) {
         )}
       >
         <div className="min-w-0">
-          <h3 className="font-semibold break-words text-content">{officer.name}</h3>
+          <h3 className="font-semibold wrap-break-word text-content">{officer.name}</h3>
         </div>
         <Badge variant={officer.resignedOn ? "outline" : "positive"}>
           {officer.resignedOn ? "Resigned" : "Active"}

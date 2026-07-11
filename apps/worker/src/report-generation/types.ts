@@ -57,6 +57,9 @@ export interface OwnerNotificationPublisher {
 export interface PdfPublisher {
   publish(reportId: string): Promise<void>;
 }
+export interface RefundPublisher {
+  publish(reportId: string): Promise<void>;
+}
 
 export class ReportGenerationError extends Error {
   constructor(
