@@ -52,7 +52,7 @@ export const checkoutStatusSchema = z.enum([
 ]);
 
 export const creditBalanceSchema = z.object({
-  availableCredits: z.number().int().nonnegative(),
+  redeemableCredits: z.number().int().nonnegative(),
   eligiblePurchaseCount: z.number().int().nonnegative(),
 });
 

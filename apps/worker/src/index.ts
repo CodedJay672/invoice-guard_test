@@ -39,7 +39,7 @@ import { DrizzleReportNotificationRepository } from "./report-notification/repos
 import { OwnerReportNotificationService } from "./report-notification/service.js";
 import { createOwnerReportNotificationWorker } from "./report-notification/worker.js";
 import { CreditRefundPublisher } from "./refund/publisher.js";
-import { CreditRefundService } from "./refund/service.js";
+import { CreditRefundService, StripeCreditRefundGateway } from "./refund/service.js";
 import { createCreditRefundWorker } from "./refund/worker.js";
 
 const config = loadAppConfig();
@@ -128,7 +128,7 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
   if (config.stripeSecretKey) {
     createCreditRefundWorker({
       connectionString: config.redisUrl,
-      service: new CreditRefundService(db, config.stripeSecretKey),
+      service: new CreditRefundService(db, new StripeCreditRefundGateway(config.stripeSecretKey)),
     });
     await refundPublisher.reconcile();
   }

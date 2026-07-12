@@ -19,9 +19,9 @@
     "@workspace/integrations": "*",
     "@workspace/logger": "*",
     "@workspace/queues": "^0.0.0",
+    "@workspace/types": "*",
     "@workspace/utils": "*",
     "@workspace/validation": "*",
-    "@workspace/types": "*",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
@@ -29,6 +29,8 @@
     "stripe": "^22.3.0"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1"
+    "@testcontainers/postgresql": "^12.0.4",
+    "@types/node": "^25.9.1",
+    "testcontainers": "^12.0.4"
   }
 }

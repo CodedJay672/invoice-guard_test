@@ -78,6 +78,7 @@ export class DrizzleReportGenerationRepository implements ReportGenerationReposi
             .select({
               purchaseId: schema.creditPurchases.id,
               unitPricePence: schema.creditPurchases.unitPricePence,
+              purchaseStatus: schema.creditPurchases.status,
             })
             .from(schema.purchasedReports)
             .innerJoin(
@@ -96,6 +97,7 @@ export class DrizzleReportGenerationRepository implements ReportGenerationReposi
               creditQuantity: 1,
               amountPence: purchase.unitPricePence,
               reason: "Foundational Companies House report generation failure",
+              previousPurchaseStatus: purchase.purchaseStatus,
             })
             .onConflictDoNothing({ target: schema.creditRefundRequests.reportId });
         }

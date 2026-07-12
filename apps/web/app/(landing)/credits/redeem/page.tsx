@@ -19,7 +19,7 @@ export default async function Page({
     requestCreditBalance(),
     requestFreePreview(companyNumber),
   ]);
-  if (!balance || balance.availableCredits < 1)
+  if (!balance || balance.redeemableCredits < 1)
     redirect(`/checkout?companyNumber=${encodeURIComponent(companyNumber)}&tier=single_report`);
   if (preview.status === "failed")
     redirect(`/company/${encodeURIComponent(companyNumber)}/overview`);
@@ -27,7 +27,7 @@ export default async function Page({
     <CreditRedemptionForm
       companyName={preview.preview.company.companyName}
       companyNumber={preview.preview.company.companiesHouseNumber}
-      availableCredits={balance.availableCredits}
+      availableCredits={balance.redeemableCredits}
       purchaseHref={`/checkout?companyNumber=${encodeURIComponent(companyNumber)}&tier=single_report&purchase=1`}
     />
   );

@@ -14,6 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { Field, FieldLabel, FieldLegend, FieldSet } from "@workspace/ui/components/field";
+import { RadioGroup, RadioGroupItem } from "@workspace/ui/components/radio-group";
 import type { FreePreviewTierCardPayload, ReportProductCode } from "@workspace/types";
 
 import { startCheckout } from "@/actions/checkout";
@@ -112,50 +114,51 @@ export function CheckoutForm(props: CheckoutFormProps) {
             </Alert>
           ) : null}
 
-          <fieldset className="grid gap-3 sm:grid-cols-2">
-            <legend id="tier-heading" className="mb-3 text-lg font-semibold text-brand-navy">
-              Select a payment tier
-            </legend>
-            {props.products.map((item) => {
-              const selected = item.tier === tier;
-              return (
-                <label
-                  key={item.tier}
-                  className={cn(
-                    "cursor-pointer rounded-lg border bg-surface p-4 shadow-sm transition-colors focus-within:ring-2 focus-within:ring-focus",
-                    selected ? "border-brand-teal" : "border-line hover:border-brand-teal",
-                  )}
-                >
-                  <input
-                    className="sr-only"
-                    type="radio"
-                    name="tier"
-                    value={item.tier}
-                    checked={selected}
-                    onChange={() => selectTier(item.tier)}
-                  />
-                  <span className="flex items-start justify-between gap-3">
-                    <span>
-                      <span className="block font-semibold text-brand-navy">{item.name}</span>
-                      <span className="mt-1 block text-sm text-content-muted">
-                        {item.creditQuantity}{" "}
-                        {item.creditQuantity === 1 ? "report credit" : "report credits"}
+          <FieldSet>
+            <FieldLegend id="tier-heading">Select a payment tier</FieldLegend>
+            <RadioGroup
+              value={tier}
+              onValueChange={(value) => selectTier(value as ReportProductCode)}
+              className="sm:grid-cols-2"
+            >
+              {props.products.map((item) => {
+                const selected = item.tier === tier;
+                return (
+                  <Field key={item.tier}>
+                    <FieldLabel
+                      onClick={() => selectTier(item.tier)}
+                      className={cn(
+                        "cursor-pointer rounded-lg border bg-surface p-4 shadow-sm transition-colors focus-within:ring-2 focus-within:ring-focus",
+                        selected ? "border-brand-teal" : "border-line hover:border-brand-teal",
+                      )}
+                    >
+                      <span className="flex items-start justify-between gap-3">
+                        <span>
+                          <span className="block font-semibold text-brand-navy">{item.name}</span>
+                          <span className="mt-1 block text-sm text-content-muted">
+                            {item.creditQuantity}{" "}
+                            {item.creditQuantity === 1 ? "report credit" : "report credits"}
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          {item.tier === "business_pack" ? (
+                            <Badge variant="positive">Popular</Badge>
+                          ) : null}
+                          <RadioGroupItem value={item.tier} aria-label={item.name} />
+                        </span>
                       </span>
-                    </span>
-                    {item.tier === "business_pack" ? (
-                      <Badge variant="positive">Popular</Badge>
-                    ) : null}
-                  </span>
-                  <span className="mt-4 block text-2xl font-semibold text-content">
-                    {formatMoney(item.pricePence)}
-                  </span>
-                  <span className="mt-1 block text-sm text-content-muted">
-                    {formatMoney(item.pricePence / item.creditQuantity)} per report
-                  </span>
-                </label>
-              );
-            })}
-          </fieldset>
+                      <span className="mt-4 block text-2xl font-semibold text-content">
+                        {formatMoney(item.pricePence)}
+                      </span>
+                      <span className="mt-1 block text-sm text-content-muted">
+                        {formatMoney(item.pricePence / item.creditQuantity)} per report
+                      </span>
+                    </FieldLabel>
+                  </Field>
+                );
+              })}
+            </RadioGroup>
+          </FieldSet>
 
           <Card>
             <CardHeader>

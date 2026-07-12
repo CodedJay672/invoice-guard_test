@@ -70,7 +70,7 @@ export interface PaidReportEventResult {
 export interface CheckoutRepository {
   getCreditBalance(
     clerkUserId: string,
-  ): Promise<{ availableCredits: number; eligiblePurchaseCount: number }>;
+  ): Promise<{ redeemableCredits: number; eligiblePurchaseCount: number }>;
   redeemCredit(input: {
     clerkUserId: string;
     companyNumber: string;
@@ -124,7 +124,8 @@ export interface CheckoutStatusResult {
 }
 
 export interface CreditBalanceResult {
-  availableCredits: number;
+  redeemableCredits: number;
+  eligiblePurchaseCount: number;
 }
 
 export class CheckoutUnavailableError extends Error {}

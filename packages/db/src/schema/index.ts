@@ -339,6 +339,7 @@ export const creditRefundRequests = pgTable(
       .references(() => creditPurchases.id),
     reportId: uuid("report_id").references(() => purchasedReports.id),
     requestedByClerkUserId: varchar("requested_by_clerk_user_id", { length: 128 }),
+    previousPurchaseStatus: creditPurchaseStatusEnum("previous_purchase_status").notNull(),
     creditQuantity: integer("credit_quantity").notNull(),
     amountPence: integer("amount_pence").notNull(),
     reason: text("reason").notNull(),

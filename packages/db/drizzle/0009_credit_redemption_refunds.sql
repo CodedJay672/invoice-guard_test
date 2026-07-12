@@ -23,6 +23,7 @@ CREATE TABLE "credit_refund_requests" (
 	"credit_purchase_id" uuid NOT NULL,
 	"report_id" uuid,
 	"requested_by_clerk_user_id" varchar(128),
+	"previous_purchase_status" "credit_purchase_status" NOT NULL,
 	"credit_quantity" integer NOT NULL,
 	"amount_pence" integer NOT NULL,
 	"reason" text NOT NULL,

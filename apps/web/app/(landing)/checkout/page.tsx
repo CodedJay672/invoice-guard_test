@@ -63,7 +63,7 @@ export default async function Page({ searchParams }: PageProps) {
 
   if (!fixtureName && singleValue(params.purchase) !== "1") {
     const balance = await requestCreditBalance();
-    if (balance && balance.availableCredits > 0) {
+    if (balance && balance.redeemableCredits > 0) {
       redirect(`/credits/redeem?companyNumber=${encodeURIComponent(selection.companyNumber)}`);
     }
   }

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 
 import { schema, type Database } from "@workspace/db";
-import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, count, eq, gt, sql, sum } from "drizzle-orm";
 
 import {
   CheckoutValidationError,
@@ -9,30 +9,28 @@ import {
   type PaidReportEventInput,
   type PaidReportEventResult,
 } from "./types.js";
+import { redeemablePurchasePredicate } from "./credit-eligibility.js";
 
 export class DrizzleCheckoutRepository implements CheckoutRepository {
   constructor(private readonly db: Database) {}
 
   async getCreditBalance(
     clerkUserId: string,
-  ): Promise<{ availableCredits: number; eligiblePurchaseCount: number }> {
-    const rows = await this.db
-      .select({ availableCredits: schema.creditAccounts.availableCredits })
-      .from(schema.creditAccounts)
-      .where(eq(schema.creditAccounts.clerkUserId, clerkUserId))
-      .limit(1);
-    const purchases = await this.db
-      .select({ id: schema.creditPurchases.id })
-      .from(schema.creditPurchases)
-      .where(
-        and(
-          eq(schema.creditPurchases.clerkUserId, clerkUserId),
-          gt(schema.creditPurchases.availableQuantity, 0),
-        ),
-      );
+  ): Promise<{ redeemableCredits: number; eligiblePurchaseCount: number }> {
+    const result = (
+      await this.db
+        .select({
+          redeemableCredits: sum(schema.creditPurchases.availableQuantity),
+          eligiblePurchaseCount: count(schema.creditPurchases.id),
+        })
+        .from(schema.creditPurchases)
+        .where(
+          and(eq(schema.creditPurchases.clerkUserId, clerkUserId), redeemablePurchasePredicate()),
+        )
+    )[0];
     return {
-      availableCredits: rows[0]?.availableCredits ?? 0,
-      eligiblePurchaseCount: purchases.length,
+      redeemableCredits: Number(result?.redeemableCredits ?? 0),
+      eligiblePurchaseCount: result?.eligiblePurchaseCount ?? 0,
     };
   }
 
@@ -62,7 +60,7 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
         return {
           reportId: existing[0].id,
           reportReference: existing[0].reportReference,
-          remainingCredits: balance.availableCredits,
+          remainingCredits: balance.redeemableCredits,
           lifecycleUrl: `/reports/${existing[0].reportReference}`,
         };
       }
@@ -73,8 +71,7 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
           .where(
             and(
               eq(schema.creditPurchases.clerkUserId, input.clerkUserId),
-              inArray(schema.creditPurchases.status, ["active", "partially_refunded"]),
-              gt(schema.creditPurchases.availableQuantity, 0),
+              redeemablePurchasePredicate(),
             ),
           )
           .orderBy(asc(schema.creditPurchases.createdAt))
@@ -129,16 +126,14 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
           .returning({ id: schema.purchasedReports.id })
       )[0];
       if (!report) throw new Error("Credit report creation failed.");
-      await tx
-        .insert(schema.creditLedgerEntries)
-        .values({
-          clerkUserId: input.clerkUserId,
-          entryType: "report_redemption",
-          creditPurchaseId: purchase.id,
-          creditDelta: -1,
-          reportTier: purchase.reportTier,
-          reportId: report.id,
-        });
+      await tx.insert(schema.creditLedgerEntries).values({
+        clerkUserId: input.clerkUserId,
+        entryType: "report_redemption",
+        creditPurchaseId: purchase.id,
+        creditDelta: -1,
+        reportTier: purchase.reportTier,
+        reportId: report.id,
+      });
       return {
         reportId: report.id,
         reportReference,
@@ -167,7 +162,7 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
           .where(
             and(
               eq(schema.creditPurchases.id, input.purchaseId),
-              eq(schema.creditPurchases.status, "active"),
+              redeemablePurchasePredicate(),
               gt(schema.creditPurchases.availableQuantity, input.creditQuantity - 1),
             ),
           )
@@ -186,6 +181,7 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
             amountPence,
             reason: input.reason,
             idempotencyKey: input.idempotencyKey,
+            previousPurchaseStatus: purchase.status,
           })
           .returning({ id: schema.creditRefundRequests.id })
       )[0];
@@ -194,19 +190,21 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
         .update(schema.creditPurchases)
         .set({ status: "refund_pending", updatedAt: new Date() })
         .where(eq(schema.creditPurchases.id, purchase.id));
-      await tx
-        .insert(schema.adminAuditLogs)
-        .values({
-          adminClerkUserId: input.requestedByClerkUserId,
-          action: "credit_refund_requested",
-          targetType: "credit_purchase",
-          targetId: purchase.id,
-          metadata: { creditQuantity: input.creditQuantity, amountPence, reason: input.reason },
-        });
+      await tx.insert(schema.adminAuditLogs).values({
+        adminClerkUserId: input.requestedByClerkUserId,
+        action: "credit_refund_requested",
+        targetType: "credit_purchase",
+        targetId: purchase.id,
+        metadata: { creditQuantity: input.creditQuantity, amountPence, reason: input.reason },
+      });
       return { refundRequestId: request.id };
     });
   }
-  async getRefundStatus(refundRequestId: string): Promise<{ status: "queued" | "processing" | "succeeded" | "failed"; amountPence: number } | undefined> {
+  async getRefundStatus(
+    refundRequestId: string,
+  ): Promise<
+    { status: "queued" | "processing" | "succeeded" | "failed"; amountPence: number } | undefined
+  > {
     return (
       await this.db
         .select({
@@ -254,7 +252,7 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
         if (!request.reportId)
           await tx
             .update(schema.creditPurchases)
-            .set({ status: "active", updatedAt: new Date() })
+            .set({ status: request.previousPurchaseStatus, updatedAt: new Date() })
             .where(eq(schema.creditPurchases.id, purchase.id));
         return;
       }
@@ -267,26 +265,23 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
             updatedAt: new Date(),
           })
           .where(eq(schema.creditAccounts.clerkUserId, purchase.clerkUserId));
-        await tx
-          .insert(schema.creditLedgerEntries)
-          .values({
-            clerkUserId: purchase.clerkUserId,
-            entryType: "refund_reversal",
-            creditPurchaseId: purchase.id,
-            creditDelta: -request.creditQuantity,
-            reportTier: purchase.reportTier,
-            refundReference: input.stripeRefundId,
-          });
+        await tx.insert(schema.creditLedgerEntries).values({
+          clerkUserId: purchase.clerkUserId,
+          entryType: "refund_reversal",
+          creditPurchaseId: purchase.id,
+          creditDelta: -request.creditQuantity,
+          reportTier: purchase.reportTier,
+          refundReference: input.stripeRefundId,
+        });
       }
-      const refundedTotal = purchase.amountRefundedPence + request.amountPence;
       await tx
         .update(schema.creditPurchases)
         .set({
           availableQuantity: unused
-            ? purchase.availableQuantity - request.creditQuantity
-            : purchase.availableQuantity,
-          amountRefundedPence: refundedTotal,
-          status: refundedTotal >= purchase.amountPaidPence ? "refunded" : "partially_refunded",
+            ? sql`${schema.creditPurchases.availableQuantity} - ${request.creditQuantity}`
+            : schema.creditPurchases.availableQuantity,
+          amountRefundedPence: sql`${schema.creditPurchases.amountRefundedPence} + ${request.amountPence}`,
+          status: sql`case when ${schema.creditPurchases.amountRefundedPence} + ${request.amountPence} >= ${purchase.amountPaidPence} then 'refunded' else 'partially_refunded' end`,
           updatedAt: new Date(),
         })
         .where(eq(schema.creditPurchases.id, purchase.id));
@@ -390,7 +385,7 @@ export class DrizzleCheckoutRepository implements CheckoutRepository {
             reportTier: input.tier,
             originalQuantity: input.creditQuantity,
             availableQuantity: input.creditQuantity - 1,
-            unitPricePence: input.amountPaidPence / input.creditQuantity,
+            unitPricePence: Math.round(input.amountPaidPence / input.creditQuantity),
             amountPaidPence: input.amountPaidPence,
             currency: input.currency,
             stripePaymentId: input.paymentId,

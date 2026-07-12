@@ -539,6 +539,27 @@ introduced.
 
 ## Paid Report Unlock Checkout
 
+### Shared Field and RadioGroup Primitives
+
+Files: `packages/ui/src/components/field.tsx`, `packages/ui/src/components/radio-group.tsx`
+Last updated: 2026-07-11
+
+| Property           | Class/pattern                                                            |
+| ------------------ | ------------------------------------------------------------------------ |
+| Background         | radio item `bg-surface`; consuming tier cards retain `bg-surface`        |
+| Border             | radio `border-line`; checked state `border-brand-teal`                   |
+| Border radius      | radio `rounded-full`; consuming fields retain registered card radii      |
+| Text — primary     | FieldLabel `text-content`; FieldLegend `text-brand-navy`                 |
+| Text — secondary   | FieldDescription `text-content-muted`                                   |
+| Spacing            | FieldSet/Field/RadioGroup use canonical `gap-3`/`gap-2`                  |
+| Interactive states | `focus-visible:ring-3 focus-visible:ring-focus/50`; disabled opacity      |
+| Shadow             | radio `shadow-xs`; field containers own contextual elevation             |
+| Accent usage       | checked indicator and border use semantic brand teal                     |
+
+**Pattern notes:** Option sets use FieldSet + FieldLegend + RadioGroup. Visual cards wrap a
+RadioGroupItem and synchronize the whole-card click with the same controlled value. Native keyboard
+arrow navigation and focus visibility come from the Radix-backed shared primitive.
+
 ### Retained-Credit Redemption Review
 
 File: `apps/web/components/checkout/CreditRedemptionForm.tsx`

@@ -939,6 +939,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "previous_purchase_status": {
+          "name": "previous_purchase_status",
+          "type": "credit_purchase_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
         "credit_quantity": {
           "name": "credit_quantity",
           "type": "integer",

@@ -13,8 +13,8 @@ import {
 } from "./checkout.js";
 
 void test("credit contracts reject client-controlled commercial values", () => {
-  assert.deepEqual(creditBalanceSchema.parse({ availableCredits: 2, eligiblePurchaseCount: 1 }), {
-    availableCredits: 2,
+  assert.deepEqual(creditBalanceSchema.parse({ redeemableCredits: 2, eligiblePurchaseCount: 1 }), {
+    redeemableCredits: 2,
     eligiblePurchaseCount: 1,
   });
   assert.equal(

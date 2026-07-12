@@ -1,5 +1,20 @@
 # Progress Tracker
 
+## 2026-07-11 — Financial Flow Production Hardening
+
+- Customer balance now sums only unused credits from active or partially refunded purchases through
+  one shared eligibility predicate; refund-pending and refunded purchases are excluded consistently.
+- Admin refunds now accept partially refunded packs, preserve the purchase's previous status for
+  definitive Stripe failure recovery, and continue to reserve purchases while refunds are pending.
+- Added project-owned Field/FieldSet/RadioGroup primitives after the official shadcn registry timed
+  out, then migrated checkout selection to the shared accessible composition.
+- Replaced Google-hosted Next fonts with locally packaged Inter and Geist Mono; the production build
+  compiled and generated every route without outbound font requests.
+- Added a Testcontainers PostgreSQL financial suite covering eligible balance, partially refunded
+  redemption/refund, refund-pending exclusion, and concurrent final-credit claims. The suite is
+  automatically runnable in Docker-enabled environments; it skipped here because no container runtime
+  is installed.
+
 ## 2026-07-11 — Credit Redemption and Refund Integrity
 
 - Added durable credit purchases linked to reports and ledger entries, oldest-purchase redemption,

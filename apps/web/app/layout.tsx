@@ -1,19 +1,26 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/ui/themes";
-import { Geist_Mono, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import type { ComponentProps } from "react";
 
 import "@clerk/ui/themes/shadcn.css";
 import "@workspace/ui/globals.css";
 import { cn } from "@workspace/ui/lib/utils";
 
-const fontSans = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const fontSans = localFont({
+  src: "../../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
+  variable: "--font-sans",
+  weight: "100 900",
+  display: "swap",
+});
 type ClerkAppearance = NonNullable<ComponentProps<typeof ClerkProvider>["appearance"]>;
 const clerkTheme = shadcn as unknown as NonNullable<ClerkAppearance["theme"]>;
 
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
+const fontMono = localFont({
+  src: "../../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2",
   variable: "--font-mono",
+  weight: "100 900",
+  display: "swap",
 });
 
 export default function RootLayout({

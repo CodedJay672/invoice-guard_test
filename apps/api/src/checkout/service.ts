@@ -92,7 +92,9 @@ export class CheckoutService {
     }
   }
 
-  async getCreditBalance(clerkUserId: string): Promise<{ availableCredits: number }> {
+  async getCreditBalance(
+    clerkUserId: string,
+  ): Promise<{ redeemableCredits: number; eligiblePurchaseCount: number }> {
     return this.dependencies.checkoutRepository.getCreditBalance(clerkUserId);
   }
 
@@ -141,7 +143,10 @@ export class CheckoutService {
     await this.dependencies.refundQueue.enqueue(created.refundRequestId);
     return created;
   }
-  async getAdminRefundStatus(input: { refundRequestId: string; verifiedEmail: string }): Promise<{ status: "queued" | "processing" | "succeeded" | "failed"; amountPence: number }> {
+  async getAdminRefundStatus(input: {
+    refundRequestId: string;
+    verifiedEmail: string;
+  }): Promise<{ status: "queued" | "processing" | "succeeded" | "failed"; amountPence: number }> {
     if (
       !this.dependencies.adminEmail ||
       input.verifiedEmail.toLowerCase() !== this.dependencies.adminEmail.toLowerCase()

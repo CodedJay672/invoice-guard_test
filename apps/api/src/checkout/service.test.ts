@@ -58,8 +58,8 @@ class MemoryCheckoutRepository implements CheckoutRepository {
   processedEvents: string[] = [];
   alreadyProcessed = false;
 
-  getCreditBalance(): Promise<{ availableCredits: number; eligiblePurchaseCount: number }> {
-    return Promise.resolve({ availableCredits: 0, eligiblePurchaseCount: 0 });
+  getCreditBalance(): Promise<{ redeemableCredits: number; eligiblePurchaseCount: number }> {
+    return Promise.resolve({ redeemableCredits: 0, eligiblePurchaseCount: 0 });
   }
   redeemCredit(): Promise<never> {
     return Promise.reject(new Error("Not used"));
