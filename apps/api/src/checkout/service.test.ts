@@ -9,7 +9,9 @@ import type { CompanyService } from "../companies/service.js";
 import type { ReportProductRepository } from "../report-products/repository.js";
 import { CheckoutService } from "./service.js";
 import type {
-  CheckoutRepository,
+  CheckoutSessionRepository,
+  CreditRepository,
+  RefundRepository,
   CheckoutSessionResult,
   CheckoutSessionState,
   PaidReportEventInput,
@@ -43,7 +45,9 @@ const productRepository: ReportProductRepository = {
     }),
 };
 
-class MemoryCheckoutRepository implements CheckoutRepository {
+class MemoryCheckoutRepository
+  implements CheckoutSessionRepository, CreditRepository, RefundRepository
+{
   report:
     | {
         id: string;
@@ -152,7 +156,9 @@ function createHarness(): {
     appUrl: "https://invoiceguard.test",
     companyService,
     reportProductRepository: productRepository,
-    checkoutRepository: repository,
+    checkoutSessionRepository: repository,
+    creditRepository: repository,
+    refundRepository: repository,
     stripeGateway,
     reportGenerationQueue: queue,
   });

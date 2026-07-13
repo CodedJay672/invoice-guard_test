@@ -9,6 +9,10 @@ import {
   resolveCompanyWorkspaceFixtureName,
   type CompanyWorkspaceTab,
 } from "./fixtures.js";
+import {
+  formatFilingDescriptionValue,
+  resolveFilingDescription,
+} from "../../lib/company-display.js";
 
 const freeTabs: CompanyWorkspaceTab[] = [
   "overview",
@@ -57,6 +61,29 @@ void test("provides deterministic records for Companies House-backed fixture tab
     (getCompanyWorkspaceFixture("insolvency", "populated", "test").insolvencyCases ?? []).length >
       0,
   );
+});
+
+void test("provides Companies House-style overview sections and confirmation dates", () => {
+  const overview = getCompanyWorkspaceFixture("overview", "populated", "test");
+  assert.equal(overview.overviewCompany?.registeredOfficeAddress.addressLine1, "10 Market Street");
+  assert.equal(overview.overviewCompany?.confirmationStatement?.nextDue, "2027-04-26");
+  assert.equal(overview.overviewCompany?.sicDescriptions?.[0], "Non-specialised wholesale trade");
+});
+
+void test("composes Companies House filing descriptions from returned description values", () => {
+  assert.equal(
+    resolveFilingDescription("confirmation-statement-with-no-updates", {
+      made_up_date: "2019-05-25",
+    }),
+    "Confirmation statement made on 25 May 2019 with no updates",
+  );
+  assert.equal(
+    resolveFilingDescription("accounts-with-accounts-type-micro-entity", {
+      made_up_date: "2018-06-30",
+    }),
+    "Micro company accounts made up to 30 June 2018",
+  );
+  assert.equal(formatFilingDescriptionValue("made_up_date", "2019-05-25"), "25 May 2019");
 });
 
 void test("surfaces design-visible Companies House fixture fields with paid interpretation locked", () => {

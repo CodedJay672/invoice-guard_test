@@ -26,8 +26,19 @@ import { cn } from "@workspace/ui/lib/utils";
 import type { FreePreviewPayload } from "@workspace/types";
 
 import type { PreviewRequestResult } from "@/lib/data/free-company-prev";
+import {
+  companiesHouseUnavailable,
+  companyTypeLabel,
+  formatCompaniesHouseAddress,
+  formatCompaniesHouseDate,
+  filingDescriptionValueLabel,
+  formatFilingDescriptionValue,
+  resolveFilingDescription,
+  sentenceCase as displaySentenceCase,
+} from "@/lib/company-display";
 
 import { MobileTabSelect } from "./MobileTabSelect";
+import { ProviderMetadata } from "@/components/provider-metadata/ProviderMetadata";
 import {
   companyWorkspaceTabs,
   fixtureCompany,
@@ -98,7 +109,7 @@ export function CompanyWorkspace({
               className={cn(
                 "text-sm font-semibold text-brand-teal",
                 fixture.pagination.page >= fixture.pagination.totalPages &&
-                "pointer-events-none opacity-50",
+                  "pointer-events-none opacity-50",
               )}
               aria-disabled={fixture.pagination.page >= fixture.pagination.totalPages}
               href={`/company/${houseNumber}/${activeTab}?page=${Math.min(fixture.pagination.totalPages, fixture.pagination.page + 1)}`}
@@ -260,20 +271,164 @@ function TabPanel({ fixture }: TabPanelProps) {
     return <PaidPlaceholderPanel fixture={fixture} />;
   }
 
+  let content: ReactNode;
   switch (fixture.tab) {
     case "overview":
-      return <FactsPanel fixture={fixture} icon={Building2} />;
+      content = fixture.overviewCompany ? (
+        <CompanyOverviewPanel company={fixture.overviewCompany} />
+      ) : (
+        <FactsPanel fixture={fixture} icon={Building2} />
+      );
+      break;
     case "filing-history":
-      return <FilingHistoryPanel fixture={fixture} />;
+      content = <FilingHistoryPanel fixture={fixture} />;
+      break;
     case "charges":
-      return <ChargesPanel fixture={fixture} />;
+      content = <ChargesPanel fixture={fixture} />;
+      break;
     case "officers":
-      return <OfficersPanel fixture={fixture} />;
+      content = <OfficersPanel fixture={fixture} />;
+      break;
     case "insolvency":
-      return <InsolvencyPanel fixture={fixture} />;
+      content = <InsolvencyPanel fixture={fixture} />;
+      break;
     default:
-      return <FactsPanel fixture={fixture} icon={FileText} />;
+      content = <FactsPanel fixture={fixture} icon={FileText} />;
   }
+  return (
+    <div className="grid gap-6">
+      {content}
+      <ProviderMetadata payload={fixture.providerPayload} />
+    </div>
+  );
+}
+
+function CompanyOverviewPanel({ company }: { company: FreePreviewPayload["company"] }) {
+  const accounts = company.accounts;
+  const confirmation = company.confirmationStatement;
+  const sicRows = company.sicCodes.map((code, index) => ({
+    label: code,
+    value: company.sicDescriptions?.[index] ?? companiesHouseUnavailable,
+  }));
+
+  return (
+    <div className="grid gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Company information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-6 sm:grid-cols-2">
+          <FactSection title="Registered office address" wide>
+            {formatCompaniesHouseAddress(company.registeredOfficeAddress)}
+          </FactSection>
+          <FactSection title="Company status">
+            {displaySentenceCase(company.companyStatus)}
+          </FactSection>
+          <FactSection title="Company type">{companyTypeLabel(company.companyType)}</FactSection>
+          <FactSection title="Incorporated on">
+            {formatCompaniesHouseDate(company.incorporationDate)}
+          </FactSection>
+          {company.cessationDate ? (
+            <FactSection title="Dissolved on">
+              {formatCompaniesHouseDate(company.cessationDate)}
+            </FactSection>
+          ) : null}
+        </CardContent>
+      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Accounts</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FactSection title="Next accounts made up to">
+              {formatCompaniesHouseDate(
+                accounts?.next_made_up_to ?? accounts?.next_accounts.period_end_on,
+              )}
+            </FactSection>
+            <FactSection title="Due by">
+              {formatCompaniesHouseDate(accounts?.next_due ?? accounts?.next_accounts.due_on)}
+            </FactSection>
+            <FactSection title="Last accounts made up to">
+              {formatCompaniesHouseDate(
+                accounts?.last_accounts.made_up_to ?? accounts?.last_accounts.period_end_on,
+              )}
+            </FactSection>
+            <FactSection title="Accounts type">
+              {displaySentenceCase(accounts?.last_accounts.type)}
+            </FactSection>
+            <FactSection title="Overdue">
+              {accounts?.overdue === undefined
+                ? companiesHouseUnavailable
+                : accounts.overdue
+                  ? "Yes"
+                  : "No"}
+            </FactSection>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Confirmation statement</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FactSection title="Next statement date">
+              {formatCompaniesHouseDate(confirmation?.nextMadeUpTo)}
+            </FactSection>
+            <FactSection title="Due by">
+              {formatCompaniesHouseDate(confirmation?.nextDue)}
+            </FactSection>
+            <FactSection title="Last statement dated">
+              {formatCompaniesHouseDate(confirmation?.lastMadeUpTo)}
+            </FactSection>
+            <FactSection title="Overdue">
+              {confirmation?.overdue === undefined
+                ? companiesHouseUnavailable
+                : confirmation.overdue
+                  ? "Yes"
+                  : "No"}
+            </FactSection>
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Nature of business (SIC)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sicRows.length ? (
+            <dl className="grid gap-3">
+              {sicRows.map((item) => (
+                <div key={item.label}>
+                  <dt className="inline font-mono font-semibold text-content">{item.label}</dt>
+                  <dd className="inline text-content"> — {item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="text-sm text-content-muted">{companiesHouseUnavailable}</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function FactSection({
+  title,
+  children,
+  wide = false,
+}: {
+  title: string;
+  children: ReactNode;
+  wide?: boolean;
+}) {
+  if (children === undefined || children === null || children === "") return null;
+  return (
+    <div className={wide ? "sm:col-span-2" : undefined}>
+      <p className="text-sm text-content-muted">{title}</p>
+      <p className="mt-1 font-semibold text-content">{children}</p>
+    </div>
+  );
 }
 
 function LoadingPanel({ fixture }: TabPanelProps) {
@@ -341,9 +496,13 @@ function FactsPanel({ fixture, icon: Icon }: FactsPanelProps) {
 }
 
 function FactGrid({ facts }: { facts: WorkspaceFact[] }) {
+  const visibleFacts = facts.filter(
+    (fact) => fact.value.trim() && !/not listed|not supplied|no notes supplied/i.test(fact.value),
+  );
+  if (!visibleFacts.length) return null;
   return (
-    <dl className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-      {facts.map((fact) => (
+    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+      {visibleFacts.map((fact) => (
         <div key={fact.label} className="w-full rounded-md border bg-transparent p-3">
           <dt className="mb-1 text-xs font-medium text-content-muted uppercase">{fact.label}</dt>
           <dd className="text-sm font-semibold wrap-break-word text-content">{fact.value}</dd>
@@ -379,11 +538,58 @@ function FilingList({ filings }: { filings: FilingRecord[] }) {
             key={`${filing.date}-${filing.type}-${idx}`}
             className="grid gap-2 px-4 py-4 text-sm md:grid-cols-[120px_90px_minmax(0,1fr)_120px_90px] md:gap-3"
           >
-            <span className="font-medium text-content">{formatDisplayDate(filing.date)}</span>
-            <span className="font-mono text-content-muted">{filing.type}</span>
-            <span className="text-content">{filing.description}</span>
-            <span className="text-content-muted">{filing.category}</span>
-            <span className="text-content-muted">{filing.pages}</span>
+            {filing.date ? (
+              <span className="font-medium text-content">{formatDisplayDate(filing.date)}</span>
+            ) : (
+              <span />
+            )}
+            {filing.type ? (
+              <span className="font-mono text-content-muted">
+                <span className="md:hidden">Filing type: </span>
+                {filing.type}
+              </span>
+            ) : (
+              <span />
+            )}
+            {filing.description ? (
+              <div className="grid gap-2">
+                <span className="font-semibold text-content">
+                  {resolveFilingDescription(filing.description, filing.descriptionValues)}
+                </span>
+                {filing.descriptionValues && Object.keys(filing.descriptionValues).length ? (
+                  <dl className="grid gap-1 text-xs text-content-muted">
+                    {Object.entries(filing.descriptionValues).map(([key, value]) => (
+                      <div key={key} className="flex flex-wrap gap-1">
+                        <dt>{filingDescriptionValueLabel(key)}:</dt>
+                        <dd className="font-medium text-content">
+                          {formatFilingDescriptionValue(key, value)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : null}
+              </div>
+            ) : (
+              <span />
+            )}
+            {filing.category ? (
+              <span className="text-content-muted">{filing.category}</span>
+            ) : (
+              <span />
+            )}
+            {filing.pages || filing.transactionId ? (
+              <span className="text-content-muted">
+                {filing.pages}
+                {filing.transactionId ? (
+                  <>
+                    <br />
+                    <span className="text-xs">Reference {filing.transactionId}</span>
+                  </>
+                ) : null}
+              </span>
+            ) : (
+              <span />
+            )}
           </article>
         ))}
       </div>
@@ -440,6 +646,13 @@ function ChargeCard({ charge }: { charge: ChargeRecord }) {
             { label: "Status", value: sentenceCase(charge.status) },
             { label: "Created", value: formatDisplayDate(charge.createdOn) },
             { label: "Delivered to CH", value: formatDisplayDate(charge.deliveredOn) },
+            { label: "Satisfied", value: formatDisplayDate(charge.satisfiedOn) },
+            {
+              label: "Particulars type",
+              value: charge.particularsType
+                ? displaySentenceCase(charge.particularsType)
+                : companiesHouseUnavailable,
+            },
           ]}
         />
         {charge.tags?.length ? (
@@ -504,11 +717,15 @@ function OfficerCard({ officer }: { officer: OfficerRecord }) {
       <div className="grid gap-4 p-4">
         <FactGrid
           facts={[
-            { label: "Role", value: officer.role },
+            ...(officer.role ? [{ label: "Role", value: officer.role }] : []),
             { label: "Appointed", value: formatDisplayDate(officer.appointedOn) },
-            { label: "Date of birth", value: officer.dateOfBirth ?? "Not listed" },
-            { label: "Nationality", value: officer.nationality ?? "Not listed" },
-            { label: "Country of residence", value: officer.residence ?? "Not listed" },
+            ...(officer.dateOfBirth
+              ? [{ label: "Date of birth", value: officer.dateOfBirth }]
+              : []),
+            ...(officer.nationality ? [{ label: "Nationality", value: officer.nationality }] : []),
+            ...(officer.residence
+              ? [{ label: "Country of residence", value: officer.residence }]
+              : []),
             { label: "Resigned", value: formatDisplayDate(officer.resignedOn) },
           ]}
         />
@@ -704,7 +921,7 @@ function formatAddress(address: FreePreviewPayload["company"]["registeredOfficeA
 }
 
 function formatDisplayDate(value: string | undefined): string {
-  if (!value) return "Not listed";
+  if (!value) return "";
 
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
@@ -714,6 +931,6 @@ function formatDisplayDate(value: string | undefined): string {
 }
 
 function sentenceCase(value: string): string {
-  if (!value) return "Not listed";
+  if (!value) return "";
   return value.charAt(0).toUpperCase() + value.slice(1);
 }

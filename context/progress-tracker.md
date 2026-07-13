@@ -460,6 +460,11 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
 
 ## Session Notes
 
+- 2026-07-12: completed the final financial architecture cleanup. Refund terminal outcomes now use
+  one idempotent `@workspace/db` transaction shared by the API webhook and refund worker; checkout
+  persistence is decomposed into session, credit, and refund repositories; and the GitHub Actions
+  `Financial PostgreSQL` check runs the strict Testcontainers suite before affected typecheck/lint.
+  Configure branch protection to require `Financial integrity / Financial PostgreSQL` before merge.
 - Restored the canonical nine-file InvoiceGuard context system after an accidental template revert.
 - Use `build-plan.md` for order.
 - Preserve A0-A11 behavior during Feature 12 refactor.
@@ -477,6 +482,32 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
   tab is paid-only and summarizes Companies House overview data.
 - 2026-07-10: 12D wired production free tabs to live Companies House data with success-only short
   caching and no fixture substitution on real failures.
+- 2026-07-12: implemented Companies House provider-page parity across canonical free-company
+  contracts, normalization, search results, and company workspace presentation. Full addresses now
+  retain premises/care-of/PO box fields; profiles retain confirmation-statement dates; filings retain
+  description substitutions; charges retain particulars type and supplied charge flags. Search and
+  overview now use explicit Companies House-style fact hierarchy and shared display terminology.
+  Focused integrations (17), validation (12), API (40 passed/1 Docker-only skipped), and web (46)
+  tests passed. Repository typecheck passed 13 tasks; focused integrations/API/web lint and builds
+  passed; the Next.js 16.2.6 production build completed successfully for all public company routes.
+  Aggregate lint/test/build wrappers exceeded the shared command window, so affected workspace gates
+  were run directly; the full repository test run had already passed 12 tasks before the timeout.
+- 2026-07-13: expanded Companies House parity to retain complete JSON-safe provider responses across
+  search, profile, filing-history, charges, officers, and insolvency paths. Search and every free tab
+  now include a collapsed recursive provider-metadata disclosure; null/blank/empty values disappear,
+  while `false` and `0` remain visible. Filing contracts additionally normalize annotations,
+  associated filings, resolutions, subcategory, barcode, and paper-filed state. Removed factual UI
+  fallbacks that rendered missing Companies House values as "Not listed" or "Not supplied".
+  Focused typecheck and lint passed for integrations, validation, API, and web. Tests passed for
+  integrations (17), validation (12), API (40 passed/1 Docker-only skipped), and web (48). Focused
+  integrations/API builds and the Next.js 16.2.6 production build passed; every company/search route
+  compiled successfully.
+- 2026-07-13: filing-history presentation now composes Companies House description identifiers with
+  returned `description_values`. Confirmation statements and accounts use provider-style sentences
+  with long-form UK dates, and every returned description value remains visibly labelled beneath the
+  primary filing description for forward compatibility with unknown templates.
+  Web typecheck and lint passed, all 49 web assertions passed, and the Next.js 16.2.6 production
+  build completed successfully with every company and search route generated.
 - Landing suggestions carry the selected Companies House number to `/search`; display-name query text is contextual only and never canonical identity.
 - Update this tracker and `ui-registry.md` after every feature.
 - V1 context is reference material for depth; the canonical nine files remain the only active source of truth.

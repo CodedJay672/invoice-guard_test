@@ -67,7 +67,7 @@ export interface PaidReportEventResult {
   alreadyProcessed: boolean;
 }
 
-export interface CheckoutRepository {
+export interface CreditRepository {
   getCreditBalance(
     clerkUserId: string,
   ): Promise<{ redeemableCredits: number; eligiblePurchaseCount: number }>;
@@ -78,6 +78,9 @@ export interface CheckoutRepository {
     idempotencyKey: string;
     entitlements: PaidReportEntitlements;
   }): Promise<RedeemCreditResult & { reportId: string }>;
+}
+
+export interface RefundRepository {
   createUnusedCreditRefund(
     input: RefundRequest & { requestedByClerkUserId: string },
   ): Promise<{ refundRequestId: string }>;
@@ -92,6 +95,9 @@ export interface CheckoutRepository {
     succeeded: boolean;
     failureCode?: string;
   }): Promise<void>;
+}
+
+export interface CheckoutSessionRepository {
   findReportBySessionId(
     sessionId: string,
     clerkUserId: string,

@@ -30,6 +30,7 @@ export class CompanyService {
 
     return {
       matches: result.data.matches.map(toSearchMatchPayload),
+      providerPayload: result.data.providerPayload,
     };
   }
 

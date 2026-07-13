@@ -51,6 +51,17 @@ Read relevant installed Next.js documentation under `node_modules/next/dist/docs
 
 ## Boundaries
 
+### Provider-page parity
+
+Provider adapters preserve the complete JSON-safe provider response alongside normalized facts.
+Normalized contracts remain authoritative for domain rules; literal payloads are evidence and
+presentation data only. Free pages, frozen paid reports, and generated documents must use the
+same normalized names, dates, addresses, source states, and plain-English display labels. Missing,
+not supplied, not checked, empty, and failed are separate states; no failure or absence may be
+presented as a clean result.
+Fresh visitor responses expose non-empty technical metadata in a collapsed provider disclosure;
+credentials, request headers, and InvoiceGuard configuration never enter provider payloads.
+
 | Area | Owns | Must not own |
 | --- | --- | --- |
 | `apps/web` | Presentation, interaction state, Server Component reads through server-only DAL helpers, Server Actions for mutations, thin Express proxies | Providers, payment confirmation, report creation, durable business rules |

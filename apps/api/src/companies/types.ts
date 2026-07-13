@@ -65,6 +65,8 @@ export function toSearchMatchPayload(
     registeredOfficeAddress: toCompanyAddressPayload(summary.registeredOfficeAddress),
     sicCodes: summary.sicCodes,
     accounts: summary.accounts,
+    confirmationStatement: summary.confirmationStatement,
+    providerPayload: summary.providerPayload,
   };
 }
 
@@ -72,6 +74,8 @@ export function toCompanyAddressPayload(
   address: CompaniesHouseRegisteredOfficeAddress,
 ): CompanyAddressPayload {
   return {
+    premises: address.premises,
+    careOf: address.careOf,
     addressLine1: address.addressLine_1,
     addressLine2: address.addressLine_2,
     locality: address.locality,

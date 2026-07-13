@@ -1,10 +1,4 @@
-import {
-  BotIcon,
-  BuildingIcon,
-  CircleAlert,
-  LucideIcon,
-  ScaleIcon,
-} from "lucide-react";
+import { BotIcon, BuildingIcon, CircleAlert, LucideIcon, ScaleIcon } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -26,12 +20,15 @@ import type {
 
 import { searchCompanies } from "@/lib/data/search-companies";
 
-import {
-  getSearchFixtureState,
-  type SearchFixtureName,
-  type SearchStatus,
-} from "./fixtures";
+import { getSearchFixtureState, type SearchFixtureName, type SearchStatus } from "./fixtures";
 import SearchPanel from "./search-panel";
+import { ProviderMetadata } from "@/components/provider-metadata/ProviderMetadata";
+import {
+  companyTypeLabel,
+  formatCompaniesHouseAddress,
+  formatCompaniesHouseDate,
+  sentenceCase,
+} from "@/lib/company-display";
 
 type CompanySearchExperienceProps = {
   fixtureName?: SearchFixtureName | undefined;
@@ -49,6 +46,7 @@ export async function CompanySearchExperience({
         searchStatus: fixtureState.searchStatus,
         matches: fixtureState.matches,
         message: fixtureState.message,
+        providerPayload: undefined,
       };
 
   return (
@@ -66,7 +64,11 @@ export async function CompanySearchExperience({
 
         {matches.matches.length > 0 ? (
           <Suspense key={initialQuery} fallback={<PreviewLoading />}>
-            <SearchResults query={initialQuery ?? ""} matches={matches.matches} />
+            <SearchResults
+              query={initialQuery ?? ""}
+              matches={matches.matches}
+              {...(matches.providerPayload ? { providerPayload: matches.providerPayload } : {})}
+            />
           </Suspense>
         ) : null}
       </section>
@@ -117,14 +119,15 @@ function SearchFeedback({ status, message }: SearchFeedbackProps) {
 type SearchResultsProps = {
   matches: CompanySearchMatchPayload[];
   query: string;
+  providerPayload?: import("@workspace/types").ProviderPayload | undefined;
 };
 
-function SearchResults({ matches, query }: SearchResultsProps) {
+function SearchResults({ matches, query, providerPayload }: SearchResultsProps) {
   return (
     <section aria-labelledby="search-results-heading" className="mx-auto w-full max-w-240 p-7">
       <h2 id="search-results-heading" className="mb-4 text-xs text-content-subtle">
-        Search results: <span className="text-content">{matches.length} found</span> for{" "}
-        &quot;{query}&quot;. Data from Companies House public register.
+        Search results: <span className="text-content">{matches.length} found</span> for &quot;
+        {query}&quot;. Data from Companies House public register.
       </h2>
 
       <div className="mb-5 flex flex-wrap items-center justify-center gap-7 rounded-md border border-line bg-surface px-5 py-3.5">
@@ -136,6 +139,7 @@ function SearchResults({ matches, query }: SearchResultsProps) {
       {matches.map((company) => (
         <SearchResultCard key={company.companiesHouseNumber} {...company} />
       ))}
+      <ProviderMetadata payload={providerPayload} />
     </section>
   );
 }
@@ -174,30 +178,43 @@ function SearchResultCard({ ...company }: CompanySearchMatchPayload) {
   return (
     <article className="mb-5 overflow-hidden rounded-md border border-line bg-surface">
       <Link href={`/company/${company.companiesHouseNumber}/overview`}>
-        <div className="flex flex-wrap justify-between gap-3 px-6 py-5">
-          <div>
-            <h3 className="mb-1.25 text-lg font-black">{company.companyName}</h3>
-            <div className="flex flex-wrap gap-3 text-xs text-content-subtle">
-              <span>
-                No: <strong>{company.companiesHouseNumber}</strong>
-              </span>
-              <span>
-                Incorporated:{" "}
-                <strong>{formatDateWithAge(company.incorporationDate, undefined)}</strong>
-              </span>
-              <span>
-                Type: <strong>{company.companyType ?? "Not listed"}</strong>
-              </span>
-              <span>
-                SIC: <strong>{company.sicCodes.join(", ") || "Not listed"}</strong>
-              </span>
-            </div>
+        <div className="flex flex-wrap justify-between gap-4 px-6 py-5">
+          <div className="min-w-0 flex-1">
+            <h3 className="mb-1 text-lg font-bold text-brand-teal underline underline-offset-2">
+              {company.companyName}
+            </h3>
+            <p className="text-sm text-content-muted">
+              <span className="font-medium text-content">{company.companiesHouseNumber}</span>
+              {company.incorporationDate ? (
+                <> · Incorporated on {formatCompaniesHouseDate(company.incorporationDate)}</>
+              ) : null}
+            </p>
+            <p className="mt-1 text-sm font-medium text-content">
+              {formatCompaniesHouseAddress(company.registeredOfficeAddress)}
+            </p>
+            <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-content-muted">
+              <div>
+                <dt className="inline">Company status: </dt>
+                <dd className="inline font-semibold text-content">
+                  {sentenceCase(company.companyStatus)}
+                </dd>
+              </div>
+              <div>
+                <dt className="inline">Company type: </dt>
+                <dd className="inline font-semibold text-content">
+                  {companyTypeLabel(company.companyType)}
+                </dd>
+              </div>
+            </dl>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <StatusBadge status={company.companyStatus} />
+            <StatusBadge status={sentenceCase(company.companyStatus)} />
             <span className="text-[10px] text-content-subtle">
               {providerLabel("companies_house")}
             </span>
+          </div>
+          <div className="w-full">
+            <ProviderMetadata payload={company.providerPayload} />
           </div>
         </div>
       </Link>

@@ -5,6 +5,8 @@ import {
   companySearchApiResponseSchema,
   type CompanySearchMatchPayload,
 } from "@workspace/validation";
+import type { ProviderPayload } from "@workspace/types";
+import type { CompanySearchResponsePayload } from "@workspace/types";
 import { assertWebProxyProductionConfig, loadWebProxyConfig } from "@workspace/config/web";
 import { SearchStatus } from "@/components/company-search/fixtures";
 
@@ -12,6 +14,7 @@ export async function searchCompanies(query: string): Promise<{
   searchStatus: SearchStatus;
   matches: CompanySearchMatchPayload[];
   message: string;
+  providerPayload?: ProviderPayload;
 }> {
   const trimmedQuery = query.trim();
 
@@ -60,10 +63,13 @@ export async function searchCompanies(query: string): Promise<{
       throw new Error("Company search returned an invalid response.");
     }
 
+    const data = parsed.data.data as CompanySearchResponsePayload;
+
     return {
-      searchStatus: parsed.data.data.matches.length > 0 ? "results" : "empty",
-      matches: parsed.data.data.matches,
+      searchStatus: data.matches.length > 0 ? "results" : "empty",
+      matches: data.matches,
       message: "",
+      ...(data.providerPayload ? { providerPayload: data.providerPayload } : {}),
     };
   } catch {
     return {

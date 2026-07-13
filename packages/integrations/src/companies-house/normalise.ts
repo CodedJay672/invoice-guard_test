@@ -11,9 +11,19 @@ import type {
   CompaniesHouseInsolvencyFoundation,
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchResult,
-} from "../../../types/src/companies-house.js";
+  ProviderPayload,
+} from "@workspace/types";
 
 const provider = "companies_house";
+
+function asProviderPayload(value: unknown): ProviderPayload | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  try {
+    return JSON.parse(JSON.stringify(value)) as ProviderPayload;
+  } catch {
+    return undefined;
+  }
+}
 
 interface RawCompaniesHouseAddress {
   address_line_1: unknown;
@@ -69,6 +79,12 @@ interface RawCompaniesHouseProfile {
   registered_office_address?: RawCompaniesHouseAddress;
   sic_codes?: unknown;
   accounts?: RawCompaniesHouseAccount;
+  confirmation_statement?: {
+    last_made_up_to?: unknown;
+    next_made_up_to?: unknown;
+    next_due?: unknown;
+    overdue?: unknown;
+  };
   has_been_liquidated?: unknown;
   has_charges?: unknown;
   has_insolvency_history?: unknown;
@@ -124,6 +140,13 @@ interface RawCompaniesHouseFiling {
   category?: unknown;
   pages?: unknown;
   transaction_id?: unknown;
+  description_values?: unknown;
+  subcategory?: unknown;
+  barcode?: unknown;
+  paper_filed?: unknown;
+  annotations?: unknown;
+  associated_filings?: unknown;
+  resolutions?: unknown;
 }
 
 interface RawCompaniesHouseCharge {
@@ -208,6 +231,8 @@ function normaliseOptionalAddress(
 }
 
 function normaliseAddress(rawAddress: RawCompaniesHouseAddress | undefined): {
+  premises: string | undefined;
+  careOf: string | undefined;
   addressLine_1: string | undefined;
   addressLine_2: string | undefined;
   locality: string | undefined;
@@ -217,6 +242,8 @@ function normaliseAddress(rawAddress: RawCompaniesHouseAddress | undefined): {
   poBox: string | undefined;
 } {
   return {
+    premises: asString(rawAddress?.premises),
+    careOf: asString(rawAddress?.care_of),
     addressLine_1: asString(rawAddress?.address_line_1),
     addressLine_2: asString(rawAddress?.address_line_2),
     locality: asString(rawAddress?.locality),
@@ -257,6 +284,14 @@ function normaliseAccounts(
   };
 }
 
+function normaliseDescriptionValues(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const entries = Object.entries(value)
+    .map(([key, entry]) => [key, asString(entry)] as const)
+    .filter((entry): entry is readonly [string, string] => Boolean(entry[1]));
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
 function normaliseSearchItem(
   item: RawCompaniesHouseSearchItem,
 ): CompaniesHouseCompanySummary | null {
@@ -277,10 +312,12 @@ function normaliseSearchItem(
     registeredOfficeAddress: normaliseAddress(item.address),
     sicCodes: [],
     accounts: undefined,
+    confirmationStatement: undefined,
     cessationDate: undefined,
     has_been_liquidated: undefined,
     has_charges: undefined,
     has_insolvency_history: undefined,
+    providerPayload: asProviderPayload(item),
   };
 }
 
@@ -342,6 +379,7 @@ export function normaliseCompaniesHouseInsolvencyResponse(
         })
       : [],
     status: asString(response.status),
+    providerPayload: asProviderPayload(payload),
   });
 }
 
@@ -365,11 +403,20 @@ function normaliseProfile(
     registeredOfficeAddress: normaliseAddress(rawProfile.registered_office_address),
     sicCodes: asStringArray(rawProfile.sic_codes),
     accounts: normaliseAccounts(rawProfile.accounts),
+    confirmationStatement: rawProfile.confirmation_statement
+      ? {
+          lastMadeUpTo: asString(rawProfile.confirmation_statement.last_made_up_to),
+          nextMadeUpTo: asString(rawProfile.confirmation_statement.next_made_up_to),
+          nextDue: asString(rawProfile.confirmation_statement.next_due),
+          overdue: asBoolean(rawProfile.confirmation_statement.overdue),
+        }
+      : undefined,
     cessationDate: asString(rawProfile.date_of_cessation),
-    has_been_liquidated: rawProfile.has_been_liquidated as boolean,
-    has_charges: rawProfile.has_charges as boolean,
-    has_insolvency_history: rawProfile.has_insolvency_history as boolean,
+    has_been_liquidated: asBoolean(rawProfile.has_been_liquidated),
+    has_charges: asBoolean(rawProfile.has_charges),
+    has_insolvency_history: asBoolean(rawProfile.has_insolvency_history),
     activeDirectorCount: undefined,
+    providerPayload: asProviderPayload(rawProfile),
   };
 }
 
@@ -390,6 +437,7 @@ export function normaliseCompaniesHouseSearchResponse(
     matches: items
       .map((item) => normaliseSearchItem(item as RawCompaniesHouseSearchItem))
       .filter((item): item is CompaniesHouseCompanySummary => item !== null),
+    providerPayload: asProviderPayload(payload),
   });
 }
 
@@ -494,6 +542,7 @@ export function normaliseCompaniesHouseOfficersResponse(
     activeCount: asNumber(rawResponse.active_count),
     resignedCount: asNumber(rawResponse.resigned_count),
     pagination: pagination(rawResponse, page, limit),
+    providerPayload: asProviderPayload(payload),
   });
 }
 
@@ -517,10 +566,59 @@ export function normaliseCompaniesHouseFilingHistoryResponse(
             category: asString(item.category),
             pages: asNumber(item.pages),
             transactionId: asString(item.transaction_id),
+            descriptionValues: normaliseDescriptionValues(item.description_values),
+            subcategory: asString(item.subcategory),
+            barcode: asString(item.barcode),
+            paperFiled: asBoolean(item.paper_filed),
+            annotations: Array.isArray(item.annotations)
+              ? item.annotations.map((entry) => {
+                  const value = entry as {
+                    annotation?: unknown;
+                    date?: unknown;
+                    description?: unknown;
+                  };
+                  return {
+                    annotation: asString(value.annotation),
+                    date: asString(value.date),
+                    description: asString(value.description),
+                  };
+                })
+              : undefined,
+            associatedFilings: Array.isArray(item.associated_filings)
+              ? item.associated_filings.map((entry) => {
+                  const value = entry as { date?: unknown; description?: unknown; type?: unknown };
+                  return {
+                    date: asString(value.date),
+                    description: asString(value.description),
+                    type: asString(value.type),
+                  };
+                })
+              : undefined,
+            resolutions: Array.isArray(item.resolutions)
+              ? item.resolutions.map((entry) => {
+                  const value = entry as {
+                    category?: unknown;
+                    description?: unknown;
+                    document_id?: unknown;
+                    receive_date?: unknown;
+                    subcategory?: unknown;
+                    type?: unknown;
+                  };
+                  return {
+                    category: asString(value.category),
+                    description: asString(value.description),
+                    documentId: asString(value.document_id),
+                    receivedOn: asString(value.receive_date),
+                    subcategory: asString(value.subcategory),
+                    type: asString(value.type),
+                  };
+                })
+              : undefined,
           };
         })
       : [],
     pagination: pagination(payload as RawCompaniesHouseListResponse, page, limit),
+    providerPayload: asProviderPayload(payload),
   });
 }
 
@@ -539,6 +637,14 @@ export function normaliseCompaniesHouseChargesResponse(
           const item = value as RawCompaniesHouseCharge;
           const classification = item.classification as { description?: unknown } | undefined;
           const particulars = item.particulars as { description?: unknown } | undefined;
+          const particularsWithFlags = item.particulars as
+            | {
+                type?: unknown;
+                contains_fixed_charge?: unknown;
+                contains_floating_charge?: unknown;
+                contains_negative_pledge?: unknown;
+              }
+            | undefined;
           const satisfiedOn = asString(item.satisfied_on);
           return {
             createdOn: asString(item.created_on),
@@ -553,9 +659,14 @@ export function normaliseCompaniesHouseChargesResponse(
               : [],
             description: asString(particulars?.description),
             chargeCode: asString(item.charge_code),
+            particularsType: asString(particularsWithFlags?.type),
+            containsFixedCharge: asBoolean(particularsWithFlags?.contains_fixed_charge),
+            containsFloatingCharge: asBoolean(particularsWithFlags?.contains_floating_charge),
+            containsNegativePledge: asBoolean(particularsWithFlags?.contains_negative_pledge),
           };
         })
       : [],
     pagination: pagination(payload as RawCompaniesHouseListResponse, page, limit),
+    providerPayload: asProviderPayload(payload),
   });
 }

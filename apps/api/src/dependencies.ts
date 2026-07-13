@@ -24,7 +24,9 @@ import {
 import { CompanyService } from "./companies/service.js";
 import { InMemoryCompanyTabCache, RedisCompanyTabCache } from "./companies/tab-cache.js";
 import { CompanyTabService } from "./companies/tab-service.js";
-import { DrizzleCheckoutRepository } from "./checkout/repository.js";
+import { DrizzleCheckoutSessionRepository } from "./checkout/session-repository.js";
+import { DrizzleCreditRepository } from "./checkout/credit-repository.js";
+import { DrizzleRefundRepository } from "./checkout/refund-repository.js";
 import { CheckoutService } from "./checkout/service.js";
 import { StripeSdkGateway } from "./checkout/stripe-gateway.js";
 import { createRequestIdentityResolver, type RequestIdentityResolver } from "./request-context.js";
@@ -160,7 +162,9 @@ function createCheckoutService(
     appUrl: config.appUrl,
     companyService,
     reportProductRepository,
-    checkoutRepository: new DrizzleCheckoutRepository(db),
+    checkoutSessionRepository: new DrizzleCheckoutSessionRepository(db),
+    creditRepository: new DrizzleCreditRepository(db),
+    refundRepository: new DrizzleRefundRepository(db),
     stripeGateway: new StripeSdkGateway(config.stripeSecretKey!, config.stripeWebhookSecret!),
     reportGenerationQueue: {
       async enqueue(reportId: string): Promise<void> {

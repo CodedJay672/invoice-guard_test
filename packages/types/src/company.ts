@@ -1,4 +1,6 @@
 export interface CompanyAddressPayload {
+  premises?: string | undefined;
+  careOf?: string | undefined;
   addressLine1?: string | undefined;
   addressLine2?: string | undefined;
   locality?: string | undefined;
@@ -6,6 +8,17 @@ export interface CompanyAddressPayload {
   country?: string | undefined;
   postalCode?: string | undefined;
   poBox?: string | undefined;
+}
+
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+export type ProviderPayload = { [key: string]: JsonValue };
+
+export interface CompanyConfirmationStatementPayload {
+  lastMadeUpTo?: string | undefined;
+  nextMadeUpTo?: string | undefined;
+  nextDue?: string | undefined;
+  overdue?: boolean | undefined;
 }
 
 export interface CompanyAccountsPayload {
@@ -40,6 +53,9 @@ export interface CompanySearchMatchPayload {
   registeredOfficeAddress: CompanyAddressPayload;
   sicCodes: string[];
   accounts?: CompanyAccountsPayload | undefined;
+  confirmationStatement?: CompanyConfirmationStatementPayload | undefined;
+  sicDescriptions?: string[] | undefined;
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export interface CompanyPayload extends CompanySearchMatchPayload {
@@ -50,6 +66,7 @@ export interface CompanyPayload extends CompanySearchMatchPayload {
 
 export interface CompanySearchResponsePayload {
   matches: CompanySearchMatchPayload[];
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export type ReportProductCode = "single_report" | "starter_pack" | "business_pack" | "agency_pack";
@@ -145,6 +162,34 @@ export interface FreeCompanyFiling {
   category?: string | undefined;
   pages?: number | undefined;
   transactionId?: string | undefined;
+  descriptionValues?: Record<string, string> | undefined;
+  subcategory?: string | undefined;
+  barcode?: string | undefined;
+  paperFiled?: boolean | undefined;
+  annotations?:
+    | Array<{
+        annotation?: string | undefined;
+        date?: string | undefined;
+        description?: string | undefined;
+      }>
+    | undefined;
+  associatedFilings?:
+    | Array<{
+        date?: string | undefined;
+        description?: string | undefined;
+        type?: string | undefined;
+      }>
+    | undefined;
+  resolutions?:
+    | Array<{
+        category?: string | undefined;
+        description?: string | undefined;
+        documentId?: string | undefined;
+        receivedOn?: string | undefined;
+        subcategory?: string | undefined;
+        type?: string | undefined;
+      }>
+    | undefined;
 }
 
 export interface FreeCompanyCharge {
@@ -156,6 +201,10 @@ export interface FreeCompanyCharge {
   personsEntitled: string[];
   description?: string | undefined;
   chargeCode?: string | undefined;
+  particularsType?: string | undefined;
+  containsFixedCharge?: boolean | undefined;
+  containsFloatingCharge?: boolean | undefined;
+  containsNegativePledge?: boolean | undefined;
 }
 
 export interface FreeCompanyOfficer {
@@ -206,6 +255,7 @@ export type FreeCompanyTabPayload =
       companyNumber: string;
       source: FreeCompanyTabSource;
       company: CompanyPayload;
+      providerPayload?: ProviderPayload | undefined;
     }
   | {
       tab: "filing-history";
@@ -213,6 +263,7 @@ export type FreeCompanyTabPayload =
       source: FreeCompanyTabSource;
       filings: FreeCompanyFiling[];
       pagination: FreeCompanyTabPagination;
+      providerPayload?: ProviderPayload | undefined;
     }
   | {
       tab: "charges";
@@ -220,6 +271,7 @@ export type FreeCompanyTabPayload =
       source: FreeCompanyTabSource;
       charges: FreeCompanyCharge[];
       pagination: FreeCompanyTabPagination;
+      providerPayload?: ProviderPayload | undefined;
     }
   | {
       tab: "officers";
@@ -229,6 +281,7 @@ export type FreeCompanyTabPayload =
       activeCount?: number | undefined;
       resignedCount?: number | undefined;
       pagination: FreeCompanyTabPagination;
+      providerPayload?: ProviderPayload | undefined;
     }
   | {
       tab: "insolvency";
@@ -236,4 +289,5 @@ export type FreeCompanyTabPayload =
       source: FreeCompanyTabSource;
       cases: FreeCompanyInsolvencyCase[];
       status?: string | undefined;
+      providerPayload?: ProviderPayload | undefined;
     };

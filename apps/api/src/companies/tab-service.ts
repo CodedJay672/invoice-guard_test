@@ -47,6 +47,7 @@ export class CompanyTabService {
         companyNumber: company.companiesHouseNumber,
         source: { provider: "companies_house", checkedAt: result.checkedAt },
         company,
+        providerPayload: result.data.providerPayload,
       };
     }
     if (tab === "filing-history") {
@@ -62,6 +63,7 @@ export class CompanyTabService {
         source: { provider: "companies_house", checkedAt: result.checkedAt },
         filings: result.data.filings,
         pagination: result.data.pagination,
+        providerPayload: result.data.providerPayload,
       };
     }
     if (tab === "charges") {
@@ -77,6 +79,7 @@ export class CompanyTabService {
         source: { provider: "companies_house", checkedAt: result.checkedAt },
         charges: result.data.charges,
         pagination: result.data.pagination,
+        providerPayload: result.data.providerPayload,
       };
     }
     if (tab === "officers") {
@@ -94,6 +97,7 @@ export class CompanyTabService {
         activeCount: result.data.activeCount,
         resignedCount: result.data.resignedCount,
         pagination: result.data.pagination,
+        providerPayload: result.data.providerPayload,
       };
     }
     const result = await this.dependencies.companiesHouseClient.getInsolvency({ companyNumber });
@@ -104,6 +108,7 @@ export class CompanyTabService {
       source: { provider: "companies_house", checkedAt: result.checkedAt },
       cases: result.data.cases,
       status: result.data.status,
+      providerPayload: result.data.providerPayload,
     };
   }
 }

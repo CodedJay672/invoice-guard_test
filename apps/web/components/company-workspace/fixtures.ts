@@ -2,6 +2,7 @@ import type {
   FreeCompanyCharge,
   FreeCompanyTabPayload,
   FreePreviewPayload,
+  ProviderPayload,
 } from "@workspace/types";
 
 export type CompanyWorkspaceTab =
@@ -42,6 +43,29 @@ export interface FilingRecord {
   description: string;
   category: string;
   pages: string;
+  transactionId?: string;
+  descriptionValues?: Record<string, string>;
+  subcategory?: string;
+  barcode?: string;
+  paperFiled?: boolean;
+  annotations?: Array<{
+    annotation?: string | undefined;
+    date?: string | undefined;
+    description?: string | undefined;
+  }>;
+  associatedFilings?: Array<{
+    date?: string | undefined;
+    description?: string | undefined;
+    type?: string | undefined;
+  }>;
+  resolutions?: Array<{
+    category?: string | undefined;
+    description?: string | undefined;
+    documentId?: string | undefined;
+    receivedOn?: string | undefined;
+    subcategory?: string | undefined;
+    type?: string | undefined;
+  }>;
 }
 
 export interface ChargeRecord {
@@ -53,6 +77,8 @@ export interface ChargeRecord {
   description: string;
   chargeCode?: string;
   tags?: string[];
+  satisfiedOn?: string;
+  particularsType?: string;
 }
 
 export interface OfficerRecord {
@@ -87,6 +113,8 @@ export interface CompanyWorkspaceFixture {
   description: string;
   source: SourceState;
   facts?: WorkspaceFact[] | undefined;
+  overviewCompany?: FreePreviewPayload["company"] | undefined;
+  providerPayload?: ProviderPayload | undefined;
   filings?: FilingRecord[] | undefined;
   charges?: ChargeRecord[] | undefined;
   officers?: OfficerRecord[] | undefined;
@@ -167,6 +195,13 @@ export const fixtureCompany: FreePreviewPayload["company"] = {
     next_made_up_to: "2026-04-30",
     overdue: false,
   },
+  confirmationStatement: {
+    lastMadeUpTo: "2026-04-12",
+    nextMadeUpTo: "2027-04-12",
+    nextDue: "2027-04-26",
+    overdue: false,
+  },
+  sicDescriptions: ["Non-specialised wholesale trade"],
   registeredOfficeAddress: {
     addressLine1: "10 Market Street",
     locality: "Manchester",
@@ -230,6 +265,7 @@ export function toCompanyWorkspaceFixture(payload: FreeCompanyTabPayload): Compa
       detail: "Public record returned by Companies House.",
       checkedAt: payload.source.checkedAt,
     },
+    providerPayload: payload.providerPayload,
   };
   if (payload.tab === "overview") {
     const company = payload.company;
@@ -237,6 +273,7 @@ export function toCompanyWorkspaceFixture(payload: FreeCompanyTabPayload): Compa
       ...base,
       title: "Company overview",
       description: "Core profile, address, accounts, and filing indicators from Companies House.",
+      overviewCompany: company,
       facts: [
         { label: "Company number", value: company.companiesHouseNumber },
         { label: "Company status", value: company.companyStatus },
@@ -261,6 +298,14 @@ export function toCompanyWorkspaceFixture(payload: FreeCompanyTabPayload): Compa
         description: item.description ?? "Description not listed",
         category: item.category ?? "Not listed",
         pages: item.pages === undefined ? "Not listed" : `${item.pages} pages`,
+        ...(item.transactionId ? { transactionId: item.transactionId } : {}),
+        ...(item.descriptionValues ? { descriptionValues: item.descriptionValues } : {}),
+        ...(item.subcategory ? { subcategory: item.subcategory } : {}),
+        ...(item.barcode ? { barcode: item.barcode } : {}),
+        ...(item.paperFiled !== undefined ? { paperFiled: item.paperFiled } : {}),
+        ...(item.annotations?.length ? { annotations: item.annotations } : {}),
+        ...(item.associatedFilings?.length ? { associatedFilings: item.associatedFilings } : {}),
+        ...(item.resolutions?.length ? { resolutions: item.resolutions } : {}),
       })),
     };
   if (payload.tab === "charges")
@@ -277,6 +322,8 @@ export function toCompanyWorkspaceFixture(payload: FreeCompanyTabPayload): Compa
         personsEntitled: item.personsEntitled.join(", ") || "Not listed",
         description: item.description ?? "Description not listed",
         ...(item.chargeCode ? { chargeCode: item.chargeCode } : {}),
+        ...(item.satisfiedOn ? { satisfiedOn: item.satisfiedOn } : {}),
+        ...(item.particularsType ? { particularsType: item.particularsType } : {}),
         tags: chargeTags(item),
       })),
       summary: `${payload.pagination.totalResults} charge${payload.pagination.totalResults === 1 ? "" : "s"} total`,
@@ -368,6 +415,7 @@ function populatedFixture(tab: CompanyWorkspaceTab): CompanyWorkspaceFixture {
         ...base,
         title: "Company overview",
         description: "Core profile, address, accounts, and filing indicators from Companies House.",
+        overviewCompany: fixtureCompany,
         facts: [
           { label: "Company number", value: fixtureCompany.companiesHouseNumber },
           { label: "Company status", value: fixtureCompany.companyStatus },

@@ -72,8 +72,6 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
       return profile;
     }
 
-    console.log(profile);
-
     return {
       ...profile,
       data: {
@@ -171,8 +169,6 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
     if (payload.status === "failed") {
       return payload;
     }
-
-    console.log(payload);
 
     return normaliseCompaniesHouseFilingHistoryResponse(
       input.companyNumber,

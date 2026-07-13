@@ -1,4 +1,5 @@
 import type { ProviderMode, ProviderResult } from "@workspace/integrations";
+import type { ProviderPayload } from "./company.js";
 
 export interface CompaniesHouseClientConfig {
   mode: ProviderMode;
@@ -29,6 +30,8 @@ export interface CompaniesHousePagination {
 }
 
 export interface CompaniesHouseRegisteredOfficeAddress {
+  premises?: string | undefined;
+  careOf?: string | undefined;
   addressLine_1: string | undefined;
   addressLine_2: string | undefined;
   locality: string | undefined;
@@ -42,6 +45,7 @@ export interface CompaniesHouseInsolvencyFoundation {
   companiesHouseNumber: string;
   cases: CompaniesHouseInsolvencyCase[];
   status: string | undefined;
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export interface CompaniesHouseCompanySummary {
@@ -77,8 +81,17 @@ export interface CompaniesHouseCompanySummary {
       }
     | undefined;
   has_been_liquidated: boolean | undefined;
+  confirmationStatement?:
+    | {
+        lastMadeUpTo: string | undefined;
+        nextMadeUpTo: string | undefined;
+        nextDue: string | undefined;
+        overdue: boolean | undefined;
+      }
+    | undefined;
   has_charges: boolean | undefined;
   has_insolvency_history: boolean | undefined;
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export interface CompaniesHouseCompanyProfile extends CompaniesHouseCompanySummary {
@@ -87,6 +100,7 @@ export interface CompaniesHouseCompanyProfile extends CompaniesHouseCompanySumma
 
 export interface CompaniesHouseSearchResult {
   matches: CompaniesHouseCompanySummary[];
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export interface CompaniesHouseOfficerCount {
@@ -125,6 +139,7 @@ export interface CompaniesHouseOfficers {
   activeCount: number | undefined;
   resignedCount: number | undefined;
   pagination: CompaniesHousePagination;
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export interface CompaniesHouseAddressHistoryEntry {
@@ -145,12 +160,41 @@ export interface CompaniesHouseFiling {
   category: string | undefined;
   pages: number | undefined;
   transactionId: string | undefined;
+  descriptionValues?: Record<string, string> | undefined;
+  subcategory?: string | undefined;
+  barcode?: string | undefined;
+  paperFiled?: boolean | undefined;
+  annotations?:
+    | Array<{
+        annotation?: string | undefined;
+        date?: string | undefined;
+        description?: string | undefined;
+      }>
+    | undefined;
+  associatedFilings?:
+    | Array<{
+        date?: string | undefined;
+        description?: string | undefined;
+        type?: string | undefined;
+      }>
+    | undefined;
+  resolutions?:
+    | Array<{
+        category?: string | undefined;
+        description?: string | undefined;
+        documentId?: string | undefined;
+        receivedOn?: string | undefined;
+        subcategory?: string | undefined;
+        type?: string | undefined;
+      }>
+    | undefined;
 }
 
 export interface CompaniesHouseFilingHistoryFoundation {
   companiesHouseNumber: string;
   filings: CompaniesHouseFiling[];
   pagination: CompaniesHousePagination;
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export interface CompaniesHouseCharge {
@@ -162,12 +206,17 @@ export interface CompaniesHouseCharge {
   personsEntitled: string[];
   description: string | undefined;
   chargeCode: string | undefined;
+  particularsType?: string | undefined;
+  containsFixedCharge?: boolean | undefined;
+  containsFloatingCharge?: boolean | undefined;
+  containsNegativePledge?: boolean | undefined;
 }
 
 export interface CompaniesHouseChargesFoundation {
   companiesHouseNumber: string;
   charges: CompaniesHouseCharge[];
   pagination: CompaniesHousePagination;
+  providerPayload?: ProviderPayload | undefined;
 }
 
 export interface CompaniesHouseInsolvencyCase {

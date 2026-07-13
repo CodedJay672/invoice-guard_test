@@ -5,7 +5,9 @@ import { reportTierSchema, verifiedEmailSchema } from "@workspace/validation";
 import { CompanyService } from "../companies/service.js";
 import type { ReportProductRepository } from "../report-products/repository.js";
 import type {
-  CheckoutRepository,
+  CheckoutSessionRepository,
+  CreditRepository,
+  RefundRepository,
   CheckoutSessionResult,
   CheckoutStatusResult,
   AuthenticatedCreateCheckoutSessionInput,
@@ -23,7 +25,9 @@ export interface CheckoutServiceDependencies {
   appUrl: string;
   companyService: CompanyService;
   reportProductRepository: ReportProductRepository;
-  checkoutRepository: CheckoutRepository;
+  checkoutSessionRepository: CheckoutSessionRepository;
+  creditRepository: CreditRepository;
+  refundRepository: RefundRepository;
   stripeGateway: StripeGateway;
   reportGenerationQueue: ReportGenerationQueue;
   refundQueue?: RefundQueue;
@@ -58,7 +62,7 @@ export class CheckoutService {
   }
 
   async getStatus(sessionId: string, clerkUserId: string): Promise<CheckoutStatusResult> {
-    const report = await this.dependencies.checkoutRepository.findReportBySessionId(
+    const report = await this.dependencies.checkoutSessionRepository.findReportBySessionId(
       sessionId,
       clerkUserId,
     );
@@ -95,7 +99,7 @@ export class CheckoutService {
   async getCreditBalance(
     clerkUserId: string,
   ): Promise<{ redeemableCredits: number; eligiblePurchaseCount: number }> {
-    return this.dependencies.checkoutRepository.getCreditBalance(clerkUserId);
+    return this.dependencies.creditRepository.getCreditBalance(clerkUserId);
   }
 
   async redeemCredit(input: {
@@ -108,7 +112,7 @@ export class CheckoutService {
       await this.dependencies.reportProductRepository.findActiveByTier("single_report")
     )?.entitlements;
     if (!entitlements) throw new CheckoutUnavailableError("Report entitlement is unavailable.");
-    const redeemed = await this.dependencies.checkoutRepository.redeemCredit({
+    const redeemed = await this.dependencies.creditRepository.redeemCredit({
       clerkUserId: input.clerkUserId,
       companyNumber: company.companiesHouseNumber,
       companyName: company.companyName,
@@ -136,7 +140,7 @@ export class CheckoutService {
       throw new CheckoutAuthorizationError("Admin access is denied.");
     if (!this.dependencies.refundQueue)
       throw new CheckoutUnavailableError("Refund processing is unavailable.");
-    const created = await this.dependencies.checkoutRepository.createUnusedCreditRefund({
+    const created = await this.dependencies.refundRepository.createUnusedCreditRefund({
       ...input,
       requestedByClerkUserId: input.clerkUserId,
     });
@@ -152,9 +156,7 @@ export class CheckoutService {
       input.verifiedEmail.toLowerCase() !== this.dependencies.adminEmail.toLowerCase()
     )
       throw new CheckoutAuthorizationError("Admin access is denied.");
-    const result = await this.dependencies.checkoutRepository.getRefundStatus(
-      input.refundRequestId,
-    );
+    const result = await this.dependencies.refundRepository.getRefundStatus(input.refundRequestId);
     if (!result) throw new CheckoutValidationError("Refund request was not found.");
     return result;
   }
@@ -175,14 +177,14 @@ export class CheckoutService {
           refund.status === "failed" ||
           refund.status === "canceled")
       ) {
-        await this.dependencies.checkoutRepository.confirmRefund({
+        await this.dependencies.refundRepository.confirmRefund({
           refundRequestId,
           stripeRefundId: refund.id,
           succeeded: refund.status === "succeeded",
           failureCode: refund.failure_reason ?? refund.status,
         });
       }
-      await this.dependencies.checkoutRepository.recordHandledEvent({
+      await this.dependencies.checkoutSessionRepository.recordHandledEvent({
         eventId: event.id,
         eventType: event.type,
         payload: {
@@ -195,7 +197,7 @@ export class CheckoutService {
       return;
     }
     if (!isCheckoutEvent(event.type)) {
-      await this.dependencies.checkoutRepository.recordHandledEvent({
+      await this.dependencies.checkoutSessionRepository.recordHandledEvent({
         eventId: event.id,
         eventType: event.type,
         payload,
@@ -208,7 +210,7 @@ export class CheckoutService {
       event.type === "checkout.session.async_payment_failed" ||
       session.payment_status !== "paid"
     ) {
-      await this.dependencies.checkoutRepository.recordHandledEvent({
+      await this.dependencies.checkoutSessionRepository.recordHandledEvent({
         eventId: event.id,
         eventType: event.type,
         payload: {
@@ -252,7 +254,7 @@ export class CheckoutService {
       typeof session.payment_intent === "string"
         ? session.payment_intent
         : session.payment_intent?.id;
-    const prepared = await this.dependencies.checkoutRepository.preparePaidReport({
+    const prepared = await this.dependencies.checkoutSessionRepository.preparePaidReport({
       eventId: event.id,
       eventType: event.type,
       checkoutSessionId: session.id,
@@ -275,7 +277,7 @@ export class CheckoutService {
 
     if (!prepared.alreadyProcessed) {
       await this.dependencies.reportGenerationQueue.enqueue(prepared.reportId);
-      await this.dependencies.checkoutRepository.markEventProcessed(event.id);
+      await this.dependencies.checkoutSessionRepository.markEventProcessed(event.id);
     }
   }
 }

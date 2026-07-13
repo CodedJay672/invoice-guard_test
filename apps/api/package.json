@@ -9,6 +9,8 @@
     "format": "prettier --check .",
     "lint": "eslint .",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test:financial": "node --import tsx --test src/checkout/financial.integration.test.ts",
+    "test:financial:strict": "node scripts/run-financial-tests.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

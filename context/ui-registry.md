@@ -712,3 +712,52 @@ Last updated: 2026-07-03 (18A)
 surface-specific presentation. The document variant is non-interactive and prints the issue URL as
 text. The enabled flag-summary sample is explicitly non-production; the canonical state remains
 disabled until approved exact copy is supplied in 18B.
+
+## Provider Factual Records
+
+### Companies House Search and Overview
+
+File: `apps/web/components/company-search/CompanySearchExperience.tsx` and
+`apps/web/components/company-workspace/CompanyWorkspace.tsx`
+Last updated: 2026-07-12
+
+| Property | Class/pattern |
+| --- | --- |
+| Background | `bg-surface` through shared Card |
+| Border | `border-line` through shared Card and record containers |
+| Border radius | shared Card radius; `rounded-lg` for timelines |
+| Text — primary | `text-content`, `font-semibold` for returned values |
+| Text — secondary | `text-content-muted`, `text-sm` for factual labels |
+| Spacing | `gap-6` between provider sections; `gap-4` within fact groups |
+| Hover state | none for factual, non-interactive records |
+| Shadow | shared Card; `shadow-sm` for nested record cards |
+| Accent usage | `text-brand-teal` only for the primary company link |
+
+**Pattern notes:** Provider facts use a label-above-value hierarchy rather than unexplained compact
+codes. Overview facts are grouped into Company information, Accounts, Confirmation statement, and
+Nature of business. Search identity leads with the registered name, then company number/date, then
+the complete address. InvoiceGuard interpretation remains a separate bordered panel and never
+replaces source facts. Filing descriptions compose Companies House template identifiers with their
+returned `description_values`; every value is also listed below the primary description using
+`text-xs text-content-muted` labels and `font-medium text-content` values.
+
+### Provider Metadata Disclosure
+
+File: `apps/web/components/provider-metadata/ProviderMetadata.tsx`
+Last updated: 2026-07-13
+
+| Property | Class/pattern |
+| --- | --- |
+| Background | `bg-surface` |
+| Border | `border-line` |
+| Border radius | `rounded-lg` |
+| Text — primary | `text-content`, `font-semibold` |
+| Text — secondary | `text-content-muted`, `text-xs` |
+| Spacing | `p-4`, nested `gap-3`, disclosure body `mt-4 pt-4` |
+| Interactive state | native `details`/`summary` with `focus-visible:ring-focus` |
+| Shadow | none |
+| Accent usage | validated Companies House links use `text-brand-teal` |
+
+**Pattern notes:** The disclosure is collapsed by default. It recursively hides null, blank, and
+empty collection values while preserving `false` and `0`. Nested arrays use restrained left borders;
+long values wrap and never force horizontal overflow.

@@ -152,6 +152,23 @@ companies house endpoints:
 | GET /company/{company_number}/officers | List of all company officers. can take items_per_role; register_type  with values like "drectors", "secretary" etc; and register_view: boolean | OfficersList |
 | GET /company/{company_number}/filing-history | Company's filing history | Filing History |
 | GET /company/{company_number}/charges | Company registered charges | ChargesList |
+
+### Companies House provider-page parity matrix
+
+| Public surface | Canonical visitor facts |
+| --- | --- |
+| Search | Registered name, company number, incorporation date when supplied, complete result address, status, and human-readable type |
+| Overview | Full registered office, status, type, incorporation/cessation, accounts dates and overdue state, confirmation-statement dates and overdue state, SIC codes and descriptions |
+| Filing history | Filing date and readable description first; type, category, pages, and transaction reference as secondary metadata |
+| Charges | Status, creation/delivery/satisfaction dates, classification, charge code, persons entitled, particulars text/type, and supplied fixed/floating/negative-pledge flags |
+| Officers | Name, role, appointment/resignation, occupation, residence, nationality, partial birth date, and identity-verification dates where public |
+| Insolvency | Case type/number/status/dates, practitioners and appointment dates, practitioner address, and provider notes |
+
+The visitor contract retains the complete JSON-safe Companies House response, including resource
+links, etags, pagination, annotations, associated filings, resolutions, and document metadata.
+Normalized facts remain separate. Nulls and recursively empty values are invisible, while `false`
+and numeric zero remain visible returned facts. Missing, not yet checked, no records, and retrieval
+failure remain distinct states.
 | GET /company/{company_number}/insolvency | company insolvency resource | CompanyInsolvency |
 
 

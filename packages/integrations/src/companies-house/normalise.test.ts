@@ -79,6 +79,8 @@ void test("normalises live Companies House account fields before returning a pro
       type: "ltd",
       date_of_creation: "2018-04-12",
       registered_office_address: {
+        premises: "Amelia House",
+        care_of: "Example Accountants",
         locality: "Manchester",
         region: "Greater Manchester",
         country: "England",
@@ -104,6 +106,12 @@ void test("normalises live Companies House account fields before returning a pro
         next_made_up_to: "2026-12-31",
         overdue: false,
       },
+      confirmation_statement: {
+        last_made_up_to: "2026-05-30",
+        next_made_up_to: "2027-05-30",
+        next_due: "2027-06-13",
+        overdue: false,
+      },
     },
     2,
   );
@@ -112,6 +120,9 @@ void test("normalises live Companies House account fields before returning a pro
   assert.equal(result.data.accounts?.accounting_reference_date.day, 31);
   assert.equal(result.data.accounts?.accounting_reference_date.month, 12);
   assert.equal(result.data.accounts?.last_accounts.type, "micro-entity");
+  assert.equal(result.data.registeredOfficeAddress.premises, "Amelia House");
+  assert.equal(result.data.registeredOfficeAddress.careOf, "Example Accountants");
+  assert.equal(result.data.confirmationStatement?.nextDue, "2027-06-13");
 });
 
 void test("maps missing live API key to an auth provider failure", async () => {
@@ -141,6 +152,21 @@ void test("normalises paginated filing history, charges, officers, and insolvenc
           category: "accounts",
           date: "2026-01-31",
           pages: 12,
+          description_values: { accounts_type: "full" },
+          subcategory: "incorporation",
+          barcode: "X123",
+          paper_filed: false,
+          annotations: [{ annotation: "Model articles adopted", date: "2019-10-14" }],
+          associated_filings: [
+            { date: "2019-10-14", description: "statement-of-capital", type: "SH01" },
+          ],
+          resolutions: [
+            {
+              description: "model-articles-adopted",
+              receive_date: "2019-10-14",
+              type: "RESOLUTIONS",
+            },
+          ],
         },
       ],
     },
@@ -159,12 +185,31 @@ void test("normalises paginated filing history, charges, officers, and insolvenc
           satisfied_on: "2025-01-01",
           classification: { description: "A registered charge" },
           persons_entitled: [{ name: "Example Bank PLC" }],
+          particulars: {
+            description: "A fixed and floating charge over the undertaking.",
+            type: "brief-description",
+            contains_fixed_charge: true,
+            contains_floating_charge: true,
+            contains_negative_pledge: true,
+          },
         },
       ],
     },
     1,
     25,
   );
+  assert.equal(filings.status, "success");
+  assert.equal(charges.status, "success");
+  if (filings.status !== "success" || charges.status !== "success") {
+    assert.fail("Expected Companies House filing and charge normalization to succeed.");
+  }
+  assert.equal(filings.data.filings[0]?.descriptionValues?.accounts_type, "full");
+  assert.equal(filings.data.filings[0]?.annotations?.[0]?.annotation, "Model articles adopted");
+  assert.equal(filings.data.filings[0]?.associatedFilings?.[0]?.date, "2019-10-14");
+  assert.equal(filings.data.filings[0]?.resolutions?.[0]?.receivedOn, "2019-10-14");
+  assert.match(JSON.stringify(filings.data.providerPayload), /"barcode":"X123"/);
+  assert.equal(charges.data.charges[0]?.particularsType, "brief-description");
+  assert.equal(charges.data.charges[0]?.containsNegativePledge, true);
   const officers = normaliseCompaniesHouseOfficersResponse(
     "12345678",
     {

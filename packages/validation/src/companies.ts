@@ -6,7 +6,21 @@ import type {
   CompanySearchMatchPayload as SharedCompanySearchMatchPayload,
   FreePreviewPayload as SharedFreePreviewPayload,
   ReportProductCode,
+  JsonValue,
+  ProviderPayload,
 } from "@workspace/types";
+
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(jsonValueSchema),
+  ]),
+);
+const providerPayloadSchema: z.ZodType<ProviderPayload> = z.record(jsonValueSchema);
 
 export const companySearchQuerySchema = z
   .string()
@@ -33,6 +47,8 @@ export const freeCompanyTabPaginationQuerySchema = z.object({
 });
 
 export const companyAddressPayloadSchema = z.object({
+  premises: z.string().optional(),
+  careOf: z.string().optional(),
   addressLine1: z.string().optional(),
   addressLine2: z.string().optional(),
   locality: z.string().optional(),
@@ -91,6 +107,16 @@ export const companySearchMatchPayloadSchema: z.ZodType<
   registeredOfficeAddress: companyAddressPayloadSchema,
   sicCodes: z.array(z.string()),
   accounts: companyAccountsPayloadSchema.optional(),
+  confirmationStatement: z
+    .object({
+      lastMadeUpTo: z.string().optional(),
+      nextMadeUpTo: z.string().optional(),
+      nextDue: z.string().optional(),
+      overdue: z.boolean().optional(),
+    })
+    .optional(),
+  sicDescriptions: z.array(z.string()).optional(),
+  providerPayload: providerPayloadSchema.optional(),
 });
 
 export const companyPayloadSchema: z.ZodType<SharedCompanyPayload, z.ZodTypeDef, unknown> =
@@ -177,7 +203,10 @@ export const freePreviewPayloadSchema: z.ZodType<SharedFreePreviewPayload, z.Zod
   });
 
 export const companySearchApiResponseSchema = z.object({
-  data: z.object({ matches: z.array(companySearchMatchPayloadSchema) }),
+  data: z.object({
+    matches: z.array(companySearchMatchPayloadSchema),
+    providerPayload: providerPayloadSchema.optional(),
+  }),
 });
 
 export const freePreviewApiResponseSchema = z.object({
@@ -201,6 +230,7 @@ export const freeCompanyTabPayloadSchema = z.discriminatedUnion("tab", [
     companyNumber: z.string(),
     source: freeCompanyTabSourceSchema,
     company: companyPayloadSchema,
+    providerPayload: providerPayloadSchema.optional(),
   }),
   z.object({
     tab: z.literal("filing-history"),
@@ -215,8 +245,39 @@ export const freeCompanyTabPayloadSchema = z.discriminatedUnion("tab", [
         category: optionalString,
         pages: z.number().int().nonnegative().optional(),
         transactionId: optionalString,
+        descriptionValues: z.record(z.string()).optional(),
+        subcategory: optionalString,
+        barcode: optionalString,
+        paperFiled: z.boolean().optional(),
+        annotations: z
+          .array(
+            z.object({
+              annotation: optionalString,
+              date: optionalString,
+              description: optionalString,
+            }),
+          )
+          .optional(),
+        associatedFilings: z
+          .array(
+            z.object({ date: optionalString, description: optionalString, type: optionalString }),
+          )
+          .optional(),
+        resolutions: z
+          .array(
+            z.object({
+              category: optionalString,
+              description: optionalString,
+              documentId: optionalString,
+              receivedOn: optionalString,
+              subcategory: optionalString,
+              type: optionalString,
+            }),
+          )
+          .optional(),
       }),
     ),
+    providerPayload: providerPayloadSchema.optional(),
   }),
   z.object({
     tab: z.literal("charges"),
@@ -233,8 +294,13 @@ export const freeCompanyTabPayloadSchema = z.discriminatedUnion("tab", [
         personsEntitled: z.array(z.string()),
         description: optionalString,
         chargeCode: optionalString,
+        particularsType: optionalString,
+        containsFixedCharge: z.boolean().optional(),
+        containsFloatingCharge: z.boolean().optional(),
+        containsNegativePledge: z.boolean().optional(),
       }),
     ),
+    providerPayload: providerPayloadSchema.optional(),
   }),
   z.object({
     tab: z.literal("officers"),
@@ -269,6 +335,7 @@ export const freeCompanyTabPayloadSchema = z.discriminatedUnion("tab", [
           .optional(),
       }),
     ),
+    providerPayload: providerPayloadSchema.optional(),
   }),
   z.object({
     tab: z.literal("insolvency"),
@@ -293,6 +360,7 @@ export const freeCompanyTabPayloadSchema = z.discriminatedUnion("tab", [
         notes: z.array(z.string()),
       }),
     ),
+    providerPayload: providerPayloadSchema.optional(),
   }),
 ]);
 export const freeCompanyTabApiResponseSchema = z.object({
