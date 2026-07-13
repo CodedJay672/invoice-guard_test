@@ -355,7 +355,15 @@ void test("GET /companies/:companyNumber/tabs/:tab returns paginated free tab da
   const response = await fetch(`${baseUrl}/companies/12345678/tabs/filing-history?page=2&limit=10`);
   const body = (await response.json()) as {
     data: {
-      tab: { tab: string; companyNumber: string; pagination: { page: number; limit: number } };
+      tab: {
+        tab: string;
+        companyNumber: string;
+        pagination: { page: number; limit: number };
+        filings: Array<{
+          descriptionValues?: Record<string, string>;
+          providerPayload?: Record<string, unknown>;
+        }>;
+      };
     };
   };
 
@@ -364,6 +372,13 @@ void test("GET /companies/:companyNumber/tabs/:tab returns paginated free tab da
   assert.equal(body.data.tab.companyNumber, "12345678");
   assert.equal(body.data.tab.pagination.page, 2);
   assert.equal(body.data.tab.pagination.limit, 10);
+  assert.equal(body.data.tab.filings[0]?.descriptionValues?.description, "Full legacy description");
+  assert.deepEqual(body.data.tab.filings[0]?.providerPayload, {
+    transaction_id: "MzAw",
+    description: "legacy",
+    description_values: { description: "Full legacy description" },
+    links: { document_metadata: "/document/abc" },
+  });
   assert.deepEqual(companiesHouseClient.filingInputs, [
     { companyNumber: "12345678", page: 2, limit: 10 },
   ]);
@@ -617,6 +632,13 @@ class CountingCompaniesHouseClient extends SingleCompanyCompaniesHouseClient {
             date: "2025-01-31",
             pages: 12,
             barcode: "X1",
+            descriptionValues: { description: "Full legacy description" },
+            providerPayload: {
+              transaction_id: "MzAw",
+              description: "legacy",
+              description_values: { description: "Full legacy description" },
+              links: { document_metadata: "/document/abc" },
+            },
           },
         ],
         pagination: {

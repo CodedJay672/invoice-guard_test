@@ -153,6 +153,12 @@ void test("free tab response accepts typed Companies House filing payloads with 
             category: "accounts",
             pages: 12,
             transactionId: "MzAw",
+            providerPayload: {
+              transaction_id: "MzAw",
+              description_values: { made_up_date: "2025-01-31" },
+              links: { document_metadata: "/document/abc" },
+            },
+            descriptionValues: { made_up_date: "2025-01-31" },
           },
         ],
       },
@@ -160,6 +166,13 @@ void test("free tab response accepts typed Companies House filing payloads with 
   });
 
   assert.equal(result.success, true);
+  if (!result.success) return;
+  assert.deepEqual(
+    result.data.data.tab.tab === "filing-history"
+      ? result.data.data.tab.filings[0]?.providerPayload?.description_values
+      : undefined,
+    { made_up_date: "2025-01-31" },
+  );
 });
 
 void test("free tab response accepts design-visible Companies House tab fields", () => {

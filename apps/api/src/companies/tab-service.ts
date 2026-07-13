@@ -5,6 +5,7 @@ import type { CompanyRepository } from "./types.js";
 import type { CompanyTabCache } from "./tab-cache.js";
 
 export const companyTabCacheTtlSeconds = 15 * 60;
+export const companyTabCacheVersion = "v3";
 
 export class CompanyTabService {
   constructor(
@@ -21,7 +22,7 @@ export class CompanyTabService {
     page = 1,
     limit = 25,
   ): Promise<FreeCompanyTabPayload> {
-    const cacheKey = `invoiceguard:company-tab:${companyNumber}:${tab}:${page}:${limit}`;
+    const cacheKey = `invoiceguard:company-tab:${companyTabCacheVersion}:${companyNumber}:${tab}:${page}:${limit}`;
     const cached = await this.dependencies.cache.get(cacheKey);
     if (cached) return cached;
 

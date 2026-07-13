@@ -1,6 +1,6 @@
 import type { CompanyAddressPayload } from "@workspace/types";
 
-export const companiesHouseUnavailable = "";
+export const companiesHouseUnavailable = "unavailable";
 
 export function formatCompaniesHouseAddress(address: CompanyAddressPayload): string {
   return (
@@ -55,6 +55,10 @@ export function resolveFilingDescription(
   description: string,
   values?: Record<string, string>,
 ): string {
+  if (description.toLowerCase() === "legacy" && values?.description?.trim()) {
+    return values.description.trim();
+  }
+
   const madeUpDate = values?.made_up_date
     ? formatCompaniesHouseDate(values.made_up_date)
     : undefined;

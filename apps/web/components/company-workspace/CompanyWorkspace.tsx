@@ -109,7 +109,7 @@ export function CompanyWorkspace({
               className={cn(
                 "text-sm font-semibold text-brand-teal",
                 fixture.pagination.page >= fixture.pagination.totalPages &&
-                  "pointer-events-none opacity-50",
+                "pointer-events-none opacity-50",
               )}
               aria-disabled={fixture.pagination.page >= fixture.pagination.totalPages}
               href={`/company/${houseNumber}/${activeTab}?page=${Math.min(fixture.pagination.totalPages, fixture.pagination.page + 1)}`}
@@ -523,6 +523,7 @@ function FilingHistoryPanel({ fixture }: TabPanelProps) {
 }
 
 function FilingList({ filings }: { filings: FilingRecord[] }) {
+
   return (
     <div className="overflow-hidden rounded-lg border border-line">
       <div className="hidden grid-cols-[120px_90px_minmax(0,1fr)_120px_90px] gap-3 border-b border-line bg-surface-subtle px-4 py-3 text-xs font-semibold text-content-muted uppercase md:grid">

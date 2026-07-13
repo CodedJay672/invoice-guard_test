@@ -160,6 +160,7 @@ export interface CompaniesHouseFiling {
   category: string | undefined;
   pages: number | undefined;
   transactionId: string | undefined;
+  providerPayload?: ProviderPayload | undefined;
   descriptionValues?: Record<string, string> | undefined;
   subcategory?: string | undefined;
   barcode?: string | undefined;

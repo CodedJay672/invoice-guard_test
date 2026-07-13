@@ -44,6 +44,7 @@ export interface FilingRecord {
   category: string;
   pages: string;
   transactionId?: string;
+  providerPayload?: ProviderPayload;
   descriptionValues?: Record<string, string>;
   subcategory?: string;
   barcode?: string;
@@ -292,21 +293,29 @@ export function toCompanyWorkspaceFixture(payload: FreeCompanyTabPayload): Compa
       title: "Filing history",
       description: "Recent filings returned by Companies House.",
       pagination: payload.pagination,
-      filings: payload.filings.map((item) => ({
-        date: item.date ?? "",
-        type: item.type ?? "Not listed",
-        description: item.description ?? "Description not listed",
-        category: item.category ?? "Not listed",
-        pages: item.pages === undefined ? "Not listed" : `${item.pages} pages`,
-        ...(item.transactionId ? { transactionId: item.transactionId } : {}),
-        ...(item.descriptionValues ? { descriptionValues: item.descriptionValues } : {}),
-        ...(item.subcategory ? { subcategory: item.subcategory } : {}),
-        ...(item.barcode ? { barcode: item.barcode } : {}),
-        ...(item.paperFiled !== undefined ? { paperFiled: item.paperFiled } : {}),
-        ...(item.annotations?.length ? { annotations: item.annotations } : {}),
-        ...(item.associatedFilings?.length ? { associatedFilings: item.associatedFilings } : {}),
-        ...(item.resolutions?.length ? { resolutions: item.resolutions } : {}),
-      })),
+      filings: payload.filings.map((item) => {
+        const descriptionValues = {
+          ...descriptionValuesForFiling(payload.providerPayload, item.transactionId),
+          ...descriptionValuesFromFilingPayload(item.providerPayload),
+          ...item.descriptionValues,
+        };
+        return {
+          date: item.date ?? "",
+          type: item.type ?? "Not listed",
+          description: item.description ?? "Description not listed",
+          category: item.category ?? "Not listed",
+          pages: item.pages === undefined ? "Not listed" : `${item.pages} pages`,
+          ...(item.transactionId ? { transactionId: item.transactionId } : {}),
+          ...(item.providerPayload ? { providerPayload: item.providerPayload } : {}),
+          ...(Object.keys(descriptionValues).length ? { descriptionValues } : {}),
+          ...(item.subcategory ? { subcategory: item.subcategory } : {}),
+          ...(item.barcode ? { barcode: item.barcode } : {}),
+          ...(item.paperFiled !== undefined ? { paperFiled: item.paperFiled } : {}),
+          ...(item.annotations?.length ? { annotations: item.annotations } : {}),
+          ...(item.associatedFilings?.length ? { associatedFilings: item.associatedFilings } : {}),
+          ...(item.resolutions?.length ? { resolutions: item.resolutions } : {}),
+        };
+      }),
     };
   if (payload.tab === "charges")
     return {
@@ -388,6 +397,42 @@ export function failedCompanyWorkspaceFixture(
   tab: Exclude<CompanyWorkspaceTab, "ccj" | "fpc" | "ai-summary">,
 ): CompanyWorkspaceFixture {
   return failedFixture(tab);
+}
+
+export function descriptionValuesForFiling(
+  providerPayload: ProviderPayload | undefined,
+  transactionId: string | undefined,
+): Record<string, string> | undefined {
+  if (!transactionId) return undefined;
+  const items = providerPayload?.items;
+  if (!Array.isArray(items)) return undefined;
+  const rawFiling = items.find(
+    (item) =>
+      item !== null &&
+      typeof item === "object" &&
+      !Array.isArray(item) &&
+      item.transaction_id === transactionId,
+  );
+  if (!rawFiling || typeof rawFiling !== "object" || Array.isArray(rawFiling)) return undefined;
+  const rawValues = rawFiling.description_values;
+  if (!rawValues || typeof rawValues !== "object" || Array.isArray(rawValues)) return undefined;
+  const values = Object.entries(rawValues).filter(
+    (entry): entry is [string, string] =>
+      typeof entry[1] === "string" && entry[1].trim().length > 0,
+  );
+  return values.length ? Object.fromEntries(values) : undefined;
+}
+
+export function descriptionValuesFromFilingPayload(
+  providerPayload: ProviderPayload | undefined,
+): Record<string, string> | undefined {
+  const rawValues = providerPayload?.description_values;
+  if (!rawValues || typeof rawValues !== "object" || Array.isArray(rawValues)) return undefined;
+  const values = Object.entries(rawValues).filter(
+    (entry): entry is [string, string] =>
+      typeof entry[1] === "string" && entry[1].trim().length > 0,
+  );
+  return values.length ? Object.fromEntries(values) : undefined;
 }
 
 function isPaidTab(tab: CompanyWorkspaceTab): boolean {

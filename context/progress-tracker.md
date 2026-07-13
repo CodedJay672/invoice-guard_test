@@ -508,6 +508,22 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
   primary filing description for forward compatibility with unknown templates.
   Web typecheck and lint passed, all 49 web assertions passed, and the Next.js 16.2.6 production
   build completed successfully with every company and search route generated.
+- 2026-07-13: corrected live filing description-value reconciliation. Filing rows now recover raw
+  `description_values` from the retained Companies House payload by matching `transaction_id`, with
+  normalized values taking precedence. Legacy filings display the provider's returned `description`
+  value as their primary text. Web typecheck/lint, 49 tests, and production build passed.
+- 2026-07-13: versioned the Companies House tab-cache namespace as `v2` so pre-parity Redis entries
+  cannot suppress newly retained filing `description_values` or keep rendering `Legacy`. New requests
+  bypass the old namespace and repopulate the 15-minute cache from the corrected provider pipeline.
+  The focused API cache tests and web filing-description tests passed; API and web typechecks passed.
+- 2026-07-13: fixed the filing-history field-loss boundary identified from the web server payload.
+  Every normalized filing now carries its complete JSON-safe Companies House item as
+  `providerPayload`, including `description_values`, links, identifiers, and unknown future fields.
+  Runtime validation preserves that evidence, the web mapper reads description values from the
+  per-filing payload, and the tab-cache namespace is now `v3`. End-to-end API coverage proves both
+  normalized description values and the literal raw filing reach the frontend. Focused tests passed
+  for integrations (7), validation (5), API (17), and web (9); all five affected workspace
+  typechecks and focused lint passed.
 - Landing suggestions carry the selected Companies House number to `/search`; display-name query text is contextual only and never canonical identity.
 - Update this tracker and `ui-registry.md` after every feature.
 - V1 context is reference material for depth; the canonical nine files remain the only active source of truth.

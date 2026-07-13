@@ -245,6 +245,7 @@ export const freeCompanyTabPayloadSchema = z.discriminatedUnion("tab", [
         category: optionalString,
         pages: z.number().int().nonnegative().optional(),
         transactionId: optionalString,
+        providerPayload: providerPayloadSchema.optional(),
         descriptionValues: z.record(z.string()).optional(),
         subcategory: optionalString,
         barcode: optionalString,

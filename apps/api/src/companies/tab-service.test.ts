@@ -15,7 +15,11 @@ import type {
 
 import { InMemoryCompanyRepository } from "./repository.js";
 import type { CompanyTabCache } from "./tab-cache.js";
-import { companyTabCacheTtlSeconds, CompanyTabService } from "./tab-service.js";
+import {
+  companyTabCacheTtlSeconds,
+  companyTabCacheVersion,
+  CompanyTabService,
+} from "./tab-service.js";
 
 void test("tab service caches successful normalized pages for 15 minutes with page-isolated keys", async () => {
   const companiesHouseClient = new TabServiceCompaniesHouseClient();
@@ -42,11 +46,11 @@ void test("tab service caches successful normalized pages for 15 minutes with pa
     cache.sets.map((entry) => ({ key: entry.key, ttlSeconds: entry.ttlSeconds })),
     [
       {
-        key: "invoiceguard:company-tab:12345678:filing-history:1:25",
+        key: `invoiceguard:company-tab:${companyTabCacheVersion}:12345678:filing-history:1:25`,
         ttlSeconds: companyTabCacheTtlSeconds,
       },
       {
-        key: "invoiceguard:company-tab:12345678:filing-history:2:25",
+        key: `invoiceguard:company-tab:${companyTabCacheVersion}:12345678:filing-history:2:25`,
         ttlSeconds: companyTabCacheTtlSeconds,
       },
     ],

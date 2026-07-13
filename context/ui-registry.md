@@ -739,7 +739,9 @@ Nature of business. Search identity leads with the registered name, then company
 the complete address. InvoiceGuard interpretation remains a separate bordered panel and never
 replaces source facts. Filing descriptions compose Companies House template identifiers with their
 returned `description_values`; every value is also listed below the primary description using
-`text-xs text-content-muted` labels and `font-medium text-content` values.
+`text-xs text-content-muted` labels and `font-medium text-content` values. Visible filing rows
+reconcile values from the raw provider item by transaction ID when the normalized record lacks them;
+legacy filings promote `description_values.description` to the primary description.
 
 ### Provider Metadata Disclosure
 
@@ -761,3 +763,17 @@ Last updated: 2026-07-13
 **Pattern notes:** The disclosure is collapsed by default. It recursively hides null, blank, and
 empty collection values while preserving `false` and `0`. Nested arrays use restrained left borders;
 long values wrap and never force horizontal overflow.
+
+### Companies House Filing Cache Coherence
+
+Last updated: 2026-07-13
+
+**Pattern notes:** Filing-history presentation depends on the versioned API tab-cache contract.
+Whenever normalized or raw provider fields change visitor-visible filing content, increment the
+cache namespace so older Redis payloads cannot preserve stale descriptions. This behavior change
+adds no new visual tokens or component styling.
+
+Each filing record must retain its own raw `providerPayload`; the page-level provider payload alone
+is not a substitute. Presenters resolve `description_values` from the per-record payload first, then
+use normalized values and page-level evidence as compatibility paths. This keeps legacy descriptions
+and future Companies House fields attached to the exact filing that supplied them.

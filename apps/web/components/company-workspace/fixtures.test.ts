@@ -5,6 +5,8 @@ import test from "node:test";
 import {
   companyWorkspaceFixtureNames,
   companyWorkspaceTabs,
+  descriptionValuesFromFilingPayload,
+  descriptionValuesForFiling,
   getCompanyWorkspaceFixture,
   resolveCompanyWorkspaceFixtureName,
   type CompanyWorkspaceTab,
@@ -84,6 +86,38 @@ void test("composes Companies House filing descriptions from returned descriptio
     "Micro company accounts made up to 30 June 2018",
   );
   assert.equal(formatFilingDescriptionValue("made_up_date", "2019-05-25"), "25 May 2019");
+  assert.equal(
+    resolveFilingDescription("legacy", {
+      description: "Return made up to 30/05/09; full list of members",
+    }),
+    "Return made up to 30/05/09; full list of members",
+  );
+  assert.deepEqual(
+    descriptionValuesForFiling(
+      {
+        items: [
+          {
+            transaction_id: "MjAzNDcxMTExN2FkaXF6a2M4",
+            description_values: {
+              description: "Return made up to 30/05/09; full list of members",
+            },
+          },
+        ],
+      },
+      "MjAzNDcxMTExN2FkaXF6a2M4",
+    ),
+    { description: "Return made up to 30/05/09; full list of members" },
+  );
+  assert.deepEqual(
+    descriptionValuesFromFilingPayload({
+      description: "legacy",
+      description_values: {
+        description: "Return made up to 30/05/09; full list of members",
+      },
+      links: { document_metadata: "/document/abc" },
+    }),
+    { description: "Return made up to 30/05/09; full list of members" },
+  );
 });
 
 void test("surfaces design-visible Companies House fixture fields with paid interpretation locked", () => {

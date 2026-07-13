@@ -204,6 +204,9 @@ void test("normalises paginated filing history, charges, officers, and insolvenc
     assert.fail("Expected Companies House filing and charge normalization to succeed.");
   }
   assert.equal(filings.data.filings[0]?.descriptionValues?.accounts_type, "full");
+  assert.deepEqual(filings.data.filings[0]?.providerPayload?.description_values, {
+    accounts_type: "full",
+  });
   assert.equal(filings.data.filings[0]?.annotations?.[0]?.annotation, "Model articles adopted");
   assert.equal(filings.data.filings[0]?.associatedFilings?.[0]?.date, "2019-10-14");
   assert.equal(filings.data.filings[0]?.resolutions?.[0]?.receivedOn, "2019-10-14");

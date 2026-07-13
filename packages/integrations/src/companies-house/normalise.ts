@@ -566,6 +566,7 @@ export function normaliseCompaniesHouseFilingHistoryResponse(
             category: asString(item.category),
             pages: asNumber(item.pages),
             transactionId: asString(item.transaction_id),
+            providerPayload: asProviderPayload(value),
             descriptionValues: normaliseDescriptionValues(item.description_values),
             subcategory: asString(item.subcategory),
             barcode: asString(item.barcode),
