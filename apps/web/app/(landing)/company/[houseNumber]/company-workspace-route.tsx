@@ -10,10 +10,15 @@ import {
 } from "@/components/company-workspace/fixtures";
 import { requestFreePreview } from "@/lib/data/free-company-prev";
 import { requestFreeCompanyTab } from "@/lib/data/free-company-tab";
+import { resolvePurchaseTier } from "@/lib/purchase-intent";
 
 export type CompanyWorkspacePageProps = {
   params: Promise<{ houseNumber: string }>;
-  searchParams?: Promise<{ fixture?: string | string[]; page?: string | string[] }>;
+  searchParams?: Promise<{
+    fixture?: string | string[];
+    page?: string | string[];
+    tier?: string | string[];
+  }>;
 };
 
 type CompanyWorkspaceRouteProps = CompanyWorkspacePageProps & {
@@ -29,6 +34,7 @@ export async function CompanyWorkspaceRoute({
   const query = searchParams ? await searchParams : {};
   const environment = loadWebProxyConfig().environment;
   const fixtureName = resolveCompanyWorkspaceFixtureName(query.fixture, environment);
+  const purchaseTier = resolvePurchaseTier(query.tier);
   const isPaidTab = activeTab === "ccj" || activeTab === "fpc" || activeTab === "ai-summary";
   const page =
     typeof query.page === "string" && /^\d+$/.test(query.page)
@@ -54,6 +60,7 @@ export async function CompanyWorkspaceRoute({
       houseNumber={houseNumber}
       previewResult={previewResult}
       fixtureMode={Boolean(fixtureName)}
+      purchaseTier={purchaseTier}
     />
   );
 }

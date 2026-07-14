@@ -16,12 +16,14 @@ import type {
   CompanyAddressPayload,
   CompanySearchMatchPayload,
   FreePreviewPayload,
+  ReportProductCode,
 } from "@workspace/types";
 
 import { searchCompanies } from "@/lib/data/search-companies";
 
 import { getSearchFixtureState, type SearchFixtureName, type SearchStatus } from "./fixtures";
 import SearchPanel from "./search-panel";
+import { buildCompanyHref } from "@/lib/purchase-intent";
 import { ProviderMetadata } from "@/components/provider-metadata/ProviderMetadata";
 import {
   companyTypeLabel,
@@ -33,11 +35,13 @@ import {
 type CompanySearchExperienceProps = {
   fixtureName?: SearchFixtureName | undefined;
   initialQuery?: string | undefined;
+  purchaseTier?: ReportProductCode | undefined;
 };
 
 export async function CompanySearchExperience({
   fixtureName,
   initialQuery,
+  purchaseTier,
 }: CompanySearchExperienceProps) {
   const fixtureState = getSearchFixtureState(fixtureName);
   const matches = initialQuery
@@ -53,7 +57,7 @@ export async function CompanySearchExperience({
     <section className="min-h-svh w-full bg-page">
       <div className="border-b border-b-line bg-surface px-7 py-6">
         <div className="mx-auto w-full max-w-240">
-          <SearchPanel />
+          <SearchPanel purchaseTier={purchaseTier} />
         </div>
       </div>
       <section
@@ -67,6 +71,7 @@ export async function CompanySearchExperience({
             <SearchResults
               query={initialQuery ?? ""}
               matches={matches.matches}
+              purchaseTier={purchaseTier}
               {...(matches.providerPayload ? { providerPayload: matches.providerPayload } : {})}
             />
           </Suspense>
@@ -120,9 +125,10 @@ type SearchResultsProps = {
   matches: CompanySearchMatchPayload[];
   query: string;
   providerPayload?: import("@workspace/types").ProviderPayload | undefined;
+  purchaseTier?: ReportProductCode | undefined;
 };
 
-function SearchResults({ matches, query, providerPayload }: SearchResultsProps) {
+function SearchResults({ matches, query, providerPayload, purchaseTier }: SearchResultsProps) {
   return (
     <section aria-labelledby="search-results-heading" className="mx-auto w-full max-w-240 p-7">
       <h2 id="search-results-heading" className="mb-4 text-xs text-content-subtle">
@@ -137,7 +143,11 @@ function SearchResults({ matches, query, providerPayload }: SearchResultsProps) 
       </div>
 
       {matches.map((company) => (
-        <SearchResultCard key={company.companiesHouseNumber} {...company} />
+        <SearchResultCard
+          key={company.companiesHouseNumber}
+          {...company}
+          purchaseTier={purchaseTier}
+        />
       ))}
       <ProviderMetadata payload={providerPayload} />
     </section>
@@ -174,10 +184,13 @@ function PreviewLoading() {
   );
 }
 
-function SearchResultCard({ ...company }: CompanySearchMatchPayload) {
+function SearchResultCard({
+  purchaseTier,
+  ...company
+}: CompanySearchMatchPayload & { purchaseTier?: ReportProductCode | undefined }) {
   return (
     <article className="mb-5 overflow-hidden rounded-md border border-line bg-surface">
-      <Link href={`/company/${company.companiesHouseNumber}/overview`}>
+      <Link href={buildCompanyHref(company.companiesHouseNumber, "overview", purchaseTier)}>
         <div className="flex flex-wrap justify-between gap-4 px-6 py-5">
           <div className="min-w-0 flex-1">
             <h3 className="mb-1 text-lg font-bold text-brand-teal underline underline-offset-2">

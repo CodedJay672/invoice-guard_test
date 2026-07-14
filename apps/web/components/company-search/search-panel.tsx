@@ -6,20 +6,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import type { ReportProductCode } from "@workspace/types";
 
-function SearchPanel() {
+function SearchPanel({ purchaseTier }: { purchaseTier?: ReportProductCode | undefined }) {
   const params = useSearchParams();
   const query = params.get("q") || "";
 
-  return <SearchPanelForm key={query} initialQuery={query} paramsString={params.toString()} />;
+  return <SearchPanelForm key={query} initialQuery={query} purchaseTier={purchaseTier} />;
 }
 
 type SearchPanelFormProps = {
   initialQuery: string;
-  paramsString: string;
+  purchaseTier?: ReportProductCode | undefined;
 };
 
-function SearchPanelForm({ initialQuery, paramsString }: SearchPanelFormProps) {
+function SearchPanelForm({ initialQuery, purchaseTier }: SearchPanelFormProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = React.useState(initialQuery);
   const [searchStatus, setSearchStatus] = React.useState<"idle" | "loading" | "invalid">("idle");
@@ -34,8 +35,8 @@ function SearchPanelForm({ initialQuery, paramsString }: SearchPanelFormProps) {
     }
 
     setSearchStatus("loading");
-    const searchParams = new URLSearchParams(paramsString);
-    searchParams.set("q", trimmedInput);
+    const searchParams = new URLSearchParams({ q: trimmedInput });
+    if (purchaseTier) searchParams.set("tier", purchaseTier);
 
     router.push(`/search?${searchParams.toString()}`);
     setSearchStatus("idle");
@@ -43,7 +44,10 @@ function SearchPanelForm({ initialQuery, paramsString }: SearchPanelFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <label className="text-content-subtle text-xs font-medium mb-2.5 block" htmlFor="company-search">
+      <label
+        className="mb-2.5 block text-xs font-medium text-content-subtle"
+        htmlFor="company-search"
+      >
         Company name or number
       </label>
       <div className="flex gap-2.5">
@@ -62,7 +66,7 @@ function SearchPanelForm({ initialQuery, paramsString }: SearchPanelFormProps) {
             }}
             aria-invalid={searchStatus === "invalid"}
             placeholder="For example, ACME or 12345678"
-            className="flex-1 bg-surface-subtle border border-line rounded-sm py-2.5 pr-4 pl-10 text-content text-sm outline-none transition-colors duration-150 focus:border-brand-navy-hover placeholder:text-content-subtle"
+            className="flex-1 rounded-sm border border-line bg-surface-subtle py-2.5 pr-4 pl-10 text-sm text-content transition-colors duration-150 outline-none placeholder:text-content-subtle focus:border-brand-navy-hover"
           />
         </div>
         <Button
@@ -70,7 +74,7 @@ function SearchPanelForm({ initialQuery, paramsString }: SearchPanelFormProps) {
           variant="ghost"
           size="lg"
           disabled={searchStatus === "loading"}
-          className="bg-brand-navy text-content-inverse text-sm font-semibold rounded-sm py-2.5 px-6 cursor-pointer whitespace-nowrap transition-colors hover:bg-brand-navy-hover"
+          className="cursor-pointer rounded-sm bg-brand-navy px-6 py-2.5 text-sm font-semibold whitespace-nowrap text-content-inverse transition-colors hover:bg-brand-navy-hover"
         >
           <Search data-icon="inline-start" />
           {searchStatus === "loading" ? "Searching" : "Search"}

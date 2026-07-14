@@ -1,5 +1,17 @@
 # Progress Tracker
 
+## 2026-07-14 — Visitor Report Purchase Entry Flow
+
+- Connected all four landing pricing actions to tier-aware company search and preserved validated
+  purchase intent through company selection, overview review, desktop tabs, and the mobile selector.
+- Added live product purchase cards to company overview plus checkout actions on CCJ, Fair Payment
+  Code, and AI Summary locks, with a safe Single Report fallback when no tier was selected.
+- Consolidated public web product metadata while retaining server-authoritative checkout pricing;
+  existing Clerk, Stripe, webhook, credit redemption, refund, and delivery behavior is unchanged.
+- Focused web typecheck passed; 49 existing web assertions and 2 purchase-intent assertions passed;
+  changed-file lint and formatting passed; the Next.js 16.2.6 production build passed. Full web lint
+  remains blocked by the pre-existing unnecessary assertion in `lib/data/search-companies.ts:66`.
+
 ## 2026-07-11 — Financial Flow Production Hardening
 
 - Customer balance now sums only unused credits from active or partially refunded purchases through
@@ -437,20 +449,20 @@ fixture-query rejection.
 
 ### Coverage Tracking
 
-| System                                    | Current state                                                          |
-| ----------------------------------------- | ---------------------------------------------------------------------- |
-| Companies House normalization             | Covered                                                                |
-| Gazette normalization                     | Covered                                                                |
-| Insolvency/disqualification normalization | Covered                                                                |
-| Search/free-preview API                   | Covered for Companies House-only response and failure boundaries       |
+| System                                      | Current state                                                                              |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Companies House normalization               | Covered                                                                                    |
+| Gazette normalization                       | Covered                                                                                    |
+| Insolvency/disqualification normalization   | Covered                                                                                    |
+| Search/free-preview API                     | Covered for Companies House-only response and failure boundaries                           |
 | All non-Companies-House free-tier isolation | Covered for free search, preview, workspace UI, and 12D free-tab route/service composition |
-| Stripe/webhook/pending-report lifecycle   | Covered for checkout, paid/unpaid events, replay, queueing, and status |
-| Worker generation lifecycle               | Covered for claim, retry, terminal convergence, failure, and delay     |
-| Paid provider/partial/refund outcomes     | Covered by tier, snapshot reuse, recovery, and refund tests              |
-| AI interpretation                         | Composed into frozen paid generation with terminal fallback             |
-| Secure browser report delivery            | Covered for ownership, concealment, lifecycle, validation, and tiers     |
-| Owner notifications                       | Covered for ownership, durable state, retries, ambiguity, and live UI projection |
-| PDF/admin/maintenance                     | 18B PDF delivery covered; admin and maintenance pending                 |
+| Stripe/webhook/pending-report lifecycle     | Covered for checkout, paid/unpaid events, replay, queueing, and status                     |
+| Worker generation lifecycle                 | Covered for claim, retry, terminal convergence, failure, and delay                         |
+| Paid provider/partial/refund outcomes       | Covered by tier, snapshot reuse, recovery, and refund tests                                |
+| AI interpretation                           | Composed into frozen paid generation with terminal fallback                                |
+| Secure browser report delivery              | Covered for ownership, concealment, lifecycle, validation, and tiers                       |
+| Owner notifications                         | Covered for ownership, durable state, retries, ambiguity, and live UI projection           |
+| PDF/admin/maintenance                       | 18B PDF delivery covered; admin and maintenance pending                                    |
 
 ### Environment Variables in Scope
 

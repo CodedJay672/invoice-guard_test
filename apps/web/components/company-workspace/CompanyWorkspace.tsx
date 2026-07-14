@@ -9,21 +9,24 @@ import {
   Scale,
   ShieldCheck,
   Users,
+  ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert";
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { cn } from "@workspace/ui/lib/utils";
-import type { FreePreviewPayload } from "@workspace/types";
+import type { FreePreviewPayload, ReportProductCode } from "@workspace/types";
 
 import type { PreviewRequestResult } from "@/lib/data/free-company-prev";
 import {
@@ -36,6 +39,7 @@ import {
   resolveFilingDescription,
   sentenceCase as displaySentenceCase,
 } from "@/lib/company-display";
+import { buildCompanyHref, buildPurchaseCheckoutHref } from "@/lib/purchase-intent";
 
 import { MobileTabSelect } from "./MobileTabSelect";
 import { ProviderMetadata } from "@/components/provider-metadata/ProviderMetadata";
@@ -58,6 +62,7 @@ type CompanyWorkspaceProps = {
   fixture: CompanyWorkspaceFixture;
   previewResult: PreviewRequestResult;
   fixtureMode: boolean;
+  purchaseTier?: ReportProductCode | undefined;
 };
 
 export function CompanyWorkspace({
@@ -66,6 +71,7 @@ export function CompanyWorkspace({
   fixture,
   previewResult,
   fixtureMode,
+  purchaseTier,
 }: CompanyWorkspaceProps) {
   const company =
     previewResult.status === "success"
@@ -77,7 +83,7 @@ export function CompanyWorkspace({
   return (
     <main className="min-h-svh bg-page text-content">
       {company ? <CompanyMasthead company={company} previewResult={previewResult} /> : null}
-      <CompanyTabs activeTab={activeTab} houseNumber={houseNumber} />
+      <CompanyTabs activeTab={activeTab} houseNumber={houseNumber} purchaseTier={purchaseTier} />
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
         {previewResult.status === "failed" ? (
           <Alert variant="caution">
@@ -89,7 +95,14 @@ export function CompanyWorkspace({
           </Alert>
         ) : null}
         <SourceStatusCard source={fixture.source} />
-        <TabPanel fixture={fixture} />
+        {activeTab === "overview" && previewResult.status === "success" ? (
+          <ReportPurchaseOptions
+            companyNumber={houseNumber}
+            products={previewResult.preview.tierCards}
+            selectedTier={purchaseTier}
+          />
+        ) : null}
+        <TabPanel fixture={fixture} companyNumber={houseNumber} purchaseTier={purchaseTier} />
         {fixture.pagination && fixture.pagination.totalPages > 1 ? (
           <nav aria-label="Tab result pages" className="flex items-center justify-between gap-4">
             <Link
@@ -109,7 +122,7 @@ export function CompanyWorkspace({
               className={cn(
                 "text-sm font-semibold text-brand-teal",
                 fixture.pagination.page >= fixture.pagination.totalPages &&
-                "pointer-events-none opacity-50",
+                  "pointer-events-none opacity-50",
               )}
               aria-disabled={fixture.pagination.page >= fixture.pagination.totalPages}
               href={`/company/${houseNumber}/${activeTab}?page=${Math.min(fixture.pagination.totalPages, fixture.pagination.page + 1)}`}
@@ -170,13 +183,18 @@ function CompanyMasthead({ company, previewResult }: CompanyMastheadProps) {
 type CompanyTabsProps = {
   activeTab: CompanyWorkspaceTab;
   houseNumber: string;
+  purchaseTier?: ReportProductCode | undefined;
 };
 
-function CompanyTabs({ activeTab, houseNumber }: CompanyTabsProps) {
+function CompanyTabs({ activeTab, houseNumber, purchaseTier }: CompanyTabsProps) {
   return (
     <div className="sticky top-0 z-20 border-b border-line bg-surface">
       <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
-        <MobileTabSelect activeTab={activeTab} houseNumber={houseNumber} />
+        <MobileTabSelect
+          activeTab={activeTab}
+          houseNumber={houseNumber}
+          purchaseTier={purchaseTier}
+        />
         <nav aria-label="Company sections" className="hidden overflow-x-auto md:block">
           <ul className="flex min-w-max items-center gap-1">
             {companyWorkspaceTabs.map((tab) => {
@@ -184,7 +202,7 @@ function CompanyTabs({ activeTab, houseNumber }: CompanyTabsProps) {
               return (
                 <li key={tab.id}>
                   <Link
-                    href={`/company/${houseNumber}/${tab.href}`}
+                    href={buildCompanyHref(houseNumber, tab.href, purchaseTier)}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
                       "inline-flex min-h-11 items-center rounded-md border border-transparent px-3 py-2 text-sm font-medium text-content-muted transition hover:border-line hover:text-content focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none",
@@ -234,6 +252,62 @@ function SourceStatusCard({ source }: SourceStatusCardProps) {
   );
 }
 
+function ReportPurchaseOptions({
+  companyNumber,
+  products,
+  selectedTier,
+}: {
+  companyNumber: string;
+  products: FreePreviewPayload["tierCards"];
+  selectedTier?: ReportProductCode | undefined;
+}) {
+  return (
+    <Card aria-labelledby="report-purchase-heading">
+      <CardHeader>
+        <CardTitle id="report-purchase-heading">Choose a report pack</CardTitle>
+        <CardDescription>
+          Every pack unlocks the same full report. One credit checks this company now and any
+          remaining credits stay in your account.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {products.map((product) => (
+          <Card
+            key={product.tier}
+            size="sm"
+            className={cn(selectedTier === product.tier && "border-brand-teal")}
+          >
+            <CardHeader>
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle>{product.name}</CardTitle>
+                {selectedTier === product.tier ? <Badge variant="positive">Selected</Badge> : null}
+              </div>
+              <CardDescription>
+                {product.creditQuantity} {product.creditQuantity === 1 ? "credit" : "credits"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-semibold text-content">{product.price}</p>
+            </CardContent>
+            <CardFooter>
+              <Button
+                asChild
+                variant={selectedTier === product.tier ? "authoritative" : "outline"}
+                className="w-full"
+              >
+                <Link href={buildPurchaseCheckoutHref(companyNumber, product.tier)}>
+                  {product.cta}
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 function SourceIcon({ source }: SourceStatusCardProps) {
   if (source.status === "failed") {
     return (
@@ -252,9 +326,11 @@ function SourceIcon({ source }: SourceStatusCardProps) {
 
 type TabPanelProps = {
   fixture: CompanyWorkspaceFixture;
+  companyNumber?: string | undefined;
+  purchaseTier?: ReportProductCode | undefined;
 };
 
-function TabPanel({ fixture }: TabPanelProps) {
+function TabPanel({ fixture, companyNumber, purchaseTier }: TabPanelProps) {
   if (fixture.source.detail === "Loading public record data.") {
     return <LoadingPanel fixture={fixture} />;
   }
@@ -268,7 +344,13 @@ function TabPanel({ fixture }: TabPanelProps) {
   }
 
   if (fixture.paidPlaceholder) {
-    return <PaidPlaceholderPanel fixture={fixture} />;
+    return (
+      <PaidPlaceholderPanel
+        fixture={fixture}
+        companyNumber={companyNumber}
+        purchaseTier={purchaseTier}
+      />
+    );
   }
 
   let content: ReactNode;
@@ -523,7 +605,6 @@ function FilingHistoryPanel({ fixture }: TabPanelProps) {
 }
 
 function FilingList({ filings }: { filings: FilingRecord[] }) {
-
   return (
     <div className="overflow-hidden rounded-lg border border-line">
       <div className="hidden grid-cols-[120px_90px_minmax(0,1fr)_120px_90px] gap-3 border-b border-line bg-surface-subtle px-4 py-3 text-xs font-semibold text-content-muted uppercase md:grid">
@@ -865,7 +946,7 @@ function EmptyState() {
   );
 }
 
-function PaidPlaceholderPanel({ fixture }: TabPanelProps) {
+function PaidPlaceholderPanel({ fixture, companyNumber, purchaseTier }: TabPanelProps) {
   const placeholder = fixture.paidPlaceholder;
   if (!placeholder) return null;
 
@@ -880,7 +961,7 @@ function PaidPlaceholderPanel({ fixture }: TabPanelProps) {
           <Badge variant="outline">{placeholder.label}</Badge>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
         {fixture.tab === "ai-summary" ? (
           <div className="rounded-lg border border-line bg-surface-subtle p-4" aria-hidden="true">
             <div className="space-y-3 blur-sm select-none">
@@ -902,6 +983,16 @@ function PaidPlaceholderPanel({ fixture }: TabPanelProps) {
           </Alert>
         )}
       </CardContent>
+      {companyNumber ? (
+        <CardFooter>
+          <Button asChild variant="authoritative">
+            <Link href={buildPurchaseCheckoutHref(companyNumber, purchaseTier ?? "single_report")}>
+              Unlock the full report
+              <ArrowRight data-icon="inline-end" />
+            </Link>
+          </Button>
+        </CardFooter>
+      ) : null}
     </Card>
   );
 }

@@ -3,6 +3,7 @@ import {
   type CheckoutSelection,
   type ReportTier,
 } from "@workspace/validation/checkout";
+import { formatProductPrice, publicReportProductsByCode } from "@/lib/report-products";
 
 export const checkoutFixtureNames = [
   "authenticated-ready",
@@ -43,10 +44,10 @@ export interface ReportProductFixture {
 export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
   single_report: {
     tier: "single_report",
-    name: "Single Report",
-    price: "GBP 20",
-    pricePence: 2000,
-    creditQuantity: 1,
+    name: publicReportProductsByCode.single_report.name,
+    price: formatProductPrice(publicReportProductsByCode.single_report.pricePence),
+    pricePence: publicReportProductsByCode.single_report.pricePence,
+    creditQuantity: publicReportProductsByCode.single_report.creditQuantity,
     includesPdf: false,
     includedItems: [
       "All 6 data sources",
@@ -59,10 +60,10 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
   },
   starter_pack: {
     tier: "starter_pack",
-    name: "Starter Pack",
-    price: "GBP 54",
-    pricePence: 5400,
-    creditQuantity: 3,
+    name: publicReportProductsByCode.starter_pack.name,
+    price: formatProductPrice(publicReportProductsByCode.starter_pack.pricePence),
+    pricePence: publicReportProductsByCode.starter_pack.pricePence,
+    creditQuantity: publicReportProductsByCode.starter_pack.creditQuantity,
     includesPdf: false,
     includedItems: [
       "Everything in Single Report",
@@ -74,10 +75,10 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
   },
   business_pack: {
     tier: "business_pack",
-    name: "Business Pack",
-    price: "GBP 80",
-    pricePence: 8000,
-    creditQuantity: 5,
+    name: publicReportProductsByCode.business_pack.name,
+    price: formatProductPrice(publicReportProductsByCode.business_pack.pricePence),
+    pricePence: publicReportProductsByCode.business_pack.pricePence,
+    creditQuantity: publicReportProductsByCode.business_pack.creditQuantity,
     includesPdf: false,
     includedItems: [
       "Everything in Starter Pack",
@@ -89,10 +90,10 @@ export const reportProductFixtures: Record<ReportTier, ReportProductFixture> = {
   },
   agency_pack: {
     tier: "agency_pack",
-    name: "Agency Pack",
-    price: "GBP 140",
-    pricePence: 14000,
-    creditQuantity: 10,
+    name: publicReportProductsByCode.agency_pack.name,
+    price: formatProductPrice(publicReportProductsByCode.agency_pack.pricePence),
+    pricePence: publicReportProductsByCode.agency_pack.pricePence,
+    creditQuantity: publicReportProductsByCode.agency_pack.creditQuantity,
     includesPdf: false,
     includedItems: [
       "Everything in Business Pack",

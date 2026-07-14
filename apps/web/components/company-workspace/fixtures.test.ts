@@ -189,6 +189,11 @@ void test("keeps workspace UI accessible, semantic, and fixture-safe", () => {
   assert.match(shell, /Data could not be retrieved/);
   assert.match(fixtures, /Source not yet checked/);
   assert.match(shell, /blur-sm select-none/);
+  assert.match(shell, /buildPurchaseCheckoutHref/);
+  assert.match(shell, /Unlock the full report/);
+  assert.match(shell, /Choose a report pack/);
+  assert.match(mobile, /buildCompanyHref/);
+  assert.match(route, /resolvePurchaseTier\(query\.tier\)/);
   assert.match(shell, /PendingPanel/);
   assert.doesNotMatch(shell, /(?:bg|text|border)-(?:red|green|blue|slate|amber|purple)-/);
   assert.doesNotMatch(mobile, /(?:bg|text|border)-(?:red|green|blue|slate|amber|purple)-/);

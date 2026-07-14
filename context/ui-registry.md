@@ -148,13 +148,13 @@ interactive state belongs to the smallest practical client leaf.
   paid/not-yet-checked placeholders. AI Summary renders a paid blurred/skeleton placeholder for free
   users and states that it summarizes Companies House overview data only.
 - Record cards: Charges, insolvency, and officers use `overflow-hidden rounded-lg border bg-surface
-  shadow-sm`, `p-4` content, and `gap-4` stacks. Outstanding charges and insolvency cases use
+shadow-sm`, `p-4` content, and `gap-4` stacks. Outstanding charges and insolvency cases use
   `border-critical bg-critical-surface text-critical-content`; active officers use
   `border-positive bg-positive-surface`; resigned officers fall back to
   `border-line bg-surface-subtle`. Detail rows use the shared fact-grid cells and compact practitioner
   rows use `rounded-md border border-line bg-surface-subtle px-3 py-2`.
 - Paid interpretation placeholders inside free tabs use `rounded-lg border border-line
-  bg-surface-subtle p-4`; only the teaser lines receive `blur-sm select-none`. Official Companies
+bg-surface-subtle p-4`; only the teaser lines receive `blur-sm select-none`. Official Companies
   House facts must remain readable, unblurred, and source-attributed.
 - Accessibility: desktop links use `aria-current="page"` for the active tab; the mobile selector has
   an explicit label and native keyboard behavior. Factual Companies House data is never blurred, and
@@ -398,16 +398,16 @@ Companies House failure suppresses every factual section and enters the refund-r
 File: `apps/web/components/paid-report/PaidReportSections.tsx`
 Last updated: 2026-07-02 (15A)
 
-| Property           | Class/pattern                                                        |
-| ------------------ | -------------------------------------------------------------------- |
-| Background         | shared Card `bg-surface`                                              |
-| Border             | `border-brand-teal` on the containing Card                            |
-| Border radius      | shared Card/Alert `rounded-lg`                                        |
-| Text — primary     | `text-brand-navy`, `text-content`                                     |
-| Text — secondary   | `text-content-muted`                                                  |
+| Property           | Class/pattern                                                          |
+| ------------------ | ---------------------------------------------------------------------- |
+| Background         | shared Card `bg-surface`                                               |
+| Border             | `border-brand-teal` on the containing Card                             |
+| Border radius      | shared Card/Alert `rounded-lg`                                         |
+| Text — primary     | `text-brand-navy`, `text-content`                                      |
+| Text — secondary   | `text-content-muted`                                                   |
 | Spacing            | Card composition with `gap-3`/`gap-4`; interpretation copy `leading-6` |
-| Interactive states | none; interpretation is read-only                                     |
-| Shadow             | shared Card subtle elevation                                          |
+| Interactive states | none; interpretation is read-only                                      |
+| Shadow             | shared Card subtle elevation                                           |
 | Accent usage       | teal border/label; caution Alert for partial, unavailable, or withheld |
 
 **Pattern notes:** Loading, ready, partial-source, unavailable/failed, and safety-fallback states
@@ -421,16 +421,16 @@ than displayed.
 File: `apps/web/components/paid-report/RecoveryAction.tsx`
 Last updated: 2026-07-02 (15A)
 
-| Property           | Class/pattern                                           |
-| ------------------ | ------------------------------------------------------- |
-| Background         | shared outline Button `bg-surface`                      |
-| Border             | `border-line` through the shared Button                 |
-| Border radius      | shared Button `rounded-md`                              |
-| Text — primary     | shared Button `text-content`                            |
-| Text — secondary   | helper copy `text-xs text-content-muted`                |
-| Spacing            | `gap-2` between action and durable result copy          |
-| Interactive states | shared hover/focus patterns; result announced politely  |
-| Shadow             | shared outline Button subtle shadow                     |
+| Property           | Class/pattern                                          |
+| ------------------ | ------------------------------------------------------ |
+| Background         | shared outline Button `bg-surface`                     |
+| Border             | `border-line` through the shared Button                |
+| Border radius      | shared Button `rounded-md`                             |
+| Text — primary     | shared Button `text-content`                           |
+| Text — secondary   | helper copy `text-xs text-content-muted`               |
+| Spacing            | `gap-2` between action and durable result copy         |
+| Interactive states | shared hover/focus patterns; result announced politely |
+| Shadow             | shared outline Button subtle shadow                    |
 | Accent usage       | caution parent Alert owns the operational-state colour |
 
 **Pattern notes:** Current credit-pack products offer the same free-recheck recovery action.
@@ -506,7 +506,7 @@ Last updated: 2026-07-03 (18B)
 | Property           | Class/pattern                                                                 |
 | ------------------ | ----------------------------------------------------------------------------- |
 | Background         | page `bg-page`; masthead/panels `bg-surface`; metadata `bg-surface-subtle/40` |
-| Border             | structural `border-line`; active navigation `border-brand-teal`              |
+| Border             | structural `border-line`; active navigation `border-brand-teal`               |
 | Border radius      | shared Card `rounded-lg`; facts and controls `rounded-md`                     |
 | Text — primary     | headings `text-brand-navy`; facts `text-content`                              |
 | Text — secondary   | `text-content-muted`; metadata `text-content-subtle`                          |
@@ -544,17 +544,17 @@ introduced.
 Files: `packages/ui/src/components/field.tsx`, `packages/ui/src/components/radio-group.tsx`
 Last updated: 2026-07-11
 
-| Property           | Class/pattern                                                            |
-| ------------------ | ------------------------------------------------------------------------ |
-| Background         | radio item `bg-surface`; consuming tier cards retain `bg-surface`        |
-| Border             | radio `border-line`; checked state `border-brand-teal`                   |
-| Border radius      | radio `rounded-full`; consuming fields retain registered card radii      |
-| Text — primary     | FieldLabel `text-content`; FieldLegend `text-brand-navy`                 |
-| Text — secondary   | FieldDescription `text-content-muted`                                   |
-| Spacing            | FieldSet/Field/RadioGroup use canonical `gap-3`/`gap-2`                  |
-| Interactive states | `focus-visible:ring-3 focus-visible:ring-focus/50`; disabled opacity      |
-| Shadow             | radio `shadow-xs`; field containers own contextual elevation             |
-| Accent usage       | checked indicator and border use semantic brand teal                     |
+| Property           | Class/pattern                                                        |
+| ------------------ | -------------------------------------------------------------------- |
+| Background         | radio item `bg-surface`; consuming tier cards retain `bg-surface`    |
+| Border             | radio `border-line`; checked state `border-brand-teal`               |
+| Border radius      | radio `rounded-full`; consuming fields retain registered card radii  |
+| Text — primary     | FieldLabel `text-content`; FieldLegend `text-brand-navy`             |
+| Text — secondary   | FieldDescription `text-content-muted`                                |
+| Spacing            | FieldSet/Field/RadioGroup use canonical `gap-3`/`gap-2`              |
+| Interactive states | `focus-visible:ring-3 focus-visible:ring-focus/50`; disabled opacity |
+| Shadow             | radio `shadow-xs`; field containers own contextual elevation         |
+| Accent usage       | checked indicator and border use semantic brand teal                 |
 
 **Pattern notes:** Option sets use FieldSet + FieldLegend + RadioGroup. Visual cards wrap a
 RadioGroupItem and synchronize the whole-card click with the same controlled value. Native keyboard
@@ -568,10 +568,10 @@ Last updated: 2026-07-11
 | Property           | Class/pattern                                                        |
 | ------------------ | -------------------------------------------------------------------- |
 | Background         | page `bg-page`; Card `bg-surface`; company inset `bg-surface-subtle` |
-| Border             | shared `border-line`                                                  |
+| Border             | shared `border-line`                                                 |
 | Border radius      | shared Card `rounded-lg`; inset `rounded-md`                         |
 | Text — primary     | headings `text-brand-navy`; balances `text-content`                  |
-| Text — secondary   | descriptions and labels `text-content-muted`                        |
+| Text — secondary   | descriptions and labels `text-content-muted`                         |
 | Spacing            | wrapper `px-4 py-10`; Card content `gap-5`; inset `p-4`              |
 | Interactive states | authoritative confirmation and outline secondary Button patterns     |
 | Shadow             | shared Card subtle elevation                                         |
@@ -586,17 +586,17 @@ single-use while pending; purchasing another pack remains secondary.
 File: `apps/web/components/checkout/CheckoutForm.tsx`
 Last updated: 2026-07-11
 
-| Property           | Class/pattern                                                                  |
-| ------------------ | ------------------------------------------------------------------------------ |
+| Property           | Class/pattern                                                                          |
+| ------------------ | -------------------------------------------------------------------------------------- |
 | Background         | page `bg-page`; tier and summary Cards `bg-surface`; company inset `bg-surface-subtle` |
-| Border             | default `border-line`; selected/hover tier `border-brand-teal`                 |
-| Border radius      | tier cards `rounded-lg`; summary insets `rounded-md`                           |
-| Text — primary     | headings `text-brand-navy`; prices and values `text-content`                   |
-| Text — secondary   | descriptions and helper copy `text-content-muted`                             |
-| Spacing            | page `px-4 py-8`; sections `gap-6`; tier cards `p-4`; summary content `gap-5`  |
-| Interactive states | native radio labels use `focus-within:ring-2 focus-within:ring-focus`          |
-| Shadow             | tier cards and shared Cards use subtle `shadow-sm`                             |
-| Accent usage       | teal selection border; positive Badge marks the recommended business pack     |
+| Border             | default `border-line`; selected/hover tier `border-brand-teal`                         |
+| Border radius      | tier cards `rounded-lg`; summary insets `rounded-md`                                   |
+| Text — primary     | headings `text-brand-navy`; prices and values `text-content`                           |
+| Text — secondary   | descriptions and helper copy `text-content-muted`                                      |
+| Spacing            | page `px-4 py-8`; sections `gap-6`; tier cards `p-4`; summary content `gap-5`          |
+| Interactive states | native radio labels use `focus-within:ring-2 focus-within:ring-focus`                  |
+| Shadow             | tier cards and shared Cards use subtle `shadow-sm`                                     |
+| Accent usage       | teal selection border; positive Badge marks the recommended business pack              |
 
 **Pattern notes:** Every credit pack unlocks the same report depth. Selection always repeats tier
 name, credit quantity, total price, and per-report price, while the sticky summary states one credit
@@ -633,17 +633,17 @@ regeneration.
 File: `apps/web/components/report-notification/ReportReadyEmail.tsx`
 Last updated: 2026-07-03 (17A)
 
-| Property           | Class/pattern                                                               |
-| ------------------ | --------------------------------------------------------------------------- |
-| Background         | page `bg-page`; email Card `bg-surface`; header `bg-brand-navy`             |
-| Border             | shared `border-line`; metadata and security panels use structural borders   |
-| Border radius      | shared Card/panels `rounded-lg`                                              |
-| Text — primary     | `text-brand-navy`, `text-content`, header `text-content-inverse`             |
-| Text — secondary   | `text-content-muted`, metadata `text-content-subtle`                         |
-| Spacing            | shell `px-4 py-8`; email content `gap-6 p-5 sm:p-8`; compact panels `p-4`    |
-| Interactive states | authoritative Button and underlined support link with semantic focus ring   |
-| Shadow             | shared Card subtle elevation                                                |
-| Accent usage       | navy transactional header/action; positive ready Badge                      |
+| Property           | Class/pattern                                                             |
+| ------------------ | ------------------------------------------------------------------------- |
+| Background         | page `bg-page`; email Card `bg-surface`; header `bg-brand-navy`           |
+| Border             | shared `border-line`; metadata and security panels use structural borders |
+| Border radius      | shared Card/panels `rounded-lg`                                           |
+| Text — primary     | `text-brand-navy`, `text-content`, header `text-content-inverse`          |
+| Text — secondary   | `text-content-muted`, metadata `text-content-subtle`                      |
+| Spacing            | shell `px-4 py-8`; email content `gap-6 p-5 sm:p-8`; compact panels `p-4` |
+| Interactive states | authoritative Button and underlined support link with semantic focus ring |
+| Shadow             | shared Card subtle elevation                                              |
+| Accent usage       | navy transactional header/action; positive ready Badge                    |
 
 **Pattern notes:** The compact email contains only company name, tier, reference, generation time,
 authenticated report CTA, and support guidance. It contains no report findings, interpretation,
@@ -667,17 +667,17 @@ the content stacks naturally on mobile before using a two-column metadata grid a
 File: `apps/web/components/premium-pdf/PremiumPdfDocument.tsx`
 Last updated: 2026-07-03 (18B)
 
-| Property           | Class/pattern                                                                    |
-| ------------------ | -------------------------------------------------------------------------------- |
-| Background         | preview `bg-page`; document sheets and factual panels `bg-surface`               |
-| Border             | sheets, sections, and compliance blocks use `border-line`                        |
-| Border radius      | screen sheets/sections `rounded-lg`; compact evidence rows `rounded-md`           |
-| Text — primary     | headings `text-brand-navy`; facts `text-content`                                 |
-| Text — secondary   | detail `text-content-muted`; metadata and pagination `text-content-subtle`         |
-| Spacing            | preview `px-4 py-8`; sheets `p-8`; section grids `gap-4`; compact panels `p-3/4`  |
+| Property           | Class/pattern                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| Background         | preview `bg-page`; document sheets and factual panels `bg-surface`                   |
+| Border             | sheets, sections, and compliance blocks use `border-line`                            |
+| Border radius      | screen sheets/sections `rounded-lg`; compact evidence rows `rounded-md`              |
+| Text — primary     | headings `text-brand-navy`; facts `text-content`                                     |
+| Text — secondary   | detail `text-content-muted`; metadata and pagination `text-content-subtle`           |
+| Spacing            | preview `px-4 py-8`; sheets `p-8`; section grids `gap-4`; compact panels `p-3/4`     |
 | Interactive states | fixture links use semantic hover and `focus-visible:ring-2 focus-visible:ring-focus` |
-| Shadow             | screen sheets `shadow-sm`; removed in print                                      |
-| Accent usage       | teal brand label; positive/caution source icons always paired with status text    |
+| Shadow             | screen sheets `shadow-sm`; removed in print                                          |
+| Accent usage       | teal brand label; positive/caution source icons always paired with status text       |
 
 **Pattern notes:** Premium PDF mocks use three deterministic screen page sheets and dedicated print
 breaks. Preview chrome, sheet radius, borders, shadows, and page background disappear in print.
@@ -696,17 +696,17 @@ hex values and raw Tailwind colours.
 File: `apps/web/components/report-compliance/ReportCompliance.tsx`
 Last updated: 2026-07-03 (18A)
 
-| Property           | Class/pattern                                                          |
-| ------------------ | ---------------------------------------------------------------------- |
+| Property           | Class/pattern                                                           |
+| ------------------ | ----------------------------------------------------------------------- |
 | Background         | browser `bg-brand-navy`; document `bg-surface-subtle/40`                |
-| Border             | browser/document separation uses `border-line`                         |
-| Border radius      | document block `rounded-lg`; browser footer is structural              |
+| Border             | browser/document separation uses `border-line`                          |
+| Border radius      | document block `rounded-lg`; browser footer is structural               |
 | Text — primary     | document heading `text-brand-navy`; body `text-content-muted`           |
 | Text — secondary   | browser uses `text-content-inverse`; print returns to `text-content`    |
 | Spacing            | browser `px-4 py-6 gap-4`; document `p-4` with compact `gap-3`          |
 | Interactive states | browser issue link uses underline and the canonical semantic focus ring |
-| Shadow             | none                                                                   |
-| Accent usage       | navy browser footer; document shield icon uses brand navy              |
+| Shadow             | none                                                                    |
+| Accent usage       | navy browser footer; document shield icon uses brand navy               |
 
 **Pattern notes:** Browser and document reports share one compliance content contract while keeping
 surface-specific presentation. The document variant is non-interactive and prints the issue URL as
@@ -721,17 +721,17 @@ File: `apps/web/components/company-search/CompanySearchExperience.tsx` and
 `apps/web/components/company-workspace/CompanyWorkspace.tsx`
 Last updated: 2026-07-12
 
-| Property | Class/pattern |
-| --- | --- |
-| Background | `bg-surface` through shared Card |
-| Border | `border-line` through shared Card and record containers |
-| Border radius | shared Card radius; `rounded-lg` for timelines |
-| Text — primary | `text-content`, `font-semibold` for returned values |
-| Text — secondary | `text-content-muted`, `text-sm` for factual labels |
-| Spacing | `gap-6` between provider sections; `gap-4` within fact groups |
-| Hover state | none for factual, non-interactive records |
-| Shadow | shared Card; `shadow-sm` for nested record cards |
-| Accent usage | `text-brand-teal` only for the primary company link |
+| Property         | Class/pattern                                                 |
+| ---------------- | ------------------------------------------------------------- |
+| Background       | `bg-surface` through shared Card                              |
+| Border           | `border-line` through shared Card and record containers       |
+| Border radius    | shared Card radius; `rounded-lg` for timelines                |
+| Text — primary   | `text-content`, `font-semibold` for returned values           |
+| Text — secondary | `text-content-muted`, `text-sm` for factual labels            |
+| Spacing          | `gap-6` between provider sections; `gap-4` within fact groups |
+| Hover state      | none for factual, non-interactive records                     |
+| Shadow           | shared Card; `shadow-sm` for nested record cards              |
+| Accent usage     | `text-brand-teal` only for the primary company link           |
 
 **Pattern notes:** Provider facts use a label-above-value hierarchy rather than unexplained compact
 codes. Overview facts are grouped into Company information, Accounts, Confirmation statement, and
@@ -748,17 +748,17 @@ legacy filings promote `description_values.description` to the primary descripti
 File: `apps/web/components/provider-metadata/ProviderMetadata.tsx`
 Last updated: 2026-07-13
 
-| Property | Class/pattern |
-| --- | --- |
-| Background | `bg-surface` |
-| Border | `border-line` |
-| Border radius | `rounded-lg` |
-| Text — primary | `text-content`, `font-semibold` |
-| Text — secondary | `text-content-muted`, `text-xs` |
-| Spacing | `p-4`, nested `gap-3`, disclosure body `mt-4 pt-4` |
+| Property          | Class/pattern                                              |
+| ----------------- | ---------------------------------------------------------- |
+| Background        | `bg-surface`                                               |
+| Border            | `border-line`                                              |
+| Border radius     | `rounded-lg`                                               |
+| Text — primary    | `text-content`, `font-semibold`                            |
+| Text — secondary  | `text-content-muted`, `text-xs`                            |
+| Spacing           | `p-4`, nested `gap-3`, disclosure body `mt-4 pt-4`         |
 | Interactive state | native `details`/`summary` with `focus-visible:ring-focus` |
-| Shadow | none |
-| Accent usage | validated Companies House links use `text-brand-teal` |
+| Shadow            | none                                                       |
+| Accent usage      | validated Companies House links use `text-brand-teal`      |
 
 **Pattern notes:** The disclosure is collapsed by default. It recursively hides null, blank, and
 empty collection values while preserving `false` and `0`. Nested arrays use restrained left borders;
@@ -777,3 +777,25 @@ Each filing record must retain its own raw `providerPayload`; the page-level pro
 is not a substitute. Presenters resolve `description_values` from the per-record payload first, then
 use normalized values and page-level evidence as compatibility paths. This keeps legacy descriptions
 and future Companies House fields attached to the exact filing that supplied them.
+
+### Public Report Purchase Options
+
+File: `apps/web/components/company-workspace/CompanyWorkspace.tsx`
+Last updated: 2026-07-14
+
+| Property          | Class/pattern                                                              |
+| ----------------- | -------------------------------------------------------------------------- |
+| Background        | shared Card `bg-surface`                                                   |
+| Border            | shared `border-line`; selected option `border-brand-teal`                  |
+| Border radius     | shared Card `rounded-lg`                                                   |
+| Text — primary    | product names `text-content`; prices `text-2xl font-semibold text-content` |
+| Text — secondary  | shared CardDescription `text-content-muted`                                |
+| Spacing           | option grid `gap-3`; shared Card header/content/footer spacing             |
+| Interactive state | authoritative selected CTA; outline unselected CTA; Link-backed Buttons    |
+| Shadow            | shared Card default                                                        |
+| Accent usage      | selected Badge `positive` and semantic brand-teal border                   |
+
+**Pattern notes:** Pricing-led intent is a visual hint, not a restriction: the preserved pack receives
+the selected treatment while every pack remains available. Paid source locks use the same
+authoritative Link-backed Button and default to Single Report when no valid tier intent exists.
+Landing pricing reuses the same typed public catalogue, while checkout remains server-authoritative.

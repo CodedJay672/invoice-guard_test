@@ -8,84 +8,15 @@ import {
 } from "lucide-react";
 
 import { cn } from "@workspace/ui/lib/utils";
+import { Button } from "@workspace/ui/components/button";
+import Link from "next/link";
 
-interface PricingPlan {
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  reports: string;
-  savings?: string;
-  isFeatured: boolean;
-  features: string[];
-  ctaText: string;
-}
-
-const pricingPlans: PricingPlan[] = [
-  {
-    name: "Single Report",
-    description: "One-off check before you sign or start work",
-    price: 20,
-    reports: "1 full report",
-    isFeatured: false,
-    features: [
-      "All 6 data sources",
-      "CCJ registry check",
-      "Fair Payment Code status",
-      "Full written summary",
-      "Instant access",
-    ],
-    ctaText: "Buy 1 Report",
-  },
-  {
-    name: "Starter Pack",
-    description: "For freelancers checking a few new clients a month",
-    price: 54,
-    originalPrice: 60,
-    reports: "3 reports",
-    savings: "Save GBP 6",
-    isFeatured: false,
-    features: [
-      "Everything in Single Report",
-      "Credits never expire",
-      "Use on any company",
-      "Instant access",
-    ],
-    ctaText: "Get Starter Pack",
-  },
-  {
-    name: "Business Pack",
-    description: "For SMEs checking customers and suppliers regularly",
-    price: 80,
-    originalPrice: 100,
-    reports: "5 reports",
-    savings: "Save GBP 20",
-    isFeatured: true,
-    features: [
-      "Everything in Starter Pack",
-      "Ideal for monthly checks",
-      "Best value under Agency",
-      "Priority email support",
-    ],
-    ctaText: "Get Business Pack",
-  },
-  {
-    name: "Agency Pack",
-    description: "For credit controllers, accountants and advisers",
-    price: 140,
-    originalPrice: 200,
-    reports: "10 reports",
-    savings: "Save GBP 60",
-    isFeatured: false,
-    features: [
-      "Everything in Business Pack",
-      "Lowest per-report rate",
-      "Use across client checks",
-      "Priority email support",
-    ],
-    ctaText: "Get Agency Pack",
-  },
-];
+import { buildSearchPurchaseHref } from "@/lib/purchase-intent";
+import {
+  formatProductPrice,
+  publicReportProducts,
+  type PublicReportProduct,
+} from "@/lib/report-products";
 
 function PricingSection() {
   return (
@@ -103,8 +34,8 @@ function PricingSection() {
           </p>
         </div>
         <div className="mb-4 grid grid-cols-4 gap-3">
-          {pricingPlans.map((plan) => (
-            <PricingCard key={plan.name} {...plan} />
+          {publicReportProducts.map((plan) => (
+            <PricingCard key={plan.code} product={plan} />
           ))}
         </div>
         <div className="reveal flex flex-wrap items-center justify-between gap-5 rounded-md border border-line bg-content-inverse px-7 py-6">
@@ -143,65 +74,52 @@ function PricingSection() {
 
 export default PricingSection;
 
-function PricingCard({ ...props }: PricingPlan) {
+function PricingCard({ product }: { product: PublicReportProduct }) {
   return (
     <div
       className={cn(
         "reveal d1 relative flex flex-col rounded-lg border border-line bg-background px-5.5 py-6.5 transition-all duration-150 hover:-translate-y-3 hover:shadow-md",
-        props.isFeatured && "border-content",
+        product.featured && "border-content",
       )}
     >
-      {props.isFeatured && (
-        <span className="absolute -top-2.75 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-brand-navy px-3.5 py-1 text-xs font-bold text-content-inverse transition-transform">
+      {product.featured && (
+        <span className="absolute -top-2.75 left-1/2 -translate-x-1/2 rounded-full bg-brand-navy px-3.5 py-1 text-xs font-bold whitespace-nowrap text-content-inverse transition-transform">
           Most Popular
         </span>
       )}
-      <p className="mb-1 text-sm font-bold text-content">{props.name}</p>
-      <p className="mb-5 min-h-8.5 text-xs text-surface-muted">{props.description}</p>
+      <p className="mb-1 text-sm font-bold text-content">{product.name}</p>
+      <p className="text-surface-muted mb-5 min-h-8.5 text-xs">{product.description}</p>
       <div className="flex items-baseline gap-1.75">
         <span className="text-4xl font-black tracking-tight text-content">
-          {props.price.toLocaleString("en-GB", {
-            style: "currency",
-            currency: "GBP",
-            maximumFractionDigits: 0,
-          })}
+          {formatProductPrice(product.pricePence)}
         </span>
-        {props.originalPrice ? (
+        {product.originalPricePence ? (
           <span className="text-sm text-content-subtle line-through">
-            {props.originalPrice.toLocaleString("en-GB", {
-              style: "currency",
-              currency: "GBP",
-              maximumFractionDigits: 0,
-            })}
+            {formatProductPrice(product.originalPricePence)}
           </span>
         ) : null}
       </div>
-      <p className="mb-2 text-xs font-bold text-content">{props.reports}</p>
-      {props.savings ? (
+      <p className="mb-2 text-xs font-bold text-content">
+        {product.creditQuantity} {product.creditQuantity === 1 ? "full report" : "reports"}
+      </p>
+      {product.savingsPence ? (
         <span className="mb-5 inline-block w-max rounded-full border border-positive bg-positive-surface px-2.25 py-1 text-xs font-bold text-positive">
-          {props.savings}
+          Save {formatProductPrice(product.savingsPence)}
         </span>
       ) : null}
       <div className="h-6" />
       <div className="my-4 h-px bg-line" />
       <div className="mb-5.5 flex grow flex-col gap-2.25">
-        {props.features.map((item) => (
+        {product.features.map((item) => (
           <div key={item} className="flex gap-2 text-xs text-content-muted">
             <CheckIcon aria-hidden="true" className="size-4 shrink-0 text-positive" />
             {item}
           </div>
         ))}
       </div>
-      <button
-        className={cn(
-          "borderline w-full cursor-pointer rounded-full border p-3 text-sm font-bold transition-all",
-          props.isFeatured
-            ? "bg-brand-navy text-content-inverse hover:bg-brand-navy-hover"
-            : "border-line bg-content-inverse hover:bg-surface-subtle",
-        )}
-      >
-        {props.ctaText}
-      </button>
+      <Button asChild variant={product.featured ? "authoritative" : "outline"} className="w-full">
+        <Link href={buildSearchPurchaseHref(product.code)}>{product.cta}</Link>
+      </Button>
     </div>
   );
 }

@@ -2,11 +2,13 @@ import { loadWebProxyConfig } from "@workspace/config/web";
 
 import { CompanySearchExperience } from "@/components/company-search/CompanySearchExperience";
 import { isSearchFixtureName, type SearchFixtureName } from "@/components/company-search/fixtures";
+import { resolvePurchaseTier } from "@/lib/purchase-intent";
 
 type PageProps = {
   searchParams: Promise<{
     fixture?: string | string[];
     q?: string | string[];
+    tier?: string | string[];
   }>;
 };
 
@@ -16,11 +18,13 @@ export default async function Page({ searchParams }: PageProps) {
   const requestedFixture = params.fixture;
   const fixtureName = resolveFixtureName(requestedFixture, config.environment);
   const query = singleValue(params.q);
+  const purchaseTier = resolvePurchaseTier(params.tier);
 
   return (
     <CompanySearchExperience
       fixtureName={fixtureName}
       initialQuery={query}
+      purchaseTier={purchaseTier}
     />
   );
 }
