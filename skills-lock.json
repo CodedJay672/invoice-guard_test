@@ -5,13 +5,13 @@
       "source": "JavaScript-Mastery-Pro/skills",
       "sourceType": "github",
       "skillPath": "skills/architect/SKILL.md",
-      "computedHash": "62908472db7bd81004ab9abe0810bac166cee1b6e08aaf5793175bb90c4916f7"
+      "computedHash": "dd68df9c63fe234742ae53aaef9bffed544afa76abca24c1516e49383fb418c6"
     },
     "clerk": {
       "source": "clerk/skills",
       "sourceType": "github",
       "skillPath": "skills/core/clerk/SKILL.md",
-      "computedHash": "2ec160843e0e4d4a46d46f9442f5dc97d82055384189881e80d128c090651bb7"
+      "computedHash": "93f74ad69ae27356e994fb25b52dcda0f9d63fff43ed2c52e1de744e98d35599"
     },
     "clerk-backend-api": {
       "source": "clerk/skills",
@@ -35,13 +35,13 @@
       "source": "clerk/skills",
       "sourceType": "github",
       "skillPath": "skills/core/clerk-setup/SKILL.md",
-      "computedHash": "a35fe4e4d03a71825d9880c9cd76ddcae536beed535a2be44908117b4661e749"
+      "computedHash": "2142fbbf99008c3152e7044730e57d6063b26a9f2523da1fd21a83f6207a2b81"
     },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
       "skillPath": "skills/find-skills/SKILL.md",
-      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+      "computedHash": "781bd6d3f9b19f8c9af6b53d8d0e4876d0183841b565db34ca7092ffa412d111"
     },
     "imprint": {
       "source": "JavaScript-Mastery-Pro/skills",
@@ -72,6 +72,26 @@
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
       "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
+    },
+    "stripe-best-practices": {
+      "source": "docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "7ff3b3441a1b1396584f85c3c7304ca4c28f2af5622a1932a046c86739063fd3"
+    },
+    "stripe-directory": {
+      "source": "docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "58d8c458beaa92877ed2f0a622af65a0a91e2804efcc4188ac87a35780015361"
+    },
+    "stripe-projects": {
+      "source": "docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "c084f4044a8d267c096e8391935e5547004a9ab003eaf34ee606041d2485f6c3"
+    },
+    "upgrade-stripe": {
+      "source": "docs.stripe.com",
+      "sourceType": "well-known",
+      "computedHash": "46bb3c16878f93b953ed901b950686d64f04f90c67400bf31e1a0d7790d889df"
     }
   }
 }

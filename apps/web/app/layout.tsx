@@ -31,6 +31,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={cn("antialiased", fontMono.variable, "font-sans", fontSans.variable)}
     >
       <body>

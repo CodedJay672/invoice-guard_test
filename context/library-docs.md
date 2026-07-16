@@ -152,6 +152,9 @@ companies house endpoints:
 | GET /company/{company_number}/officers | List of all company officers. can take items_per_role; register_type  with values like "drectors", "secretary" etc; and register_view: boolean | OfficersList |
 | GET /company/{company_number}/filing-history | Company's filing history | Filing History |
 | GET /company/{company_number}/charges | Company registered charges | ChargesList |
+| GET https://api.company-information.service.gov.uk/search/disqualified-officers | Company's disqualified officers | Disqualified officers |
+| GET https://api.company-information.service.gov.uk/disqualified-officers/corporate/{officer_id}
+
 
 ### Companies House provider-page parity matrix
 
@@ -527,7 +530,171 @@ const CompanyInsolvency = {
     ],
     "etag": "string",
     "status": "string"
-}
+} as const
+
+const DisqualifiedOfficersSearch = {
+    "etag": "string",
+    "items": [
+        {
+            "address": {
+                "address_line_1": "string",
+                "address_line_2": "string",
+                "country": "string",
+                "locality": "string",
+                "postal_code": "string",
+                "premises": "string",
+                "region": "string"
+            },
+            "address_snippet": "string",
+            "date_of_birth": "date",
+            "description": "string",
+            "description_identifiers": [
+                "string"
+            ],
+            "kind": "string",
+            "links": {
+                "self": "string"
+            },
+            "matches": {
+                "address_snippet": [
+                    "integer"
+                ],
+                "snippet": [
+                    "integer"
+                ],
+                "title": [
+                    "integer"
+                ]
+            },
+            "snippet": "string",
+            "title": "string"
+        }
+    ],
+    "items_per_page": "integer",
+    "kind": "string",
+    "start_index": "integer",
+    "total_results": "integer"
+} as const
+
+const CoporateDisqualification = {
+    "company_number": "string",
+    "country_of_registration": "string",
+    "disqualifications": [
+        {
+            "address": {
+                "address_line_1": "string",
+                "address_line_2": "string",
+                "country": "string",
+                "locality": "string",
+                "postal_code": "string",
+                "premises": "string",
+                "region": "string"
+            },
+            "case_identifier": "string",
+            "company_names": [
+                "string"
+            ],
+            "court_name": "string",
+            "disqualification_type": "string",
+            "disqualified_from": "date",
+            "disqualified_until": "date",
+            "heard_on": "date",
+            "last_variation": [
+                {
+                    "case_identifier": "string",
+                    "court_name": "string",
+                    "varied_on": "date"
+                }
+            ],
+            "reason": {
+                "act": "string",
+                "article": "string",
+                "description_identifier": "string",
+                "section": "string"
+            },
+            "undertaken_on": "date"
+        }
+    ],
+    "etag": "string",
+    "kind": "string",
+    "links": {
+        "self": "string"
+    },
+    "name": "string",
+    "permissions_to_act": [
+        {
+            "company_names": [
+                "string"
+            ],
+            "court_name": "string",
+            "expires_on": "date",
+            "granted_on": "date"
+        }
+    ],
+    "person_number": "string"
+} as const
+
+const NaturalDisqualification = {
+    "date_of_birth": "date",
+    "disqualifications": [
+        {
+            "address": {
+                "address_line_1": "string",
+                "address_line_2": "string",
+                "country": "string",
+                "locality": "string",
+                "postal_code": "string",
+                "premises": "string",
+                "region": "string"
+            },
+            "case_identifier": "string",
+            "company_names": [
+                "string"
+            ],
+            "court_name": "string",
+            "disqualification_type": "string",
+            "disqualified_from": "date",
+            "disqualified_until": "date",
+            "heard_on": "date",
+            "last_variation": [
+                {
+                    "case_identifier": "string",
+                    "court_name": "string",
+                    "varied_on": "date"
+                }
+            ],
+            "reason": {
+                "act": "string",
+                "article": "string",
+                "description_identifier": "string",
+                "section": "string"
+            },
+            "undertaken_on": "date"
+        }
+    ],
+    "etag": "string",
+    "forename": "string",
+    "honours": "string",
+    "kind": "string",
+    "links": {
+        "self": "string"
+    },
+    "nationality": "string",
+    "other_forenames": "string",
+    "permissions_to_act": [
+        {
+            "company_names": [
+                "string"
+            ],
+            "court_name": "string",
+            "expires_on": "date",
+            "granted_on": "date"
+        }
+    ],
+    "person_number": "string",
+    "surname": "string",
+    "title": "string"
+} as const
 
 ```
 

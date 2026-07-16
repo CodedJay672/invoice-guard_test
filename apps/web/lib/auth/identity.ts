@@ -2,26 +2,16 @@ import "server-only";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 
-export type AuthIdentity =
-  | { state: "signed-out" }
-  | { state: "unverified"; clerkUserId: string }
-  | { state: "verified"; clerkUserId: string; email: string };
+import { resolveClerkIdentity, type AuthIdentity } from "./identity-classification";
+
+export type { AuthIdentity } from "./identity-classification";
 
 export async function resolveAuthIdentity(): Promise<AuthIdentity> {
-  const session = await auth();
-  if (!session.userId) return { state: "signed-out" };
+  const session = await auth({ treatPendingAsSignedOut: false });
+  if (!session.userId) return resolveClerkIdentity(undefined, undefined);
 
   const user = await currentUser();
-  const primaryEmail = user?.primaryEmailAddress;
-  if (!primaryEmail || primaryEmail.verification?.status !== "verified") {
-    return { state: "unverified", clerkUserId: session.userId };
-  }
-
-  return {
-    state: "verified",
-    clerkUserId: session.userId,
-    email: primaryEmail.emailAddress.trim().toLowerCase(),
-  };
+  return resolveClerkIdentity(session.userId, user?.primaryEmailAddress);
 }
 
 export function isReportOwner(identity: AuthIdentity, reportClerkUserId: string | null): boolean {

@@ -38,6 +38,9 @@ export async function startCheckout(input: unknown): Promise<StartCheckoutResult
         body: JSON.stringify(parsed.data),
         signal: abortController.signal,
       });
+
+      console.log(response);
+
       if (!response.ok) return { ok: false, message: "Checkout could not be started right now." };
       const payload = (await response.json()) as { data?: { url?: unknown } };
       return typeof payload.data?.url === "string"

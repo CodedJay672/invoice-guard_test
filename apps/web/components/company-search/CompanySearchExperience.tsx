@@ -47,11 +47,11 @@ export async function CompanySearchExperience({
   const matches = initialQuery
     ? await searchCompanies(initialQuery)
     : {
-        searchStatus: fixtureState.searchStatus,
-        matches: fixtureState.matches,
-        message: fixtureState.message,
-        providerPayload: undefined,
-      };
+      searchStatus: fixtureState.searchStatus,
+      matches: fixtureState.matches,
+      message: fixtureState.message,
+      providerPayload: undefined,
+    };
 
   return (
     <section className="min-h-svh w-full bg-page">
@@ -225,12 +225,11 @@ function SearchResultCard({
             <span className="text-[10px] text-content-subtle">
               {providerLabel("companies_house")}
             </span>
-          </div>
-          <div className="w-full">
-            <ProviderMetadata payload={company.providerPayload} />
-          </div>
-        </div>
+          </div>        </div>
       </Link>
+      <div className="w-full">
+        <ProviderMetadata payload={company.providerPayload} />
+      </div>
     </article>
   );
 }

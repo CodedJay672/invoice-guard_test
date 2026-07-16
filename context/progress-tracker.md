@@ -1,5 +1,16 @@
 # Progress Tracker
 
+## 2026-07-14 — Clerk Pending-Session Redirect Loop Fix
+
+- Changed the shared server identity resolver to recognize Clerk v7 pending sessions as authenticated
+  identities instead of signed-out visitors. Pending users remain subject to the existing verified
+  primary-email requirement before checkout.
+- Added regression coverage for pending-session handling plus signed-out, unverified, and normalized
+  verified identity classification. This prevents the browser-side Clerk session and server-rendered
+  checkout/topbar state from sending an authenticated user between checkout and sign-in indefinitely.
+- Focused lint and typecheck passed, all 52 web assertions passed, and the Next.js 16.2.6 production
+  build completed successfully with every authenticated Phase A route compiled.
+
 ## 2026-07-14 — Visitor Report Purchase Entry Flow
 
 - Connected all four landing pricing actions to tier-aware company search and preserved validated
