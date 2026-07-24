@@ -3,10 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
   "scripts": {
-    "build": "echo \"integrations build not configured yet\"",
-    "lint": "echo \"integrations lint not configured yet\"",
-    "test": "echo \"integrations tests not configured yet\"",
-    "typecheck": "echo \"integrations typecheck not configured yet\""
+    "build": "tsc --noEmit",
+    "format": "prettier --check .",
+    "lint": "eslint .",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
   }
 }

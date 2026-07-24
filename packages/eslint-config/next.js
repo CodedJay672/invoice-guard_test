@@ -1,23 +1,18 @@
-import js from "@eslint/js"
-import pluginNext from "@next/eslint-plugin-next"
-import eslintConfigPrettier from "eslint-config-prettier"
-import pluginReact from "eslint-plugin-react"
-import pluginReactHooks from "eslint-plugin-react-hooks"
-import globals from "globals"
-import tseslint from "typescript-eslint"
+import pluginNext from "@next/eslint-plugin-next";
+import pluginReact from "eslint-plugin-react";
+import pluginReactHooks from "eslint-plugin-react-hooks";
+import globals from "globals";
 
-import { config as baseConfig } from "./base.js"
+import { config as baseConfig } from "./base.js";
 
 /**
  * A custom ESLint configuration for libraries that use Next.js.
  *
  * @type {import("eslint").Linter.Config}
  * */
-export const nextJsConfig = [
+
+export const createNextJsConfig = (rootDir = ["apps/web/"]) => [
   ...baseConfig,
-  js.configs.recommended,
-  eslintConfigPrettier,
-  ...tseslint.configs.recommended,
   {
     ...pluginReact.configs.flat.recommended,
     languageOptions: {
@@ -31,9 +26,15 @@ export const nextJsConfig = [
     plugins: {
       "@next/next": pluginNext,
     },
+    settings: {
+      next: {
+        rootDir,
+      },
+    },
     rules: {
       ...pluginNext.configs.recommended.rules,
       ...pluginNext.configs["core-web-vitals"].rules,
+      "@next/next/no-html-link-for-pages": "off",
     },
   },
   {
@@ -48,4 +49,7 @@ export const nextJsConfig = [
       "react/prop-types": "off",
     },
   },
-]
+];
+
+// Default export for backward compatibility
+export const nextJsConfig = createNextJsConfig();

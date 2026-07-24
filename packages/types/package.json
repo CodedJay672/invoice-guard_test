@@ -3,10 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
   "scripts": {
-    "build": "echo \"types build not configured yet\"",
-    "lint": "echo \"types lint not configured yet\"",
-    "test": "echo \"types tests not configured yet\"",
-    "typecheck": "echo \"types typecheck not configured yet\""
+    "build": "tsc --noEmit",
+    "format": "prettier --check .",
+    "lint": "eslint .",
+    "test": "npm run typecheck",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/integrations": "*"
   }
 }

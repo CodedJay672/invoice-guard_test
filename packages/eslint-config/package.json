@@ -5,12 +5,17 @@
   "private": true,
   "exports": {
     "./base": "./base.js",
+    "./node": "./node.js",
     "./next-js": "./next.js",
     "./react-internal": "./react-internal.js"
   },
+  "scripts": {
+    "format": "prettier --check .",
+    "lint": "eslint ."
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@next/eslint-plugin-next": "^16.1.6",
+    "@next/eslint-plugin-next": "16.2.6",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "eslint": "^9.39.2",

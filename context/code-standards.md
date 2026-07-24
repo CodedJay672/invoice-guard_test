@@ -1,773 +1,288 @@
-# Code Standards — InvoiceGuard Engineering Standards
+# Code Standards
 
-# 1. General Principles
+## Engineering Mindset
 
-- Keep modules small, focused, and single-purpose.
-- Fix root causes — never layer hacks or temporary workarounds.
-- Respect the architectural boundaries defined in `architecture-context.md`.
-- Maintain deterministic workflow behavior.
-- Prefer explicitness over clever abstractions.
-- Reuse existing patterns and infrastructure whenever possible.
-- Do not introduce alternative architectural patterns without approval.
-- Maintain strict consistency across apps and packages.
-- Prioritize reliability and maintainability over implementation speed.
+The AI agent on this project operates as a senior engineer. This means:
 
----
-
-# 2. TypeScript Standards
-
-- Strict mode is required across the entire monorepo.
-- Never use `any`.
-- All exported functions must have explicit return types.
-- All function inputs and outputs must be typed.
-- Use `interface` for object contracts where appropriate.
-- Use `type` for unions, mapped types, and utility compositions.
-- Use `unknown` for external input and validate before usage.
-- Never trust third-party API payloads directly.
+- **Think before implementing** — understand what is being built and why before writing a single line
+- **Read context files first** — never assume, always verify against architecture.md and project-overview.md
+- **Scope is sacred** — only build what the current feature requires. Never go beyond scope even if it seems helpful
+- **Every feature must be testable** — if it cannot be verified immediately after implementation, it is incomplete
+- **Clean over clever** — simple readable code that a junior developer can understand is always preferred over clever abstractions
+- **One thing at a time** — complete one feature fully before touching the next
+- **Failures are expected** — wrap agent operations in try/catch, log failures, never let one failure crash everything
 
 ---
 
-# 3. Monorepo Standards
+## TypeScript
 
-Shared logic MUST live inside `/packages`.
+- Strict mode; never use `any`.
+- Narrow `unknown` external input with Zod or explicit guards.
+- Exported functions have explicit parameters and return types.
+- Use discriminated unions for provider, report, job, and UI state.
+- Use interfaces for service/dependency contracts and type aliases for unions.
+- Treat requests, webhooks, provider responses, and environment data as untrusted.
+- No floating promises or unjustified assertions.
 
-## Approved Shared Packages
+---
 
-```txt id="aqa4x7"
-/packages
-  /db
-  /types
-  /validation
-  /queues
-  /integrations
-  /notifications
-  /logger
-  /utils
+## Next.js 16.2.6 and React 19
+
+- Read the relevant guide in `node_modules/next/dist/docs/` before Next work.
+- App Router only.
+- Pages/layouts are Server Components by default.
+- Put `"use client"` on the smallest interactive leaf, not whole pages where extraction is possible.
+- Web route handlers are thin same-origin Express proxies and contain no duplicated domain logic.
+- Route handlers are uncached unless explicitly configured.
+- Route handlers live in `app/api/` — never put business logic directly in route handlers
+- Server Actions live in `actions/` — never define Server Actions inline in components
+- DAL helpers live in `lib/data/` and are server-only; Server Components read through them instead of fetching inline
+- Server Actions perform mutations/retry commands and may call the Express backend with trusted owner context; Client Components must not POST to app route handlers for those commands
+- Thin route handlers remain acceptable for bounded client polling/status reads and owner-authorized download redirects
+- Follow installed docs for async params/context and other version-specific APIs.
+- Load Inter and mono fonts through `next/font` in the root layout.
+- Components contain no provider calls, database work, or durable business rules.
+
+---
+
+
+## Component Structure
+
+Every component follows this exact order:
+
+```typescript
+"use client"; // only if needed
+
+// 1. External imports
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+
+// 2. Internal imports
+import { StatsCard } from "@/components/dashboard/StatsCard";
+
+// 3. Type definitions
+type Props = {
+  jobId: string;
+  matchScore: number;
+};
+
+// 4. Component
+export function ComponentName({ jobId, matchScore }: Props) {
+  // state
+  // derived values
+  // handlers
+  // return JSX
+}
 ```
 
----
+- Never use default exports for components. Next.js special files that require a default export
+  (`page.tsx`, `layout.tsx`, `loading.tsx`, and `error.tsx`) are the only exception.
+- Props type defined directly above the component — not in a separate types file unless shared
+- No inline styles — all styling via Tailwind classes using CSS variables from ui-tokens.md
 
-# Monorepo Rules
+```typescript
+// actions/profile.ts
 
-- Do not duplicate logic across apps.
-- Apps must NEVER import directly from other apps.
-- Shared contracts must go through `/packages/types`.
-- Shared validation schemas must go through `/packages/validation`.
-- Shared queue definitions must go through `/packages/queues`.
+"use server";
 
----
+import { revalidatePath } from "next/cache";
 
-# 4. Backend Architecture Standards
-
-InvoiceGuard follows strict layered architecture.
-
----
-
-# 4.1 Layer Structure
-
-Every backend module must follow:
-
-```txt id="jlwm7y"
-controller
-service
-repository
-validation
-routes
-worker
-types
+export async function saveProfile(formData: ProfileFormData) {
+  try {
+    // make POST, DELETE, PUT, PATCH request to express backend
+    // handle errors
+    // parse response
+    revalidatePath("/profile"); // if this request should mutate UI
+    // return data to user
+  } catch (error) {
+    //error handling
+  }
+}
 ```
 
----
-
-# 4.2 Controller Rules
-
-Controllers must remain extremely thin.
-
-Controllers may ONLY:
-
-- parse requests
-- call services
-- return responses
-
-Controllers must NEVER:
-
-- access database directly
-- contain business logic
-- dispatch raw SQL
-- perform heavy async processing
-- generate PDFs
-- call external providers directly
+- Every Server Action has a try/catch
+- Always call `revalidatePath` after mutations that affect page data
+- Never throw from Server Actions — always return the error
 
 ---
 
-# 4.3 Service Rules
+## Styling and UI
 
-Services contain ALL business logic.
-
-Responsibilities:
-
-- orchestrate workflows
-- coordinate repositories
-- coordinate queues
-- enforce business rules
-
-Services must NEVER:
-
-- depend on Express objects
-- manipulate HTTP responses
-- access raw database drivers directly
+- Follow `ui-tokens.md`, `ui-rules.md`, and `ui-registry.md`.
+- Never hardcode colours or use built-in Tailwind colour classes.
+- Use shared shadcn primitives before creating new primitives.
+- Do not modify generated primitives unless explicitly required.
+- Use `cn` for conditional classes.
+- Register every new or materially changed product component.
 
 ---
 
-# 4.4 Repository Rules
+## Express, Services, and Persistence
 
-Repositories are the ONLY layer allowed to access the database.
+Route order:
 
-Rules:
+1. Parse/validate input.
+2. Resolve identity.
+3. Enforce rate limit/auth/authorization.
+4. Call a domain service.
+5. Return `{ data }` or `{ error: { code, message }, meta? }`.
 
-- use Drizzle ORM exclusively
-- return typed data only
-- avoid embedding business logic
-- isolate persistence concerns
+- Routes do not call providers or Drizzle directly.
+- Services own business rules; repositories own persistence; providers own transport/normalization.
+- Unexpected async errors reach Express error middleware.
+- Never expose raw errors or stack traces.
+- Use dependency injection for infrastructure-free route tests.
 
----
+### API and Error Contracts
 
-# 4.5 Worker Rules
-
-Workers are responsible for:
-
-- asynchronous processing
-- retries
-- scheduled jobs
-- queue-driven workflows
-
-Examples:
-
-- report generation
-- email delivery
-- OCR processing
-- invoice synchronization
-- interest recalculation
-
-Workers must NEVER:
-
-- depend on Express request lifecycle
-- expose HTTP behavior
-- bypass service layer rules unnecessarily
+- Resource routes use nouns and stable version-compatible shapes.
+- Validation failures are 400-class errors with stable machine codes and human messages.
+- Authentication and authorization failures are distinguished correctly.
+- Provider unavailability does not masquerade as not-found.
+- Domain errors are mapped once at the route boundary; raw upstream/database errors remain internal.
+- Pagination/filter inputs are bounded and validated.
 
 ---
 
-# 5. Queue & Event Standards
+## Provider Rules
 
-InvoiceGuard is event-driven internally.
+Every provider:
 
-All heavy or retryable operations MUST use queues.
+- Has one responsibility, timeout, mock/live contract where applicable, and normalization boundary.
+- Returns `ProviderResult<T>` with provider, status, and `checkedAt`.
+- Represents failures as structured data with retryability.
+- Never leaks credentials or raw internals to clients.
 
----
+Registry Trust:
 
-# 5.1 Required Queue Use Cases
+- Is paid-only and unreachable from free-preview/tab dependency graphs.
+- Runs only after webhook-confirmed payment.
+- Writes every call to `provider_usage_logs`.
+- Uses GBP 0.80 as planning cost until Lucky changes it.
+- Requires tests proving free preview and free tab routes cannot call it.
 
-Queues are mandatory for:
+Integration modules separate client/factory, live adapter, mock adapter, types, normalization, and tests. Timeouts/retries are explicit; retry behavior respects idempotency and never multiplies paid calls invisibly.
 
-- PDF generation
-- report generation
-- email delivery
-- OCR processing
-- invoice synchronization
-- webhook processing
-- scheduled workflows
-- notification dispatch
+Companies House:
 
----
-
-# 5.2 Queue Rules
-
-All jobs must:
-
-- be idempotent
-- support retries
-- support exponential backoff
-- emit structured logs
-- fail safely
-
-Never assume:
-
-- single execution
-- ordered execution
-- guaranteed external availability
+- Is the only free-tier provider and powers overview, filing history, charges, officers, and insolvency tabs.
+- Free-tier Companies House tab routes may fetch only Companies House endpoints and must expose source timestamps/failure states.
+- Companies House tab failures are shown as `Data could not be retrieved`, never as paid-source absence or a clean conclusion.
+- Do not call Registry Trust/CCJs, Fair Payment Code, AI, London Gazette, or other paid/non-Companies-House providers from free-tier tab composition.
 
 ---
 
-# 5.3 Event Naming Standards
+## Payments and Reports
 
-Use past-tense domain events.
+- Stripe webhook—not redirect—creates pending reports.
+- Verify signature and persist event ID for durable idempotency.
+- Duplicate events cannot duplicate reports or jobs.
+- Store money as integer pence and never trust browser tier/price data.
+- Ready `report_data` is immutable; rechecks create new rows.
+- Paid reports attempt fresh entitled data and include source timestamps/status.
+- Companies House failure enters refund-required/automatic-refund flow.
+- Non-critical failures create visible partial reports.
+- Refunds require reason and admin audit record.
+- Mandatory disclaimer is independent of `ENABLE_FLAG_SUMMARY`.
 
-Examples:
+### Webhooks
 
-```txt id="yrrvxf"
-report_purchased
-report_generated
-invoice_uploaded
-invoice_overdue
-payment_confirmed
-demand_letter_sent
-```
-
-Avoid:
-
-- vague names
-- UI-oriented names
-- technical implementation names
-
----
-
-# 6. API Design Standards
-
-## API Style
-
-- RESTful
-- resource-oriented
-- modular endpoint grouping
+- Preserve the raw body needed for signature verification.
+- Support only documented event types and acknowledge unknown types safely.
+- Persist event identity before/with effects in a transactionally safe design.
+- Do not mark processing complete before required report/job effects succeed.
+- Reprocessing must converge on the same state.
 
 ---
 
-# 6.1 Route Naming
+## AI Interpretation, Legal, and Product Copy
 
-Use consistent route structure.
-
-Examples:
-
-```txt id="lrb4jm"
-/api/companies
-/api/reports
-/api/payments
-/api/invoices
-/api/letters
-```
-
-Avoid:
-
-- verbs in URLs
-- inconsistent naming
-- RPC-style endpoints
+- Paid-report interpretation is required in Phase A and runs only after authenticated payment and frozen factual assembly.
+- The public `/company/[houseNumber]/ai-summary` tab is paid-only and summarizes Companies House overview data. Free users receive only a blurred/skeleton placeholder and upgrade prompt; no model request is made.
+- Paid AI interpretation may interpret all fetched tab data available in the frozen artifact, including Companies House filing history, charges, officers, insolvency, paid CCJs, and Fair Payment Code.
+- Use exactly `claude-haiku-4-5-20251001` with `max_tokens: 1500`; model and output limit are server-controlled validated configuration/constants.
+- Send only product-entitled frozen facts and explicit source statuses. Store model, prompt/template version, generation time, and outcome with the immutable report artifact.
+- AI output must not invent facts, infer from unchecked sources, provide legal/financial advice, make credit decisions, or create risk scores/labels. Provider facts and failures remain independently visible.
+- AI calls require timeouts, bounded retries, structured failures, idempotent generation, and tests for malformed/unsafe output and unavailable sources.
+- Approved templates are implemented exactly and never paraphrased.
+- `ENABLE_FLAG_SUMMARY` remains the separate legacy template-summary flag and defaults to `false` everywhere.
+- Never conclude safe/unsafe, high/low risk, approved/rejected, bad payer, or creditworthy.
+- Future recovery and risk-score concepts in Figma are not Phase A authorization.
 
 ---
 
-# 6.2 Request Validation
+## Jobs, Database, and Privacy
 
-All incoming requests MUST be validated using:
+- BullMQ payloads are typed and contain identifiers rather than full report data.
+- Processors are small, service-driven, idempotent, and retry transient failures only.
+- PostgreSQL/Drizzle are the only core database/ORM.
+- Schema changes require reviewed migrations and database constraints.
+- Do not store PDFs or secrets in PostgreSQL. Guest access tokens must not exist because guest purchase/access is unsupported.
+- Search IP data is anonymised/deleted after 90 days.
+- Purchased reports require a Clerk owner and verified primary email; report authorization is owner/admin only.
 
-- Zod
+### Database and Financial Rules
 
-Validation occurs BEFORE:
-
-- business logic
-- queue dispatching
-- persistence
-
-Reject invalid requests immediately.
-
----
-
-# 6.3 Response Handling
-
-- Return raw JSON responses.
-- Use proper HTTP status codes.
-- Avoid custom response envelope wrappers.
-- Keep API responses deterministic.
+- Use migrations for every schema change and review generated SQL.
+- Use transactions for coupled event/report/job state where loss or duplication would matter.
+- Store timestamps with timezone and compare in UTC.
+- Store currency code with integer amounts; never use floating point.
+- Add indexes only for documented query patterns and uniqueness/integrity constraints.
+- Application deletion never silently removes required payment/audit history.
 
 ---
 
-# 7. Error Handling Standards
+## Logging and Files
 
-InvoiceGuard requires centralized error handling.
+- Use the shared Pino logger; never log secrets, tokens, or unnecessary personal data.
+- No empty catches or application `console.log` logging.
+- Folders/modules are kebab-case; React component files are PascalCase.
+- Name files after responsibility.
+- Respect workspace exports and avoid private deep imports.
 
----
+### Environment and Security
 
-# 7.1 Error System
+- Every environment variable is declared and validated in `packages/config`.
+- Secrets never use `NEXT_PUBLIC_*`, appear in client bundles, or receive unsafe defaults.
+- Production-required values fail fast when their feature/runtime starts.
+- Validate IDs, lengths, enums, URLs, emails, and file inputs at boundaries.
+- Apply least privilege, token hashing, secure cookies/headers, rate limits, and server-side authorization.
+- Never commit credentials, real provider payloads containing personal data, or production exports.
 
-Use:
+### Frontend State and Forms
 
-- custom error classes
-- centralized error middleware
-
-Examples:
-
-```txt id="vijh4x"
-AppError
-ValidationError
-AuthenticationError
-AuthorizationError
-ExternalIntegrationError
-WebhookVerificationError
-```
-
----
-
-# 7.2 Error Rules
-
-- Throw errors in services.
-- Never swallow errors silently.
-- Never expose raw internal errors publicly.
-- Include contextual logging for failures.
-- External API failures must remain traceable.
+- Server data remains server-owned; client state represents interaction only.
+- Do not add global state until multiple independent features genuinely share it.
+- Forms share Zod-derived contracts where practical and preserve values after recoverable failure.
+- Pages remain Server Components while interactive leaves own browser state.
+- Effects synchronize external systems; they do not replace derived render values.
 
 ---
 
-# 8. Authentication & Authorization Standards
+## Verification
 
-Authentication handled via:
+Preserve tests for Companies House-only free-tier isolation, anonymous limits, authenticated checkout enforcement, server-authoritative credit-pack pricing, webhook idempotency, refund/partial-report paths, owner authorization, AI model/token/prompt boundaries, report immutability, disclaimer presence, and flag-summary behavior.
 
-- Clerk
-- middleware-based verification
+Run narrow checks during development and repository typecheck, lint, tests, and formatting before completion.
 
----
+Before a third-party library:
 
-# 8.1 Authentication Rules
+1. Load its installed skill if available.
+2. Read `library-docs.md`.
+3. Read current installed/official docs.
+4. Confirm an existing dependency/platform feature cannot solve the need.
 
-- Never implement auth logic inside controllers.
-- Never trust frontend auth state directly.
-- Attach authenticated user context via middleware.
+Definition of done includes approved scope, verified UI states, passing acceptance/checks, preserved invariants, handled failures, and updated `ui-registry.md` plus `progress-tracker.md`.
 
----
+Test naming describes behavior, not implementation. Mock external boundaries, not the domain rule under test. Critical payment/provider/queue tests must include duplicate, timeout, retry, partial, and terminal paths. Do not weaken tests to make a change pass.
 
-# 8.2 Authorization Rules
+### Prohibited Practices
 
-Enforce:
+- Business logic in routes/components or database queries in UI.
+- Any non-Companies-House provider, Fair Payment Code lookup, CCJ lookup, or AI client in free-tier search/preview/tab composition.
+- Fire-and-forget financial/report effects.
+- Swallowed errors, unbounded retries, arbitrary sleeps, or hidden partial data.
+- Premature microservices, speculative packages/tables, or future-phase implementation.
+- Rewording approved legal copy or presenting Figma content as current scope without phase filtering.
 
-- organization ownership
-- role checks
-- resource ownership
-
-before protected actions.
-
----
-
-# 9. Database Standards
-
-## ORM
-
-- Drizzle ORM only.
-
----
-
-# 9.1 Database Access Rules
-
-- Controllers must NEVER access the database.
-- Services must NEVER bypass repositories.
-- Avoid raw SQL unless absolutely necessary.
-- Repository methods must return typed data.
-
----
-
-# 9.2 Data Design Rules
-
-Store only structured transactional data in PostgreSQL.
-
-Large files belong in:
-
-- Cloudflare R2
-  OR
-- S3-compatible storage
-
-Database stores:
-
-- metadata
-- references
-- structured records
-
----
-
-# 9.3 Financial Data Rules
-
-Financial and workflow events should be append-only where possible.
-
-Avoid destructive updates for:
-
-- payment records
-- workflow transitions
-- webhook events
-- delivery logs
-- report purchases
-
----
-
-# 10. External Integration Standards
-
-External APIs must ALWAYS be isolated behind adapters.
-
----
-
-# 10.1 Integration Rules
-
-All integrations belong in:
-
-```txt id="f9hf49"
-/packages/integrations
-```
-
-Examples:
-
-```txt id="vqdhhk"
-xero/
-quickbooks/
-stripe/
-companies-house/
-registry-trust/
-postmark/
-twilio/
-```
-
----
-
-# 10.2 Integration Safety Rules
-
-Never trust external payloads directly.
-
-All integrations must support:
-
-- validation
-- retries
-- timeout handling
-- normalized responses
-- graceful degradation
-
----
-
-# 11. Webhook Standards
-
-Webhooks are infrastructure components.
-
----
-
-# 11.1 Webhook Rules
-
-All webhook endpoints must:
-
-- verify signatures
-- respond quickly
-- enqueue jobs immediately
-- avoid inline heavy processing
-
----
-
-# 11.2 Webhook Idempotency
-
-Webhook providers may send duplicate events.
-
-Processing must be idempotent.
-
-Store:
-
-- external event IDs
-- processing state
-- retry metadata
-
----
-
-# 12. File Naming & Organization
-
-## Naming Convention
-
-Use kebab-case for all files.
-
-Examples:
-
-```txt id="qjlwmv"
-company-search.service.ts
-report-generation.worker.ts
-payment-confirmation.repository.ts
-```
-
----
-
-# 12.1 Folder Rules
-
-Group files by feature/module.
-
-Never organize globally by type.
-
-Correct:
-
-```txt id="7rbr5j"
-/modules/company-search
-```
-
-Wrong:
-
-```txt id="pjzgw8"
-/controllers
-/services
-/repositories
-```
-
----
-
-# 13. Async & Error Handling Patterns
-
-Use:
-
-- async wrapper utilities
-- centralized error middleware
-
-Avoid repetitive try/catch blocks inside controllers.
-
----
-
-# 14. Logging Standards
-
-## Backend Logging
-
-Use:
-
-- Pino structured logger
-
-Required context:
-
-- request ID
-- queue job ID
-- module name
-- event type
-- integration source
-
----
-
-# 14.1 Logging Rules
-
-Log:
-
-- payment events
-- webhook events
-- queue failures
-- authentication failures
-- report purchases
-- workflow transitions
-
-Avoid:
-
-- noisy logs
-- duplicated logs
-- sensitive data exposure
-
----
-
-# 15. Environment Variable Standards
-
-Environment variables MUST be:
-
-- schema validated
-- centralized
-- typed
-
-Use:
-
-- Zod environment schemas
-
-Never access:
-
-- `process.env`
-
-directly throughout the codebase.
-
----
-
-# 16. Security Standards
-
-## Required Security Controls
-
-- Zod validation
-- RBAC
-- secure HTTP headers
-- rate limiting
-- signed webhook verification
-- upload validation
-- file MIME validation
-- token expiration enforcement
-
----
-
-# 16.1 Sensitive Data Rules
-
-Never log:
-
-- secrets
-- raw auth tokens
-- Stripe secrets
-- password hashes
-- sensitive payment metadata
-
----
-
-# 17. Frontend Standards
-
-## 17.1 Component Model
-
-- Default to React Server Components.
-- Use `"use client"` only when necessary.
-- Prefer server-side data fetching.
-- Avoid unnecessary client-side state.
-
----
-
-# 17.2 Frontend Rules
-
-Components are for:
-
-- presentation
-- interaction
-- UI orchestration
-
-Components must NEVER:
-
-- contain business logic
-- duplicate backend validation
-- directly call integrations
-
----
-
-# 17.3 Data Fetching Rules
-
-Prefer:
-
-- server-side fetching
-- server actions
-- backend-driven state
-
-Avoid:
-
-- unnecessary client polling
-- fragmented API calls
-- duplicated requests
-
----
-
-# 18. State Management Standards
-
-No global state library for MVP unless approved.
-
-Preferred:
-
-- server state
-- URL state
-- local component state
-
----
-
-# 19. Forms & Validation
-
-All forms must:
-
-- share backend validation schemas
-- validate client-side
-- validate server-side
-
-Validation schemas must originate from:
-
-- `/packages/validation`
-
----
-
-# 20. Testing Standards
-
-## Required Coverage
-
-Test:
-
-- services
-- repositories
-- workers
-- queue processors
-- webhook handlers
-- critical workflows
-
----
-
-# 20.1 Critical Workflow Tests
-
-Mandatory coverage for:
-
-- Stripe webhook flow
-- report purchase flow
-- report generation
-- email delivery
-- invoice ingestion
-- demand letter generation
-
----
-
-# 20.2 Testing Rules
-
-- Tests must be deterministic.
-- Tests must be isolated.
-- Do not merge untested business logic.
-- Queue workflows require integration testing.
-
----
-
-# 21. Shared Types & Contracts
-
-All shared contracts belong in:
-
-```txt id="ajl0dr"
-/packages/types
-```
-
-Includes:
-
-- DTOs
-- API contracts
-- queue payloads
-- webhook payloads
-- shared enums
-
----
-
-# 22. AI Development Constraints
-
-Strict rules for AI-assisted implementation.
-
----
-
-# 22.1 AI Rules
-
-- Never bypass architectural layers.
-- Never introduce new patterns unnecessarily.
-- Always reuse existing infrastructure.
-- Never duplicate workflow logic.
-- Follow execution roadmap strictly.
-- Respect module boundaries at all times.
-
----
-
-# 22.2 Workflow Discipline
-
-Never implement:
-
-- future roadmap units
-- speculative infrastructure
-- unrelated features
-
-outside scoped execution units.
-
----
-
-# 23. Prohibited Practices
-
-The following are prohibited:
-
-- using `any`
-- database access outside repositories
-- business logic inside controllers
-- heavy async work inside controllers
-- direct third-party API calls inside controllers
-- hardcoded secrets
-- skipping validation
-- silent failures
-- duplicated workflow logic
-- bypassing queue infrastructure for heavy workflows
-
----
-
-# 24. Final Standards Definition
-
-A strictly layered, event-driven, queue-oriented, type-safe monorepo architecture where business workflows are deterministic, infrastructure responsibilities are isolated, validation is enforced globally, and all systems are designed for reliable AI-assisted production-grade development.
+Free corporate and natural disqualified-officer search and detail routes may call only the matching Companies House resources. They share the existing anonymous search allowance, make one search request for the selected subtype, and preserve provider failures.

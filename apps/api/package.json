@@ -4,10 +4,35 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "echo \"api build not configured yet\"",
-    "dev": "echo \"api dev not configured yet\"",
-    "lint": "echo \"api lint not configured yet\"",
-    "test": "echo \"api tests not configured yet\"",
-    "typecheck": "echo \"api typecheck not configured yet\""
+    "build": "tsc --noEmit",
+    "dev": "tsx src/index.ts --watch",
+    "format": "prettier --check .",
+    "lint": "eslint .",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test:financial": "node --import tsx --test src/checkout/financial.integration.test.ts",
+    "test:financial:strict": "node scripts/run-financial-tests.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1079.0",
+    "@aws-sdk/s3-request-presigner": "^3.1079.0",
+    "@workspace/config": "*",
+    "@workspace/db": "*",
+    "@workspace/integrations": "*",
+    "@workspace/logger": "*",
+    "@workspace/queues": "^0.0.0",
+    "@workspace/types": "*",
+    "@workspace/utils": "*",
+    "@workspace/validation": "*",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "ioredis": "5.10.1",
+    "stripe": "^22.3.0"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^12.0.4",
+    "@types/node": "^25.9.1",
+    "testcontainers": "^12.0.4"
   }
 }

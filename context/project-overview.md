@@ -1,663 +1,222 @@
-# Product Overview — InvoiceGuard MVP Context
+# Project Overview
 
-## 1. System Summary
+## About the Project
 
-InvoiceGuard is a UK-focused SaaS platform designed to help SMEs, freelancers, agencies, consultants, and creative professionals recover overdue B2B invoice payments while also providing company payment intelligence reports.
+InvoiceGuard is a UK company-intelligence platform for SMEs, freelancers, agencies, and contractors who need to check a company before deciding whether to work with it.
 
-The platform combines:
+The active commercial build is Phase A: search for a UK company, review a free Companies House company workspace, register or sign in, purchase one of four credit-pack products, and receive paid-only CCJ, Fair Payment Code, and AI interpretation access where entitled. Companies House is a free source for company overview, filing history, charges, officers, and insolvency tabs. Every paid report includes AI interpretation generated with `claude-haiku-4-5-20251001` and `max_tokens: 1500`. Guest purchases are not supported.
 
-- company intelligence search
-- payment behavior aggregation
-- overdue invoice enforcement workflows
-- statutory interest calculation
-- demand letter generation
-- accounting platform integrations
-
-The system is built in two implementation phases but remains one unified product platform.
+Invoice chasing and late-payment recovery belong to a future phase.
 
 ---
 
-# 2. Product Strategy
+## The Problem It Solves
 
-InvoiceGuard is intentionally divided into two implementation phases:
+Small businesses currently piece together company identity, filing history, insolvency notices, director history, registered charges, and County Court Judgements from multiple sources. InvoiceGuard presents the relevant checks as one factual record.
 
----
-
-## 2.1 Phase A — Company Search & Intelligence Platform
-
-Phase A is the first production release and revenue-generating layer of the platform.
-
-This phase focuses on:
-
-- company search
-- intelligence aggregation
-- premium report monetization
-- Stripe payments
-- PDF report generation
-- email delivery
-
-This phase allows the platform to:
-
-- generate revenue immediately
-- validate market demand
-- establish intelligence infrastructure
-- build foundational platform systems
-
-without requiring invoice enforcement infrastructure first.
+InvoiceGuard does not issue credit scores, approve or reject companies, or provide financial or legal advice. It reports what was found, what was not found in checked sources, and what could not be retrieved.
 
 ---
 
-## 2.2 Phase B — Invoice Enforcement Platform
-
-Phase B expands the platform into a full late-payment recovery workflow system.
-
-This phase introduces:
-
-- Xero integration
-- QuickBooks integration
-- invoice ingestion
-- interest calculation
-- dispute tracking
-- demand letter generation
-- company response portal
-- payment confirmation workflows
-- intelligence feed generation
-
-Phase B reuses the infrastructure established in Phase A.
-
----
-
-# 3. System Goals
-
-## 3.1 Primary Goals
-
-- Help UK businesses recover overdue invoice payments
-- Provide trustworthy company payment intelligence
-- Monetize company intelligence reports
-- Centralize late payment workflows
-- Create a scalable payment intelligence database
-
----
-
-## 3.2 Secondary Goals
-
-- Validate recurring demand for payment intelligence
-- Build reusable infrastructure for enforcement workflows
-- Aggregate verified payment behavior data
-- Establish a long-term defensible intelligence moat
-
----
-
-# 4. Core System Model
-
-InvoiceGuard is fundamentally:
-
-> an event-driven financial workflow and intelligence platform.
-
-The system combines:
-
-- public company data
-- internal payment intelligence
-- asynchronous workflow orchestration
-- report monetization
-- invoice enforcement operations
-
----
-
-# 5. Primary System Actors
-
-## 5.1 Admin
-
-Responsibilities:
-
-- manage platform operations
-- monitor intelligence reports
-- manage integrations
-- oversee payment intelligence systems
-- manage legal templates
-- monitor enforcement workflows
-
----
-
-## 5.2 Business User
-
-Represents:
-
-- SMEs
-- freelancers
-- agencies
-- consultants
-- creative professionals
-
-Capabilities:
-
-- search companies
-- purchase intelligence reports
-- connect accounting platforms
-- upload invoices
-- send demand letters
-- monitor overdue payments
-
----
-
-## 5.3 Client Company (External Party)
-
-Represents:
-
-- companies receiving demand letters
-
-Capabilities:
-
-- confirm payment
-- raise disputes
-- upload payment proof
-- respond through portal
-
----
-
-# 6. Phase A — Company Search & Intelligence Platform
-
-## 6.1 Overview
-
-Phase A establishes InvoiceGuard as a monetized intelligence platform.
-
-Users can:
-
-- search UK companies
-- view intelligence previews
-- unlock premium reports
-- receive downloadable PDF reports
-
----
-
-## 6.2 Core Workflow
+## Active Routes
 
 ```text
-Search Company
-    ↓
-Resolve Company Identity
-    ↓
-Aggregate Public Data
-    ↓
-Merge Internal Intelligence
-    ↓
-Render Report Preview
-    ↓
-Stripe Checkout
-    ↓
-Unlock Report
-    ↓
-Generate PDF
-    ↓
-Deliver via Email
+/                                      -> Phase A landing page with direct company search form
+/search?q=                             -> Company search results from Companies House public register
+/company/[houseNumber]/overview        -> Companies House factual overview
+/company/[houseNumber]/{filing-history,charges,officers,insolvency}
+                                       -> Free Companies House tab data
+/company/[houseNumber]/{ccj,fpc}       -> Paid locked/not-yet-checked source states
+/company/[houseNumber]/ai-summary      -> Paid AI overview summary; blurred placeholder for free users
+/api/companies/search                  -> Next.js proxy to Express
+/api/companies/[companyNumber]/free-preview
+                                       -> Next.js proxy to Express
+/reports/[reportReference]             -> Owner-authorized paid report delivery
+/admin                                 -> Operations dashboard (planned)
+```
+
+Current Express routes:
+
+```text
+GET /health
+GET /companies/search?q=
+GET /companies/:companyNumber
+GET /companies/:companyNumber/free-preview
 ```
 
 ---
 
-# 7. Company Search System
+## Complete-System Figma Reference
 
-## 7.1 Search Model
+`https://www.figma.com/design/KgnaNquB0qRPbTrJLD2BDQ/Untitled?node-id=58-176`
 
-Users search using:
+The Figma file represents the whole future InvoiceGuard system. Phase A may reuse its brand, navigation, company-search hero, verified-source presentation, company snapshot hierarchy, one-off report pricing, CTA, report, and footer patterns.
 
-- company name
-- Companies House number
-
-The system resolves all companies into:
-
-- a normalized internal company identity
+Invoice upload, Xero/QuickBooks, statutory interest, demand letters, subscriptions, recovery dashboards, and risk scores are future reference only. Phase gates override what appears in the design.
 
 ---
 
-## 7.2 External Intelligence Sources
+## Core User Flow
 
-Phase A integrates with:
+### Search and Free Preview
 
-- Companies House API
-- Registry Trust API
-- Insolvency Service API
-- London Gazette API
-- Fair Payment Code register
-- Internal payment intelligence database
+1. Visitor searches by registered name or Companies House number from the landing page or search page.
+2. The landing page submits a plain query to `/search?q=...`; no autocomplete or browser-side provider call is used there.
+3. Anonymous visitors are limited to five searches per hashed IP per 24 hours.
+4. Free-tier company routes call Companies House only, including overview, filing history, charges, officers, and Companies House insolvency endpoints. Registry Trust/CCJs, Fair Payment Code, non-Companies-House paid sources, and AI are never called for free-tier requests.
+5. The UI presents Companies House facts in their relevant tabs, clearly labels CCJs and Fair Payment Code as paid/not yet checked, and shows the four credit-pack products.
 
----
+### Purchase and Generation
 
-## 7.3 Search Result Architecture
+1. Visitor selects Single Report, Starter Pack, Business Pack, or Agency Pack.
+2. A signed-out visitor must register or sign in and return to the selected company/product before checkout.
+3. The server requires an authenticated Clerk user with a verified primary email, then creates a one-off Stripe Checkout Session.
+4. Stripe webhook signature and event idempotency are verified.
+5. The webhook—not the redirect—creates one pending report owned by that Clerk user and enqueues generation.
+6. The worker fetches fresh entitled paid data, stores snapshots and statuses, generates bounded AI interpretations from the factual report data, and assembles frozen report data.
+7. Companies House failure enters the automatic refund path; other failures produce a visible partial report.
 
-The search experience includes:
+### Delivery
 
-- teaser report sections
-- locked premium sections
-- paywall prompts
-- tiered report visibility
-
-Search responses must support:
-
-- caching
-- stale refresh logic
-- rate limiting
-- graceful degradation
+- Every report shows reference, timestamp, company identity, product label, source statuses, disclaimer, and issue link.
+- Reports are accessible only to their authenticated owner (or an authorized admin).
+- Postmark may send report-ready notifications, but email links must resolve through authenticated owner access.
+- PDF access is artifact-driven and owner-authorized; no current credit-pack product exposes a public PDF entitlement flag.
 
 ---
 
-# 8. Intelligence Report System
+## Primary Actors
 
-## 8.1 Report Tiers
+### Public Visitor
 
-### Basic Report
+- Searches without an account within anonymous limits.
+- Selects the correct Companies House entity before purchase.
+- Sees Companies House overview, filing history, charges, officers, and insolvency data before payment.
+- Must register or sign in before checkout and cannot purchase as a guest.
 
-- lower-cost entry report
-- limited intelligence visibility
+### Authenticated Business User
 
-### Standard Report
+- Uses Clerk identity for owned reports.
+- Account history, saved companies, and notes remain Phase B features.
 
-- expanded company insights
-- additional payment behavior data
+### Admin
 
-### Premium Report
+- Lucky is the only Phase A admin.
+- Reviews report/payment/provider state, transaction counts, and conversion.
+- Can issue full or partial refunds with a required reason.
+- Every sensitive action is server-authorized and audited.
 
-- full intelligence report
-- downloadable PDF
-- email delivery
+### External Providers
 
----
-
-## 8.2 Report Generation Model
-
-Reports are generated dynamically from:
-
-- aggregated public data
-- internal intelligence data
-- payment behavior analytics
-
-PDF generation is asynchronous and queue-driven.
+- Companies House supplies canonical identity, filing history, registered charges, officers, and company insolvency records as free source data.
+- Registry Trust supplies paid CCJ data only after payment.
+- Fair Payment Code is a paid-report source when implemented and is never called for free-tier requests.
+- AI summaries are paid-only interpretation features. The AI Summary tab summarizes the Companies House overview data; other paid AI interpretation surfaces may interpret the factual data fetched for their relevant tabs.
 
 ---
 
-## 8.3 PDF Delivery
+## Report Products
 
-Premium reports support:
+| Product | Price | Scope |
+| --- | ---: | --- |
+| Free Preview | GBP 0 | Companies House overview, filing history, registered charges, officers, and Companies House insolvency data. No CCJ, Fair Payment Code, or AI call. |
+| Single Report | GBP 20.00 | One full report credit. |
+| Starter Pack | GBP 54.00 | Three full report credits. |
+| Business Pack | GBP 80.00 | Five full report credits. |
+| Agency Pack | GBP 140.00 | Ten full report credits. |
 
-- branded PDF rendering
-- downloadable access
-- email delivery
-- persistent purchase access
+The public pricing section is the authoritative product display for these four credit packs. The database and API store the matching product codes `single_report`, `starter_pack`, `business_pack`, and `agency_pack` with integer pence prices 2000, 5400, 8000, and 14000. All four products currently grant the same full-report source entitlements; pack size changes credit quantity and price, not report depth.
 
----
+The AI interpretation is mandatory Phase A scope for paid reports. It uses `claude-haiku-4-5-20251001` with `max_tokens: 1500`, interprets only frozen factual report data, and must remain clearly labelled as an interpretation rather than legal, credit, or financial advice. The `/ai-summary` company tab is a paid overview summary: it summarizes the Companies House overview data only. Paid report AI interpretation may also summarize or interpret the factual data fetched for filing history, charges, officers, insolvency, CCJs, and Fair Payment Code where those sections are available. `ENABLE_FLAG_SUMMARY` continues to govern the separate legacy approved-template flag summary and defaults to `false`.
 
-# 9. Stripe Payment Infrastructure
+### Free Preview Presentation
 
-## 9.1 Payment Flow
+Always show registered name, company number, status, incorporation date and age, registered town/county, active-director count, Companies House filing history, registered charges, officers, insolvency tab access, Court Records prompt, AI Summary paid placeholder, and paid product options.
 
-```text
-Select Report Tier
-      ↓
-Stripe Checkout Session
-      ↓
-Payment Confirmation
-      ↓
-Webhook Verification
-      ↓
-Entitlement Creation
-      ↓
-Report Unlock
-```
+The free preview makes no adverse or clean conclusion from court records, Fair Payment Code, AI, or other paid sources because they are not queried. CCJs and Fair Payment Code are shown as not yet checked/paid. The AI Summary tab shows a blurred paid-feature placeholder for free users rather than generated text. Companies House failure must not be represented as a clean check.
 
----
+### Paid Data Freshness and Failure
 
-## 9.2 Payment Rules
-
-- Stripe is the authoritative payment source.
-- Report access must always be entitlement-driven.
-- Frontend payment states are never trusted directly.
-- Webhook verification is mandatory.
+- Every paid report attempts a fresh fetch for every entitled source.
+- Cached provider data older than 24 hours is not acceptable for generation.
+- Provider snapshots retain checked time, source context, tier, status, and normalized payload/failure.
+- Companies House failure prevents delivery and triggers automatic refund handling.
+- Non-critical failure produces a partial report with explicit source status.
+- Registry Trust failure offers the same free recheck path across credit-pack products when the service recovers.
 
 ---
 
-# 10. Email Delivery System
+## Phase A Scope
 
-Phase A email responsibilities include:
+In scope:
 
-- report delivery
-- purchase confirmation
-- PDF attachment delivery
+- Company search, free preview, and anonymous rate limiting.
+- One-off credit-pack products and Stripe payment.
+- Free Companies House tab data for overview, filing history, charges, officers, and insolvency.
+- Paid-only Registry Trust/CCJ boundary.
+- BullMQ report generation, provider snapshots, and partial reports.
+- Authenticated owner-only delivery, Postmark notifications, and artifact-driven PDF access.
+- Paid-only AI interpretation using the fixed Claude model and output limit, including a paid overview summary tab.
+- Mandatory disclaimer, issue reporting, approved copy templates, and Fair Payment Code refresh.
+- Clerk-protected admin operations, refunds, conversion analytics, and maintenance jobs.
 
-Providers:
+Out of scope:
 
-- Postmark
-- Resend
-- SendGrid
-
-Email delivery events are tracked via webhooks.
-
----
-
-# 11. Internal Intelligence System
-
-## 11.1 Purpose
-
-The payment intelligence system aggregates:
-
-- payment behavior
-- lateness trends
-- escalation frequency
-- dispute patterns
-
-This becomes the long-term proprietary dataset of InvoiceGuard.
+- User dashboard, saved companies, notes, watchlists, and subscriptions.
+- Payment-signal collection.
+- Invoice upload, OCR, chasing, accounting integrations, interest calculators, demand letters, response portals, or SMS.
+- AI-generated legal or credit advice, risk scores, colour-band risk ratings, or conclusions beyond the bounded paid-report interpretation.
 
 ---
 
-## 11.2 Privacy Model
+## Future Phases and Gates
 
-Public reports never expose:
+| Phase | Direction | Gate |
+| --- | --- | --- |
+| B | Accounts, report history, saved companies, notes | At least 30 real, delivered, non-refunded Phase A purchases and acceptable conversion. |
+| C | Starter watchlists and non-CCJ alerts | After Phase B. |
+| D | Higher-tier monitoring and enterprise admin | After Phase C. |
+| E | Structured payment-experience signals | After sufficient eligible paid-report usage. |
+| F | Invoice recovery and chasing | Separate future scope. |
 
-- exact invoice amounts
-- identifiable business user information
-- raw internal records
+If Phase A conversion is poor, improve Phase A rather than opening a later phase.
 
-Threshold rules must protect anonymity.
+### Complete Future-System Reference
 
----
-
-# 12. Phase B — Invoice Enforcement Platform
-
-Phase B expands the platform into a complete payment recovery workflow engine.
-
----
-
-# 13. Invoice Ingestion System
-
-## Supported Sources
-
-- Xero
-- QuickBooks Online
-- PDF uploads
-- CSV uploads
-- XLSX uploads
-- JPG/PNG uploads
-- Manual forms
-
-All ingestion paths normalize into a unified invoice schema.
+The Figma design preserves future product direction: dashboard, invoice ingestion, accounting-platform sync, statutory interest, demand-letter stages, response tracking, and recovery operations. These concepts may inform future architecture compatibility, but no database table, route, job, component, or dependency should be implemented early.
 
 ---
 
-# 14. Accounting Platform Integrations
+## Data, Privacy, and Retention
 
-## Phase B Integrations
-
-### Included
-
-- Xero
-- QuickBooks Online
-
-### Deferred
-
-- Sage
-- FreeAgent
-- FreshBooks
-
-All integrations use:
-
-- OAuth 2.0
-- token refresh
-- queue-based synchronization
+- PostgreSQL is the transactional source of truth.
+- Redis holds ephemeral rate-limit and queue state, not durable report truth.
+- PDFs live in object storage; PostgreSQL stores references only.
+- Search IP identity is hashed and removed/anonymised after 90 days.
+- Registered-user reports remain until deletion is requested, subject to payment/audit retention duties.
+- App-level deletion does not erase required Stripe or admin-audit records.
 
 ---
 
-# 15. Interest Calculation Engine
+## Commercial Measurement
 
-The system calculates:
-
-- statutory interest
-- compensation fees
-- overdue duration
-
-using:
-
-- Bank of England base rates
-- UK late payment legislation
-
-Calculations are:
-
-- deterministic
-- auditable
-- queue-driven
+Phase A measures searches, selected companies, checkout starts, paid/delivered reports, refund rate, revenue by product, and search-to-purchase conversion. The later-phase gate counts only real user payments that are not tests or refunds and produced a delivered report.
 
 ---
 
-# 16. Demand Letter System
-
-The platform generates:
-
-- Letter 1
-- Letter 2
-- Letter 3
-
-using:
-
-- template-based rendering
-- PDF generation
-- email delivery workflows
-
-AI-generated legal letters are NOT part of the MVP.
-
----
-
-# 17. Company Response Portal
-
-Client companies can:
-
-- confirm payment
-- raise disputes
-- upload payment proof
-
-through secure tokenized response links.
-
----
-
-# 18. Payment Confirmation System
-
-Payments may be confirmed through:
-
-- Xero synchronization
-- QuickBooks synchronization
-- manual user confirmation
-- company response portal
-
-All confirmations generate:
-
-- payment intelligence records
-
----
-
-# 19. Event-Driven Architecture
-
-InvoiceGuard is internally event-driven.
-
-Examples:
-
-- invoice_uploaded
-- report_purchased
-- report_generated
-- payment_confirmed
-- demand_letter_sent
-- dispute_raised
-
-Architecture pattern:
-
-```text
-Event Occurs
-    ↓
-Queue Job Created
-    ↓
-Worker Processes
-    ↓
-Database Updated
-    ↓
-Internal Event Emitted
-```
-
----
-
-# 20. Queue & Workflow System
-
-The platform relies heavily on asynchronous processing.
-
-Core queues include:
-
-- report-generation-queue
-- email-delivery-queue
-- company-search-queue
-- webhook-processing-queue
-- invoice-sync-queue
-- OCR-processing-queue
-- interest-calculation-queue
-
-All workers must:
-
-- support retries
-- be idempotent
-- log failures
-- emit structured events
-
----
-
-# 21. Webhook Infrastructure
-
-Webhooks are used for:
-
-- Stripe payment confirmation
-- email delivery tracking
-- OAuth lifecycle events
-- future payment integrations
-
-Webhook architecture:
-
-- signature verification
-- queue-first processing
-- retry-safe execution
-- observability support
-
----
-
-# 22. Core Technology Stack
-
-## Frontend
-
-- Next.js
-- React
-- TailwindCSS
-- Shadcn UI
-
-## Backend
-
-- Node.js
-- Express.js
-- TypeScript
-
-## Infrastructure
-
-- PostgreSQL
-- Redis
-- BullMQ
-- Cloudflare R2
-- Vercel
-- Render/Railway
-
----
-
-# 23. Data Storage Model
-
-## PostgreSQL
-
-Primary transactional database.
-
-## Redis
-
-Queue and caching infrastructure.
-
-## Object Storage
-
-PDFs and uploaded files.
-
-## BigQuery
-
-Future analytics infrastructure.
-
----
-
-# 24. Features In Scope
-
-## Phase A
-
-- company search
-- intelligence reports
-- Stripe integration
-- report paywalls
-- PDF generation
-- email delivery
-
-## Phase B
-
-- invoice ingestion
-- accounting integrations
-- interest calculations
-- demand letters
-- response portal
-- payment confirmation
-
----
-
-# 25. Out of Scope (MVP)
-
-## AI Features
-
-- AI-generated legal letters
-- predictive scoring
-- machine learning risk models
-
-## Platform Expansion
-
-- mobile apps
-- multi-language support
-- multi-region deployments
-
-## Financial Infrastructure
-
-- escrow systems
-- fund holding
-- FCA-regulated payment handling
-
----
-
-# 26. Success Criteria
-
-## Phase A Success Signals
-
-- successful report purchases
-- repeat search activity
-- report conversion rates
-- stable payment workflows
-
-## Phase B Success Signals
-
-- successful invoice recovery workflows
-- stable accounting integrations
-- reliable demand letter delivery
-- active payment intelligence growth
-
----
-
-# 27. Strategic Notes
-
-- The intelligence dataset is the long-term strategic moat.
-- Search monetization validates demand before enforcement expansion.
-- Event-driven architecture is required due to async workflow complexity.
-- Queue reliability is mission-critical.
-- Workflow integrity is more important than rapid feature expansion.
-
----
-
-# 28. Final System Definition
-
-InvoiceGuard is a UK-focused SaaS platform combining company payment intelligence, monetized business reporting, and overdue invoice enforcement workflows into a unified event-driven financial operations platform.
+## Success and Launch Criteria
+
+- Users can identify the correct company and understand checked versus unchecked sources.
+- Registry Trust/CCJs, Fair Payment Code, and AI are technically unreachable from free preview and free company tabs.
+- A payment creates exactly one report through the webhook path.
+- Paid reports use fresh entitled data and expose provider failures.
+- Owner access, admin authorization, refunds, and report immutability are secure and tested.
+- Every paid product generates its AI interpretation in Phase A with the exact configured model and token limit; AI failure is visible and does not invent or conceal source data.
+- Every report and PDF contains approved compliance content.
+- Lucky provides the mandatory disclaimer and confirms ICO registration before production launch.
+- Admin alerts expose provider, webhook, generation, email, and stuck-report failures.
+- Phase A analytics can prove whether the product has commercial traction before expanding scope.
+
+### Corporate and Natural Disqualified Officers
+
+`/search?q=&tab=disqualifications&type=&page=` provides free Companies House corporate and natural disqualification search. `/disqualified-officers/[officer-id]` presents corporate details and `/disqualified-officers/natural/[officer-id]` presents natural-person details.

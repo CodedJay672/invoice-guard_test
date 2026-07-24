@@ -3,10 +3,52 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./ai-interpretation": {
+      "types": "./dist/ai-interpretation.d.ts",
+      "import": "./dist/ai-interpretation.js",
+      "default": "./dist/ai-interpretation.js"
+    },
+    "./checkout": {
+      "types": "./dist/checkout.d.ts",
+      "import": "./dist/checkout.js",
+      "default": "./dist/checkout.js"
+    },
+    "./companies": {
+      "types": "./dist/companies.d.ts",
+      "import": "./dist/companies.js",
+      "default": "./dist/companies.js"
+    },
+    "./paid-report": {
+      "types": "./dist/paid-report.d.ts",
+      "import": "./dist/paid-report.js",
+      "default": "./dist/paid-report.js"
+    },
+    "./report-delivery": {
+      "types": "./dist/report-delivery.d.ts",
+      "import": "./dist/report-delivery.js",
+      "default": "./dist/report-delivery.js"
+    }
+  },
   "scripts": {
-    "build": "echo \"validation build not configured yet\"",
-    "lint": "echo \"validation lint not configured yet\"",
-    "test": "echo \"validation tests not configured yet\"",
-    "typecheck": "echo \"validation typecheck not configured yet\""
+    "build": "tsc",
+    "format": "prettier --check .",
+    "lint": "eslint .",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/types": "*",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0"
   }
 }

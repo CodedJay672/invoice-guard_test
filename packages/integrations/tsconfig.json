@@ -1,0 +1,8 @@
+{
+  "extends": "@workspace/typescript-config/package-build.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": ["package.json", "src/**/*.ts", "../types/src/companies-house.ts"],
+  "exclude": ["node_modules", "dist"]
+}
