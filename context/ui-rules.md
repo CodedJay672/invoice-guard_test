@@ -146,3 +146,7 @@ Never conclude `safe`, `unsafe`, `high risk`, `low risk`, `approved`, `rejected`
 - No invented legal, credit, or report wording.
 - Read and update `ui-registry.md` for every UI feature.
 - No fixed primary content, inaccessible horizontal-only tables, or modal actions without focus management.
+
+Corporate disqualification records may show returned dates, courts, reasons, variations, and permissions to act. Never turn those facts into a credit verdict, legal conclusion, or severity score.
+
+Within Disqualifications, use a compact Corporate and People tab pair. Only the selected subtype loads. Natural-person records follow the same factual and non-interpretive presentation rules.

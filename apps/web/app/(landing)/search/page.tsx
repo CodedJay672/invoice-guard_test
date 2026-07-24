@@ -9,6 +9,9 @@ type PageProps = {
     fixture?: string | string[];
     q?: string | string[];
     tier?: string | string[];
+    tab?: string | string[];
+    page?: string | string[];
+    type?: string | string[];
   }>;
 };
 
@@ -19,12 +22,19 @@ export default async function Page({ searchParams }: PageProps) {
   const fixtureName = resolveFixtureName(requestedFixture, config.environment);
   const query = singleValue(params.q);
   const purchaseTier = resolvePurchaseTier(params.tier);
+  const selectedTab = params.tab === "disqualifications" ? "disqualifications" : "all";
+  const requestedPage = typeof params.page === "string" ? Number(params.page) : 1;
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const disqualificationType = params.type === "natural" ? "natural" : "corporate";
 
   return (
     <CompanySearchExperience
       fixtureName={fixtureName}
       initialQuery={query}
       purchaseTier={purchaseTier}
+      selectedTab={selectedTab}
+      page={page}
+      disqualificationType={disqualificationType}
     />
   );
 }

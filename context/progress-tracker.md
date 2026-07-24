@@ -559,3 +559,6 @@ Active configuration includes `APP_URL`, `API_PORT`, `API_BASE_URL`, `API_PROXY_
 - Record new decisions, blockers, open questions, checks, and debt immediately.
 - Do not mark future work complete because contracts/placeholders exist.
 - Keep this file operational; durable product/architecture detail belongs in the corresponding context file.
+
+- 2026-07-16: implemented free Companies House corporate disqualified-officer search and detail flows with shareable tabs and pagination, the shared anonymous quota, complete provider metadata, and factual detail presentation. Integrations passed 18 tests. API passed 43 tests with one expected Docker-only skip. Web and API lint passed, repository typecheck passed 13 tasks, and the Next.js 16.2.6 production build compiled both new public routes and proxy resources.
+- 2026-07-16: added natural disqualified-officer search and detail support with nested Corporate and People tabs. Integrations passed 19 tests, API passed 43 tests with one expected Docker-only skip, and web passed 55 tests. Focused integrations, API, and web lint passed; repository typecheck passed 13 tasks; the Next.js 16.2.6 production build compiled the natural public and proxy routes. All changed feature files pass Prettier. The repository-wide format check remains red on 34 pre-existing files outside this feature.

@@ -252,3 +252,7 @@ Required observability includes structured logs, provider latency/failure, queue
 - The complete-system Figma design never overrides phase gates.
 - Secrets are server-only validated environment values and never logged or exposed through `NEXT_PUBLIC_*`.
 - Rate limiting, input validation, webhook verification, authorization, token hashing, secure headers, and least-privilege provider credentials are mandatory controls.
+
+### Corporate and Natural Disqualified Officer Flow
+
+The free flow uses the server-only DAL, Express, and the Companies House adapter. The selected corporate or natural subtype makes one mixed Companies House search request, then retains only self links for that subtype. Company and disqualification searches share the same anonymous five-request allowance. Complete JSON-safe provider payloads remain visible through the collapsed metadata disclosure.

@@ -13,6 +13,103 @@ export interface CompaniesHouseSearchInput {
   itemsPerPage?: number;
 }
 
+export interface CompaniesHouseDisqualifiedOfficerSearchInput {
+  query: string;
+  itemsPerPage?: number;
+  startIndex?: number;
+  subtype?: CompaniesHouseDisqualifiedOfficerSubtype;
+}
+
+export type CompaniesHouseDisqualifiedOfficerSubtype = "corporate" | "natural";
+
+export interface CompaniesHouseCorporateOfficerInput {
+  officerId: string;
+}
+
+export interface CompaniesHouseNaturalOfficerInput {
+  officerId: string;
+}
+
+export interface CompaniesHouseDisqualifiedOfficerSearchItem {
+  officerId: string;
+  title: string;
+  description?: string | undefined;
+  dateOfBirth?: string | undefined;
+  address?: Partial<CompaniesHouseRegisteredOfficeAddress> | undefined;
+  addressSnippet?: string | undefined;
+  snippet?: string | undefined;
+  descriptionIdentifiers: string[];
+  matches?: ProviderPayload | undefined;
+  kind?: string | undefined;
+  providerPayload?: ProviderPayload | undefined;
+}
+
+export interface CompaniesHouseDisqualifiedOfficerSearchResult {
+  items: CompaniesHouseDisqualifiedOfficerSearchItem[];
+  itemsPerPage: number;
+  startIndex: number;
+  totalResults: number;
+  providerPayload?: ProviderPayload | undefined;
+}
+
+export interface CompaniesHouseDisqualification {
+  address?: Partial<CompaniesHouseRegisteredOfficeAddress> | undefined;
+  caseIdentifier?: string | undefined;
+  companyNames: string[];
+  courtName?: string | undefined;
+  disqualificationType?: string | undefined;
+  disqualifiedFrom?: string | undefined;
+  disqualifiedUntil?: string | undefined;
+  heardOn?: string | undefined;
+  undertakenOn?: string | undefined;
+  lastVariation: Array<{
+    caseIdentifier?: string | undefined;
+    courtName?: string | undefined;
+    variedOn?: string | undefined;
+  }>;
+  reason?:
+    | {
+        act?: string | undefined;
+        article?: string | undefined;
+        descriptionIdentifier?: string | undefined;
+        section?: string | undefined;
+      }
+    | undefined;
+}
+
+export interface CompaniesHousePermissionToAct {
+  companyNames: string[];
+  courtName?: string | undefined;
+  expiresOn?: string | undefined;
+  grantedOn?: string | undefined;
+}
+
+export interface CompaniesHouseCorporateDisqualifiedOfficer {
+  name: string;
+  companyNumber?: string | undefined;
+  countryOfRegistration?: string | undefined;
+  personNumber?: string | undefined;
+  kind?: string | undefined;
+  disqualifications: CompaniesHouseDisqualification[];
+  permissionsToAct: CompaniesHousePermissionToAct[];
+  providerPayload?: ProviderPayload | undefined;
+}
+
+export interface CompaniesHouseNaturalDisqualifiedOfficer {
+  forename?: string | undefined;
+  otherForenames?: string | undefined;
+  surname: string;
+  title?: string | undefined;
+  honours?: string | undefined;
+  nationality?: string | undefined;
+  dateOfBirth?: string | undefined;
+  personNumber?: string | undefined;
+  kind?: string | undefined;
+  disqualifications: CompaniesHouseDisqualification[];
+  permissionsToAct: CompaniesHousePermissionToAct[];
+  providerPayload?: ProviderPayload | undefined;
+}
+
 export interface CompaniesHouseCompanyNumberInput {
   companyNumber: string;
 }
@@ -241,6 +338,15 @@ export interface CompaniesHouseClient {
   searchCompanies(
     input: CompaniesHouseSearchInput,
   ): Promise<ProviderResult<CompaniesHouseSearchResult>>;
+  searchDisqualifiedOfficers?(
+    input: CompaniesHouseDisqualifiedOfficerSearchInput,
+  ): Promise<ProviderResult<CompaniesHouseDisqualifiedOfficerSearchResult>>;
+  getCorporateDisqualifiedOfficer?(
+    input: CompaniesHouseCorporateOfficerInput,
+  ): Promise<ProviderResult<CompaniesHouseCorporateDisqualifiedOfficer>>;
+  getNaturalDisqualifiedOfficer?(
+    input: CompaniesHouseNaturalOfficerInput,
+  ): Promise<ProviderResult<CompaniesHouseNaturalDisqualifiedOfficer>>;
   getCompanyProfile(
     input: CompaniesHouseCompanyNumberInput,
   ): Promise<ProviderResult<CompaniesHouseCompanyProfile>>;

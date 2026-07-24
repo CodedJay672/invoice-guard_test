@@ -216,3 +216,7 @@ Phase A measures searches, selected companies, checkout starts, paid/delivered r
 - Lucky provides the mandatory disclaimer and confirms ICO registration before production launch.
 - Admin alerts expose provider, webhook, generation, email, and stuck-report failures.
 - Phase A analytics can prove whether the product has commercial traction before expanding scope.
+
+### Corporate and Natural Disqualified Officers
+
+`/search?q=&tab=disqualifications&type=&page=` provides free Companies House corporate and natural disqualification search. `/disqualified-officers/[officer-id]` presents corporate details and `/disqualified-officers/natural/[officer-id]` presents natural-person details.

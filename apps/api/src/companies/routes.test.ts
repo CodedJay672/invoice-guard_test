@@ -76,6 +76,48 @@ void test("GET /companies/search returns normalized company matches", async () =
   await close();
 });
 
+void test("GET /disqualified-officers/search and corporate detail use Companies House", async () => {
+  const { baseUrl, close } = await startTestServer();
+  const search = await fetch(
+    `${baseUrl}/disqualified-officers/search?q=acme&items_per_page=10&start_index=0`,
+  );
+  const searchBody = (await search.json()) as { data: { items: unknown[]; itemsPerPage: number } };
+  assert.equal(search.status, 200);
+  assert.equal(searchBody.data.itemsPerPage, 10);
+  assert.deepEqual(searchBody.data.items, []);
+
+  const detail = await fetch(`${baseUrl}/disqualified-officers/corporate/corporate_1`);
+  const detailBody = (await detail.json()) as { data: { officer: { personNumber?: string } } };
+  assert.equal(detail.status, 200);
+  assert.equal(detailBody.data.officer.personNumber, "corporate_1");
+  const natural = await fetch(`${baseUrl}/disqualified-officers/natural/natural_1`);
+  const naturalBody = (await natural.json()) as {
+    data: { officer: { surname: string; personNumber?: string } };
+  };
+  assert.equal(natural.status, 200);
+  assert.equal(naturalBody.data.officer.surname, "Officer");
+  assert.equal(naturalBody.data.officer.personNumber, "natural_1");
+  await close();
+});
+
+void test("GET /disqualified-officers/search validates pagination", async () => {
+  const { baseUrl, close } = await startTestServer();
+  const response = await fetch(`${baseUrl}/disqualified-officers/search?q=acme&start_index=-1`);
+  assert.equal(response.status, 400);
+  await close();
+});
+
+void test("company and disqualification searches share the anonymous allowance", async () => {
+  const { baseUrl, close } = await startTestServer();
+  for (let index = 0; index < 4; index += 1) {
+    assert.equal((await fetch(`${baseUrl}/companies/search?q=acme`)).status, 200);
+  }
+  assert.equal((await fetch(`${baseUrl}/disqualified-officers/search?q=acme`)).status, 200);
+  const blocked = await fetch(`${baseUrl}/companies/search?q=acme`);
+  assert.equal(blocked.status, 429);
+  await close();
+});
+
 void test("GET /companies/:companyNumber returns canonical company profile data", async () => {
   const { baseUrl, close } = await startTestServer();
 

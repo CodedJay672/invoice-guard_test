@@ -7,6 +7,12 @@ import type {
   FreePreviewCuriosityCardPayload,
   FreePreviewPayload,
 } from "./types.js";
+import type {
+  CompaniesHouseCorporateDisqualifiedOfficer,
+  CompaniesHouseDisqualifiedOfficerSearchResult,
+  CompaniesHouseDisqualifiedOfficerSubtype,
+  CompaniesHouseNaturalDisqualifiedOfficer,
+} from "@workspace/types";
 import { toSearchMatchPayload } from "./types.js";
 
 export class CompanyProviderError extends Error {
@@ -32,6 +38,48 @@ export class CompanyService {
       matches: result.data.matches.map(toSearchMatchPayload),
       providerPayload: result.data.providerPayload,
     };
+  }
+
+  async searchDisqualifiedOfficers(
+    query: string,
+    itemsPerPage: number,
+    startIndex: number,
+    subtype: CompaniesHouseDisqualifiedOfficerSubtype,
+  ): Promise<CompaniesHouseDisqualifiedOfficerSearchResult> {
+    if (!this.dependencies.companiesHouseClient.searchDisqualifiedOfficers)
+      throw new Error("Companies House disqualification search is not configured.");
+    const result = await this.dependencies.companiesHouseClient.searchDisqualifiedOfficers({
+      query,
+      itemsPerPage,
+      startIndex,
+      subtype,
+    });
+    if (result.status === "failed") throw new CompanyProviderError(result);
+    return result.data;
+  }
+
+  async getNaturalDisqualifiedOfficer(
+    officerId: string,
+  ): Promise<CompaniesHouseNaturalDisqualifiedOfficer> {
+    if (!this.dependencies.companiesHouseClient.getNaturalDisqualifiedOfficer)
+      throw new Error("Companies House natural disqualification details are not configured.");
+    const result = await this.dependencies.companiesHouseClient.getNaturalDisqualifiedOfficer({
+      officerId,
+    });
+    if (result.status === "failed") throw new CompanyProviderError(result);
+    return result.data;
+  }
+
+  async getCorporateDisqualifiedOfficer(
+    officerId: string,
+  ): Promise<CompaniesHouseCorporateDisqualifiedOfficer> {
+    if (!this.dependencies.companiesHouseClient.getCorporateDisqualifiedOfficer)
+      throw new Error("Companies House corporate disqualification details are not configured.");
+    const result = await this.dependencies.companiesHouseClient.getCorporateDisqualifiedOfficer({
+      officerId,
+    });
+    if (result.status === "failed") throw new CompanyProviderError(result);
+    return result.data;
   }
 
   async getCompanyProfile(companyNumber: string): Promise<CompanyPayload> {

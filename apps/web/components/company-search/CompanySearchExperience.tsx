@@ -20,6 +20,7 @@ import type {
 } from "@workspace/types";
 
 import { searchCompanies } from "@/lib/data/search-companies";
+import { DisqualifiedOfficerResults } from "./DisqualifiedOfficerResults";
 
 import { getSearchFixtureState, type SearchFixtureName, type SearchStatus } from "./fixtures";
 import SearchPanel from "./search-panel";
@@ -36,22 +37,29 @@ type CompanySearchExperienceProps = {
   fixtureName?: SearchFixtureName | undefined;
   initialQuery?: string | undefined;
   purchaseTier?: ReportProductCode | undefined;
+  selectedTab?: "all" | "disqualifications";
+  page?: number;
+  disqualificationType?: "corporate" | "natural";
 };
 
 export async function CompanySearchExperience({
   fixtureName,
   initialQuery,
   purchaseTier,
+  selectedTab = "all",
+  page = 1,
+  disqualificationType = "corporate",
 }: CompanySearchExperienceProps) {
   const fixtureState = getSearchFixtureState(fixtureName);
-  const matches = initialQuery
-    ? await searchCompanies(initialQuery)
-    : {
-      searchStatus: fixtureState.searchStatus,
-      matches: fixtureState.matches,
-      message: fixtureState.message,
-      providerPayload: undefined,
-    };
+  const matches =
+    selectedTab === "all" && initialQuery
+      ? await searchCompanies(initialQuery)
+      : {
+          searchStatus: fixtureState.searchStatus,
+          matches: fixtureState.matches,
+          message: fixtureState.message,
+          providerPayload: undefined,
+        };
 
   return (
     <section className="min-h-svh w-full bg-page">
@@ -64,9 +72,16 @@ export async function CompanySearchExperience({
         aria-label="Company search and free preview"
         className="mx-auto w-full max-w-275 px-6 py-7"
       >
-        <SearchFeedback status={matches.searchStatus} message={matches.message} />
+        <SearchTabs
+          query={initialQuery ?? ""}
+          selectedTab={selectedTab}
+          {...(purchaseTier ? { purchaseTier } : {})}
+        />
+        {selectedTab === "all" ? (
+          <SearchFeedback status={matches.searchStatus} message={matches.message} />
+        ) : null}
 
-        {matches.matches.length > 0 ? (
+        {selectedTab === "all" && matches.matches.length > 0 ? (
           <Suspense key={initialQuery} fallback={<PreviewLoading />}>
             <SearchResults
               query={initialQuery ?? ""}
@@ -76,8 +91,104 @@ export async function CompanySearchExperience({
             />
           </Suspense>
         ) : null}
+        {selectedTab === "disqualifications" && initialQuery ? (
+          <>
+            <DisqualificationTypeTabs
+              query={initialQuery}
+              selectedType={disqualificationType}
+              {...(purchaseTier ? { purchaseTier } : {})}
+            />
+            <Suspense
+              key={`${initialQuery}-${disqualificationType}-${page}`}
+              fallback={<PreviewLoading />}
+            >
+              <DisqualifiedOfficerResults
+                query={initialQuery}
+                page={page}
+                subtype={disqualificationType}
+                {...(purchaseTier ? { tier: purchaseTier } : {})}
+              />
+            </Suspense>
+          </>
+        ) : null}
       </section>
     </section>
+  );
+}
+
+function DisqualificationTypeTabs({
+  query,
+  selectedType,
+  purchaseTier,
+}: {
+  query: string;
+  selectedType: "corporate" | "natural";
+  purchaseTier?: ReportProductCode;
+}) {
+  const href = (type: "corporate" | "natural") => {
+    const params = new URLSearchParams({ q: query, tab: "disqualifications", type, page: "1" });
+    if (purchaseTier) params.set("tier", purchaseTier);
+    return `/search?${params}`;
+  };
+  return (
+    <nav aria-label="Disqualification types" className="mb-5">
+      <div role="tablist" className="inline-flex rounded-md border border-line bg-surface p-1">
+        {(["corporate", "natural"] as const).map((type) => (
+          <Link
+            key={type}
+            role="tab"
+            aria-selected={selectedType === type}
+            className={
+              selectedType === type
+                ? "rounded-sm bg-brand-navy px-4 py-2 text-sm font-semibold text-content-inverse"
+                : "rounded-sm px-4 py-2 text-sm font-medium text-content-muted hover:text-content focus-visible:ring-2 focus-visible:ring-focus"
+            }
+            href={href(type)}
+          >
+            {type === "corporate" ? "Corporate" : "People"}
+          </Link>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+function SearchTabs({
+  query,
+  selectedTab,
+  purchaseTier,
+}: {
+  query: string;
+  selectedTab: "all" | "disqualifications";
+  purchaseTier?: ReportProductCode;
+}) {
+  const href = (tab: "all" | "disqualifications") => {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (tab === "disqualifications") params.set("tab", tab);
+    if (purchaseTier) params.set("tier", purchaseTier);
+    return `/search?${params}`;
+  };
+  return (
+    <nav aria-label="Search result types" className="mb-6 border-b border-line">
+      <div role="tablist" className="flex gap-6">
+        {(["all", "disqualifications"] as const).map((tab) => (
+          <Link
+            key={tab}
+            role="tab"
+            aria-selected={selectedTab === tab}
+            className={
+              selectedTab === tab
+                ? "border-b-2 border-brand-teal px-1 py-3 text-sm font-semibold text-brand-navy"
+                : "px-1 py-3 text-sm text-content-muted hover:text-content focus-visible:ring-2 focus-visible:ring-focus"
+            }
+            href={href(tab)}
+          >
+            {tab === "all" ? "All" : "Disqualifications"}
+          </Link>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -225,7 +336,8 @@ function SearchResultCard({
             <span className="text-[10px] text-content-subtle">
               {providerLabel("companies_house")}
             </span>
-          </div>        </div>
+          </div>{" "}
+        </div>
       </Link>
       <div className="w-full">
         <ProviderMetadata payload={company.providerPayload} />

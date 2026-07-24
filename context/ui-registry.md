@@ -780,6 +780,25 @@ and future Companies House fields attached to the exact filing that supplied the
 
 ### Public Report Purchase Options
 
+### Corporate and Natural Disqualification Search and Detail
+
+Files: `apps/web/components/company-search/DisqualifiedOfficerResults.tsx`, `apps/web/components/company-search/CompanySearchExperience.tsx`, and the corporate and natural detail pages under `apps/web/app/(landing)/disqualified-officers/`
+Last updated: 2026-07-16
+
+| Property | Class or pattern |
+| --- | --- |
+| Background | page `bg-page`; cards `bg-surface` |
+| Border | `border-line`; selected tab and link accent `border-brand-teal` |
+| Border radius | result cards `rounded-lg`; variation rows `rounded-md` |
+| Text, primary | headings `text-brand-navy`; facts `text-content` |
+| Text, secondary | labels, counts, and snippets `text-content-muted` |
+| Spacing | result stack `space-y-4`; cards `p-5`; detail sections `space-y-6` |
+| Interactive states | navy selected subtype, teal primary tab, and semantic focus rings |
+| Shadow | result cards `shadow-sm` |
+| Accent usage | teal identifies links and selection, never severity |
+
+**Pattern notes:** Main search type, disqualification subtype, and page are shareable URL state. The compact Corporate and People selector sits below the primary tabs and resets pagination on change. Only the selected subtype loads. Both detail types keep disqualifications, variations, permissions, and complete provider metadata separate.
+
 File: `apps/web/components/company-workspace/CompanyWorkspace.tsx`
 Last updated: 2026-07-14
 

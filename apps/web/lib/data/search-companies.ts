@@ -63,7 +63,7 @@ export async function searchCompanies(query: string): Promise<{
       throw new Error("Company search returned an invalid response.");
     }
 
-    const data = parsed.data.data as CompanySearchResponsePayload;
+    const data: CompanySearchResponsePayload = parsed.data.data;
 
     return {
       searchStatus: data.matches.length > 0 ? "results" : "empty",

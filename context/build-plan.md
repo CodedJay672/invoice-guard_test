@@ -439,3 +439,15 @@ Phase A Clerk authentication provides identity, report ownership, verified-email
 authorization only. Do not schedule Phase B account dashboards/history/saved companies, Phase C-D
 watchlists, Phase E payment signals, or Phase F recovery until their gates open and a new `/architect`
 plan is approved.
+
+### Corporate Disqualified Officers Enhancement
+
+- Add a shareable `Disqualifications` branch to `/search` without changing `All` behavior.
+- Use the existing adapter, Express, proxy, DAL, and Server Component boundaries.
+- Share anonymous quota, retain full provider payloads, and present corporate facts without interpretation.
+
+### Natural Disqualified Officers Enhancement
+
+- Add nested Corporate and People subtype tabs with shareable `type` state and one selected search request.
+- Normalize and display every natural-person detail field from Companies House.
+- Preserve corporate routes, mixed upstream pagination, shared quota, and factual presentation rules.

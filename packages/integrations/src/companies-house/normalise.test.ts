@@ -9,7 +9,107 @@ import {
   normaliseCompaniesHouseOfficersResponse,
   normaliseCompaniesHouseProfileResponse,
   normaliseCompaniesHouseSearchResponse,
+  normaliseCompaniesHouseDisqualifiedOfficerSearchResponse,
+  normaliseCompaniesHouseCorporateDisqualifiedOfficerResponse,
+  normaliseCompaniesHouseNaturalDisqualifiedOfficerResponse,
 } from "./normalise.js";
+
+void test("keeps corporate disqualified officer results and complete detail facts", () => {
+  const search = normaliseCompaniesHouseDisqualifiedOfficerSearchResponse({
+    items_per_page: 10,
+    start_index: 0,
+    total_results: 2,
+    items: [
+      {
+        title: "ACME CORPORATE OFFICER",
+        links: { self: "/disqualified-officers/corporate/abc_123" },
+        address_snippet: "London",
+        matches: { title: [1, 4] },
+      },
+      { title: "A NATURAL PERSON", links: { self: "/disqualified-officers/natural/ignored" } },
+    ],
+  });
+  assert.equal(search.status, "success");
+  assert.equal(search.data.items.length, 1);
+  assert.equal(search.data.items[0]?.officerId, "abc_123");
+  assert.deepEqual(search.data.items[0]?.matches, { title: [1, 4] });
+
+  const detail = normaliseCompaniesHouseCorporateDisqualifiedOfficerResponse({
+    name: "ACME CORPORATE OFFICER",
+    company_number: "12345678",
+    country_of_registration: "England and Wales",
+    person_number: "abc_123",
+    disqualifications: [
+      {
+        case_identifier: "CASE-1",
+        company_names: ["ACME LTD"],
+        court_name: "High Court",
+        disqualified_from: "2024-01-01",
+        disqualified_until: "2028-01-01",
+        reason: { act: "Company Directors Disqualification Act 1986", section: "6" },
+        last_variation: [{ varied_on: "2025-01-01" }],
+      },
+    ],
+    permissions_to_act: [
+      {
+        company_names: ["PERMITTED LTD"],
+        court_name: "High Court",
+        granted_on: "2025-02-01",
+        expires_on: "2026-02-01",
+      },
+    ],
+  });
+  assert.equal(detail.status, "success");
+  assert.equal(detail.data.disqualifications[0]?.reason?.section, "6");
+  assert.equal(detail.data.permissionsToAct[0]?.companyNames[0], "PERMITTED LTD");
+  assert.equal(detail.data.providerPayload?.company_number, "12345678");
+});
+
+void test("filters natural search results and keeps complete natural details", () => {
+  const search = normaliseCompaniesHouseDisqualifiedOfficerSearchResponse(
+    {
+      items_per_page: 10,
+      start_index: 0,
+      total_results: 2,
+      items: [
+        { title: "SMITH, Jane", links: { self: "/disqualified-officers/natural/person_1" } },
+        { title: "SMITH LIMITED", links: { self: "/disqualified-officers/corporate/company_1" } },
+      ],
+    },
+    "natural",
+  );
+  assert.equal(search.status, "success");
+  assert.equal(search.data.items.length, 1);
+  assert.equal(search.data.items[0]?.officerId, "person_1");
+
+  const detail = normaliseCompaniesHouseNaturalDisqualifiedOfficerResponse({
+    title: "Dr",
+    forename: "Jane",
+    other_forenames: "Alexandra",
+    surname: "Smith",
+    honours: "OBE",
+    nationality: "British",
+    date_of_birth: "1970-05-12",
+    person_number: "person_1",
+    kind: "natural-disqualification",
+    disqualifications: [
+      {
+        case_identifier: "CASE-N1",
+        company_names: ["EXAMPLE LTD"],
+        disqualified_from: "2024-01-01",
+        disqualified_until: "2029-01-01",
+        reason: { act: "Company Directors Disqualification Act 1986", section: "6" },
+        last_variation: [{ court_name: "High Court", varied_on: "2025-01-01" }],
+      },
+    ],
+    permissions_to_act: [{ company_names: ["PERMITTED LTD"], granted_on: "2025-03-01" }],
+  });
+  assert.equal(detail.status, "success");
+  assert.equal(detail.data.otherForenames, "Alexandra");
+  assert.equal(detail.data.disqualifications[0]?.reason?.section, "6");
+  assert.equal(detail.data.permissionsToAct[0]?.companyNames[0], "PERMITTED LTD");
+  assert.equal(detail.data.providerPayload?.honours, "OBE");
+});
 
 void test("normalises valid Companies House search responses", () => {
   const result = normaliseCompaniesHouseSearchResponse({

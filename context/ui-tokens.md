@@ -169,3 +169,5 @@ Public layouts use `max-w-7xl`, `px-4 sm:px-6 lg:px-8`, and `py-8`. Preview/tier
 - Green, amber, and red describe factual source/operation state, never credit risk.
 - New components follow `ui-rules.md` and are recorded in `ui-registry.md`.
 - Supplying light-surface and dark-surface logo variants does not authorize a full application dark mode. Use the correct logo asset for its surface and do not create incomplete parallel theme tokens.
+- Corporate disqualification tabs, cards, pagination, and details reuse existing semantic tokens; no feature-specific colour token is introduced.
+- The nested Corporate and People selector and natural detail page introduce no new tokens.

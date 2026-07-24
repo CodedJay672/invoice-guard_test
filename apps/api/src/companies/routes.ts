@@ -3,6 +3,8 @@ import {
   companySearchQuerySchema,
   freeCompanyTabPaginationQuerySchema,
   freeCompanyTabSchema,
+  disqualifiedOfficerSearchQuerySchema,
+  corporateOfficerIdSchema,
 } from "@workspace/validation";
 import type { Express, NextFunction, Request, Response } from "express";
 
@@ -21,6 +23,15 @@ export interface CompanyRouteDependencies {
 }
 
 export function registerCompanyRoutes(app: Express, dependencies: CompanyRouteDependencies): void {
+  app.get("/disqualified-officers/search", (request, response, next) => {
+    void handleDisqualifiedOfficerSearch(request, response, dependencies).catch(next);
+  });
+  app.get("/disqualified-officers/corporate/:officerId", (request, response, next) => {
+    void handleCorporateDisqualifiedOfficer(request, response, dependencies).catch(next);
+  });
+  app.get("/disqualified-officers/natural/:officerId", (request, response, next) => {
+    void handleNaturalDisqualifiedOfficer(request, response, dependencies).catch(next);
+  });
   app.get("/companies/search", (request: Request, response: Response, next: NextFunction) => {
     void handleCompanySearch(request, response, dependencies).catch(next);
   });
@@ -45,6 +56,96 @@ export function registerCompanyRoutes(app: Express, dependencies: CompanyRouteDe
       void handleCompanyProfile(request, response, dependencies).catch(next);
     },
   );
+}
+
+async function handleDisqualifiedOfficerSearch(
+  request: Request,
+  response: Response,
+  dependencies: CompanyRouteDependencies,
+): Promise<void> {
+  const parsed = disqualifiedOfficerSearchQuerySchema.safeParse(request.query);
+  if (!parsed.success) {
+    sendApiError(
+      response,
+      400,
+      "invalid_disqualified_officer_search",
+      "Enter a valid search query and page.",
+    );
+    return;
+  }
+  const identity = dependencies.requestIdentityResolver(request);
+  if (!identity.clerkUserId && identity.ipHash) {
+    const limit = await dependencies.anonymousSearchRateLimiter.check(identity.ipHash);
+    if (!limit.allowed) {
+      response.status(429).json({
+        error: {
+          code: "anonymous_search_rate_limited",
+          message: "Anonymous search limit reached. Please try again later.",
+        },
+        meta: { resetAt: limit.resetAt },
+      });
+      return;
+    }
+  }
+  try {
+    response.json({
+      data: await dependencies.companyService.searchDisqualifiedOfficers(
+        parsed.data.q,
+        parsed.data.items_per_page,
+        parsed.data.start_index,
+        parsed.data.type,
+      ),
+    });
+  } catch (error) {
+    handleCompanyError(error, response);
+  }
+}
+
+async function handleNaturalDisqualifiedOfficer(
+  request: Request,
+  response: Response,
+  dependencies: CompanyRouteDependencies,
+): Promise<void> {
+  const parsed = corporateOfficerIdSchema.safeParse(request.params["officerId"]);
+  if (!parsed.success) {
+    sendApiError(response, 400, "invalid_officer_id", "Enter a valid natural officer identifier.");
+    return;
+  }
+  try {
+    response.json({
+      data: {
+        officer: await dependencies.companyService.getNaturalDisqualifiedOfficer(parsed.data),
+      },
+    });
+  } catch (error) {
+    handleCompanyError(error, response);
+  }
+}
+
+async function handleCorporateDisqualifiedOfficer(
+  request: Request,
+  response: Response,
+  dependencies: CompanyRouteDependencies,
+): Promise<void> {
+  const parsed = corporateOfficerIdSchema.safeParse(request.params["officerId"]);
+  if (!parsed.success) {
+    sendApiError(
+      response,
+      400,
+      "invalid_officer_id",
+      "Enter a valid corporate officer identifier.",
+    );
+    return;
+  }
+  try {
+    response.json({
+      data: {
+        officer: await dependencies.companyService.getCorporateDisqualifiedOfficer(parsed.data),
+      },
+    });
+  } catch (error) {
+    handleCompanyError(error, response);
+  }
 }
 
 async function handleCompanyTab(

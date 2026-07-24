@@ -153,7 +153,8 @@ companies house endpoints:
 | GET /company/{company_number}/filing-history | Company's filing history | Filing History |
 | GET /company/{company_number}/charges | Company registered charges | ChargesList |
 | GET https://api.company-information.service.gov.uk/search/disqualified-officers | Company's disqualified officers | Disqualified officers |
-| GET https://api.company-information.service.gov.uk/disqualified-officers/corporate/{officer_id}
+| GET https://api.company-information.service.gov.uk/disqualified-officers/corporate/{officer_id} | Corporate disqualified officer details | CorporateDisqualification |
+| GET https://api.company-information.service.gov.uk/disqualified-officers/natural/{officer_id} | Natural-person disqualified officer details | NaturalDisqualification |
 
 
 ### Companies House provider-page parity matrix
@@ -576,7 +577,7 @@ const DisqualifiedOfficersSearch = {
     "total_results": "integer"
 } as const
 
-const CoporateDisqualification = {
+const CorporateDisqualification = {
     "company_number": "string",
     "country_of_registration": "string",
     "disqualifications": [
@@ -710,7 +711,7 @@ Live endpoint behavior, rate limits, response shape, attribution, and terms requ
 
 - Normalize insolvency and director-disqualification flags.
 - The active company insolvency tab uses the free Companies House insolvency endpoint.
-- Any separate insolvency/disqualified-officer provider remains outside free-tier search/preview/tabs unless a later paid entitlement is explicitly approved.
+- Companies House corporate and natural disqualified-officer search and detail are approved free public features. The selected subtype filters the mixed search page by its returned self link. Separate providers remain outside this feature.
 - Current live-shaped endpoint must be verified before production.
 
 ## Registry Trust

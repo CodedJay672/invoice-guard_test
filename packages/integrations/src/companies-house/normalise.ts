@@ -11,6 +11,12 @@ import type {
   CompaniesHouseInsolvencyFoundation,
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchResult,
+  CompaniesHouseDisqualifiedOfficerSearchResult,
+  CompaniesHouseCorporateDisqualifiedOfficer,
+  CompaniesHouseNaturalDisqualifiedOfficer,
+  CompaniesHouseDisqualifiedOfficerSubtype,
+  CompaniesHouseDisqualification,
+  CompaniesHousePermissionToAct,
   ProviderPayload,
 } from "@workspace/types";
 
@@ -179,6 +185,197 @@ interface RawCompaniesHouseInsolvencyPractitioner {
 
 function asString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+export function normaliseCompaniesHouseDisqualifiedOfficerSearchResponse(
+  payload: unknown,
+  subtype: CompaniesHouseDisqualifiedOfficerSubtype = "corporate",
+): ProviderResult<CompaniesHouseDisqualifiedOfficerSearchResult> {
+  const raw = (payload ?? {}) as Record<string, unknown>;
+  const items = Array.isArray(raw.items) ? raw.items : [];
+  return createProviderSuccess(provider, {
+    items: items.flatMap((value) => {
+      const item = value as Record<string, unknown>;
+      const links = item.links as Record<string, unknown> | undefined;
+      const self = asString(links?.self);
+      const match = self?.match(new RegExp(`/disqualified-officers/${subtype}/([^/?#]+)`, "i"));
+      const title = asString(item.title);
+      if (!match?.[1] || !title) return [];
+      return [
+        {
+          officerId: decodeURIComponent(match[1]),
+          title,
+          description: asString(item.description),
+          dateOfBirth: asString(item.date_of_birth),
+          address: item.address
+            ? normaliseAddress(item.address as RawCompaniesHouseAddress)
+            : undefined,
+          addressSnippet: asString(item.address_snippet),
+          snippet: asString(item.snippet),
+          descriptionIdentifiers: Array.isArray(item.description_identifiers)
+            ? item.description_identifiers
+                .map(asString)
+                .filter((entry): entry is string => Boolean(entry))
+            : [],
+          matches: asProviderPayload(item.matches),
+          kind: asString(item.kind),
+          providerPayload: asProviderPayload(value),
+        },
+      ];
+    }),
+    itemsPerPage: asNumber(raw.items_per_page) ?? 10,
+    startIndex: asNumber(raw.start_index) ?? 0,
+    totalResults: asNumber(raw.total_results) ?? 0,
+    providerPayload: asProviderPayload(payload),
+  });
+}
+
+export function normaliseCompaniesHouseNaturalDisqualifiedOfficerResponse(
+  payload: unknown,
+): ProviderResult<CompaniesHouseNaturalDisqualifiedOfficer> {
+  const raw = (payload ?? {}) as Record<string, unknown>;
+  const surname = asString(raw.surname);
+  if (!surname)
+    return createProviderFailure(provider, {
+      code: "integration_invalid_response",
+      message: "Companies House returned an invalid natural disqualification response.",
+      retryable: false,
+    });
+  const disqualifications = Array.isArray(raw.disqualifications) ? raw.disqualifications : [];
+  const permissions = Array.isArray(raw.permissions_to_act) ? raw.permissions_to_act : [];
+  return createProviderSuccess(provider, {
+    forename: asString(raw.forename),
+    otherForenames: asString(raw.other_forenames),
+    surname,
+    title: asString(raw.title),
+    honours: asString(raw.honours),
+    nationality: asString(raw.nationality),
+    dateOfBirth: asString(raw.date_of_birth),
+    personNumber: asString(raw.person_number),
+    kind: asString(raw.kind),
+    disqualifications: disqualifications.map(normaliseDisqualification),
+    permissionsToAct: permissions.map(normalisePermissionToAct),
+    providerPayload: asProviderPayload(payload),
+  });
+}
+
+function normaliseDisqualification(value: unknown): CompaniesHouseDisqualification {
+  const item = value as Record<string, unknown>;
+  const reason = item.reason as Record<string, unknown> | undefined;
+  return {
+    address: item.address ? normaliseAddress(item.address as RawCompaniesHouseAddress) : undefined,
+    caseIdentifier: asString(item.case_identifier),
+    companyNames: Array.isArray(item.company_names)
+      ? item.company_names.map(asString).filter((entry): entry is string => Boolean(entry))
+      : [],
+    courtName: asString(item.court_name),
+    disqualificationType: asString(item.disqualification_type),
+    disqualifiedFrom: asString(item.disqualified_from),
+    disqualifiedUntil: asString(item.disqualified_until),
+    heardOn: asString(item.heard_on),
+    undertakenOn: asString(item.undertaken_on),
+    lastVariation: Array.isArray(item.last_variation)
+      ? item.last_variation.map((entry) => {
+          const variation = entry as Record<string, unknown>;
+          return {
+            caseIdentifier: asString(variation.case_identifier),
+            courtName: asString(variation.court_name),
+            variedOn: asString(variation.varied_on),
+          };
+        })
+      : [],
+    reason: reason
+      ? {
+          act: asString(reason.act),
+          article: asString(reason.article),
+          descriptionIdentifier: asString(reason.description_identifier),
+          section: asString(reason.section),
+        }
+      : undefined,
+  };
+}
+
+function normalisePermissionToAct(value: unknown): CompaniesHousePermissionToAct {
+  const item = value as Record<string, unknown>;
+  return {
+    companyNames: Array.isArray(item.company_names)
+      ? item.company_names.map(asString).filter((entry): entry is string => Boolean(entry))
+      : [],
+    courtName: asString(item.court_name),
+    expiresOn: asString(item.expires_on),
+    grantedOn: asString(item.granted_on),
+  };
+}
+
+export function normaliseCompaniesHouseCorporateDisqualifiedOfficerResponse(
+  payload: unknown,
+): ProviderResult<CompaniesHouseCorporateDisqualifiedOfficer> {
+  const raw = (payload ?? {}) as Record<string, unknown>;
+  const name = asString(raw.name);
+  if (!name)
+    return createProviderFailure(provider, {
+      code: "integration_invalid_response",
+      message: "Companies House returned an invalid corporate disqualification response.",
+      retryable: false,
+    });
+  const disqualifications = Array.isArray(raw.disqualifications) ? raw.disqualifications : [];
+  const permissions = Array.isArray(raw.permissions_to_act) ? raw.permissions_to_act : [];
+  return createProviderSuccess(provider, {
+    name,
+    companyNumber: asString(raw.company_number),
+    countryOfRegistration: asString(raw.country_of_registration),
+    personNumber: asString(raw.person_number),
+    kind: asString(raw.kind),
+    disqualifications: disqualifications.map((value) => {
+      const item = value as Record<string, unknown>;
+      const reason = item.reason as Record<string, unknown> | undefined;
+      return {
+        address: item.address
+          ? normaliseAddress(item.address as RawCompaniesHouseAddress)
+          : undefined,
+        caseIdentifier: asString(item.case_identifier),
+        companyNames: Array.isArray(item.company_names)
+          ? item.company_names.map(asString).filter((entry): entry is string => Boolean(entry))
+          : [],
+        courtName: asString(item.court_name),
+        disqualificationType: asString(item.disqualification_type),
+        disqualifiedFrom: asString(item.disqualified_from),
+        disqualifiedUntil: asString(item.disqualified_until),
+        heardOn: asString(item.heard_on),
+        undertakenOn: asString(item.undertaken_on),
+        lastVariation: Array.isArray(item.last_variation)
+          ? item.last_variation.map((entry) => {
+              const variation = entry as Record<string, unknown>;
+              return {
+                caseIdentifier: asString(variation.case_identifier),
+                courtName: asString(variation.court_name),
+                variedOn: asString(variation.varied_on),
+              };
+            })
+          : [],
+        reason: reason
+          ? {
+              act: asString(reason.act),
+              article: asString(reason.article),
+              descriptionIdentifier: asString(reason.description_identifier),
+              section: asString(reason.section),
+            }
+          : undefined,
+      };
+    }),
+    permissionsToAct: permissions.map((value) => {
+      const item = value as Record<string, unknown>;
+      return {
+        companyNames: Array.isArray(item.company_names)
+          ? item.company_names.map(asString).filter((entry): entry is string => Boolean(entry))
+          : [],
+        courtName: asString(item.court_name),
+        expiresOn: asString(item.expires_on),
+        grantedOn: asString(item.granted_on),
+      };
+    }),
+    providerPayload: asProviderPayload(payload),
+  });
 }
 
 function asStringArray(value: unknown): string[] {

@@ -284,3 +284,5 @@ Test naming describes behavior, not implementation. Mock external boundaries, no
 - Swallowed errors, unbounded retries, arbitrary sleeps, or hidden partial data.
 - Premature microservices, speculative packages/tables, or future-phase implementation.
 - Rewording approved legal copy or presenting Figma content as current scope without phase filtering.
+
+Free corporate and natural disqualified-officer search and detail routes may call only the matching Companies House resources. They share the existing anonymous search allowance, make one search request for the selected subtype, and preserve provider failures.

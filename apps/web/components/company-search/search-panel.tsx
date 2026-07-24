@@ -11,16 +11,33 @@ import type { ReportProductCode } from "@workspace/types";
 function SearchPanel({ purchaseTier }: { purchaseTier?: ReportProductCode | undefined }) {
   const params = useSearchParams();
   const query = params.get("q") || "";
+  const tab = params.get("tab");
+  const type = params.get("type");
 
-  return <SearchPanelForm key={query} initialQuery={query} purchaseTier={purchaseTier} />;
+  return (
+    <SearchPanelForm
+      key={query}
+      initialQuery={query}
+      purchaseTier={purchaseTier}
+      tab={tab === "disqualifications" ? tab : "all"}
+      disqualificationType={type === "natural" ? "natural" : "corporate"}
+    />
+  );
 }
 
 type SearchPanelFormProps = {
   initialQuery: string;
   purchaseTier?: ReportProductCode | undefined;
+  tab: "all" | "disqualifications";
+  disqualificationType: "corporate" | "natural";
 };
 
-function SearchPanelForm({ initialQuery, purchaseTier }: SearchPanelFormProps) {
+function SearchPanelForm({
+  initialQuery,
+  purchaseTier,
+  tab,
+  disqualificationType,
+}: SearchPanelFormProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = React.useState(initialQuery);
   const [searchStatus, setSearchStatus] = React.useState<"idle" | "loading" | "invalid">("idle");
@@ -37,6 +54,8 @@ function SearchPanelForm({ initialQuery, purchaseTier }: SearchPanelFormProps) {
     setSearchStatus("loading");
     const searchParams = new URLSearchParams({ q: trimmedInput });
     if (purchaseTier) searchParams.set("tier", purchaseTier);
+    if (tab === "disqualifications") searchParams.set("tab", tab);
+    if (tab === "disqualifications") searchParams.set("type", disqualificationType);
 
     router.push(`/search?${searchParams.toString()}`);
     setSearchStatus("idle");
@@ -48,7 +67,11 @@ function SearchPanelForm({ initialQuery, purchaseTier }: SearchPanelFormProps) {
         className="mb-2.5 block text-xs font-medium text-content-subtle"
         htmlFor="company-search"
       >
-        Company name or number
+        {tab === "disqualifications"
+          ? disqualificationType === "natural"
+            ? "Person name"
+            : "Corporate officer name"
+          : "Company name or number"}
       </label>
       <div className="flex gap-2.5">
         <div className="relative min-w-0 flex-1">

@@ -9,6 +9,9 @@ import {
   normaliseCompaniesHouseProfileResponse,
   normaliseCompaniesHouseRegisteredOfficeAddressResponse,
   normaliseCompaniesHouseSearchResponse,
+  normaliseCompaniesHouseDisqualifiedOfficerSearchResponse,
+  normaliseCompaniesHouseCorporateDisqualifiedOfficerResponse,
+  normaliseCompaniesHouseNaturalDisqualifiedOfficerResponse,
 } from "./normalise.js";
 import type {
   CompaniesHouseChargesFoundation,
@@ -25,6 +28,12 @@ import type {
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
   CompaniesHouseSearchResult,
+  CompaniesHouseDisqualifiedOfficerSearchInput,
+  CompaniesHouseDisqualifiedOfficerSearchResult,
+  CompaniesHouseCorporateOfficerInput,
+  CompaniesHouseCorporateDisqualifiedOfficer,
+  CompaniesHouseNaturalOfficerInput,
+  CompaniesHouseNaturalDisqualifiedOfficer,
 } from "../../../types/src/companies-house.js";
 
 const provider = "companies_house";
@@ -48,6 +57,44 @@ export class LiveCompaniesHouseClient implements CompaniesHouseClient {
     }
 
     return normaliseCompaniesHouseSearchResponse(payload.data);
+  }
+
+  async searchDisqualifiedOfficers(
+    input: CompaniesHouseDisqualifiedOfficerSearchInput,
+  ): Promise<ProviderResult<CompaniesHouseDisqualifiedOfficerSearchResult>> {
+    const itemsPerPage = input.itemsPerPage ?? 10;
+    const startIndex = input.startIndex ?? 0;
+    const payload = await this.request(
+      `/search/disqualified-officers?q=${encodeURIComponent(input.query)}&items_per_page=${itemsPerPage}&start_index=${startIndex}`,
+    );
+    return payload.status === "failed"
+      ? payload
+      : normaliseCompaniesHouseDisqualifiedOfficerSearchResponse(
+          payload.data,
+          input.subtype ?? "corporate",
+        );
+  }
+
+  async getCorporateDisqualifiedOfficer(
+    input: CompaniesHouseCorporateOfficerInput,
+  ): Promise<ProviderResult<CompaniesHouseCorporateDisqualifiedOfficer>> {
+    const payload = await this.request(
+      `/disqualified-officers/corporate/${encodeURIComponent(input.officerId)}`,
+    );
+    return payload.status === "failed"
+      ? payload
+      : normaliseCompaniesHouseCorporateDisqualifiedOfficerResponse(payload.data);
+  }
+
+  async getNaturalDisqualifiedOfficer(
+    input: CompaniesHouseNaturalOfficerInput,
+  ): Promise<ProviderResult<CompaniesHouseNaturalDisqualifiedOfficer>> {
+    const payload = await this.request(
+      `/disqualified-officers/natural/${encodeURIComponent(input.officerId)}`,
+    );
+    return payload.status === "failed"
+      ? payload
+      : normaliseCompaniesHouseNaturalDisqualifiedOfficerResponse(payload.data);
   }
 
   async getCompanyProfile(

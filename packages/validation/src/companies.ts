@@ -28,6 +28,124 @@ export const companySearchQuerySchema = z
   .min(2, "Search query must be at least 2 characters.")
   .max(120, "Search query must be 120 characters or fewer.");
 
+export const disqualifiedOfficerSearchQuerySchema = z.object({
+  q: companySearchQuerySchema,
+  items_per_page: z.coerce.number().int().min(1).max(50).default(10),
+  start_index: z.coerce.number().int().min(0).default(0),
+  type: z.enum(["corporate", "natural"]).default("corporate"),
+});
+export const corporateOfficerIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(200)
+  .regex(/^[A-Za-z0-9_-]+$/);
+
+const disqualifiedAddressSchema = z.object({
+  premises: z.string().optional(),
+  careOf: z.string().optional(),
+  addressLine_1: z.string().optional(),
+  addressLine_2: z.string().optional(),
+  locality: z.string().optional(),
+  region: z.string().optional(),
+  country: z.string().optional(),
+  postalCode: z.string().optional(),
+  poBox: z.string().optional(),
+});
+export const disqualifiedOfficerSearchApiResponseSchema = z.object({
+  data: z.object({
+    items: z.array(
+      z.object({
+        officerId: z.string(),
+        title: z.string(),
+        description: z.string().optional(),
+        dateOfBirth: z.string().optional(),
+        address: disqualifiedAddressSchema.optional(),
+        addressSnippet: z.string().optional(),
+        snippet: z.string().optional(),
+        descriptionIdentifiers: z.array(z.string()),
+        matches: providerPayloadSchema.optional(),
+        kind: z.string().optional(),
+        providerPayload: providerPayloadSchema.optional(),
+      }),
+    ),
+    itemsPerPage: z.number(),
+    startIndex: z.number(),
+    totalResults: z.number(),
+    providerPayload: providerPayloadSchema.optional(),
+  }),
+});
+export const corporateDisqualifiedOfficerApiResponseSchema = z.object({
+  data: z.object({
+    officer: z.object({
+      name: z.string(),
+      companyNumber: z.string().optional(),
+      countryOfRegistration: z.string().optional(),
+      personNumber: z.string().optional(),
+      kind: z.string().optional(),
+      disqualifications: z.array(
+        z.object({
+          address: disqualifiedAddressSchema.optional(),
+          caseIdentifier: z.string().optional(),
+          companyNames: z.array(z.string()),
+          courtName: z.string().optional(),
+          disqualificationType: z.string().optional(),
+          disqualifiedFrom: z.string().optional(),
+          disqualifiedUntil: z.string().optional(),
+          heardOn: z.string().optional(),
+          undertakenOn: z.string().optional(),
+          lastVariation: z.array(
+            z.object({
+              caseIdentifier: z.string().optional(),
+              courtName: z.string().optional(),
+              variedOn: z.string().optional(),
+            }),
+          ),
+          reason: z
+            .object({
+              act: z.string().optional(),
+              article: z.string().optional(),
+              descriptionIdentifier: z.string().optional(),
+              section: z.string().optional(),
+            })
+            .optional(),
+        }),
+      ),
+      permissionsToAct: z.array(
+        z.object({
+          companyNames: z.array(z.string()),
+          courtName: z.string().optional(),
+          expiresOn: z.string().optional(),
+          grantedOn: z.string().optional(),
+        }),
+      ),
+      providerPayload: providerPayloadSchema.optional(),
+    }),
+  }),
+});
+export const naturalDisqualifiedOfficerApiResponseSchema = z.object({
+  data: z.object({
+    officer: z.object({
+      forename: z.string().optional(),
+      otherForenames: z.string().optional(),
+      surname: z.string(),
+      title: z.string().optional(),
+      honours: z.string().optional(),
+      nationality: z.string().optional(),
+      dateOfBirth: z.string().optional(),
+      personNumber: z.string().optional(),
+      kind: z.string().optional(),
+      disqualifications:
+        corporateDisqualifiedOfficerApiResponseSchema.shape.data.shape.officer.shape
+          .disqualifications,
+      permissionsToAct:
+        corporateDisqualifiedOfficerApiResponseSchema.shape.data.shape.officer.shape
+          .permissionsToAct,
+      providerPayload: providerPayloadSchema.optional(),
+    }),
+  }),
+});
+
 export const companiesHouseNumberSchema = z
   .string()
   .trim()

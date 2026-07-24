@@ -241,6 +241,66 @@ export class MockCompaniesHouseClient implements CompaniesHouseClient {
       }),
     );
   }
+
+  searchDisqualifiedOfficers(
+    input: import("@workspace/types").CompaniesHouseDisqualifiedOfficerSearchInput,
+  ): Promise<
+    ProviderResult<import("@workspace/types").CompaniesHouseDisqualifiedOfficerSearchResult>
+  > {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        items: [],
+        itemsPerPage: input.itemsPerPage ?? 10,
+        startIndex: input.startIndex ?? 0,
+        totalResults: 0,
+        providerPayload: {
+          items: [],
+          items_per_page: input.itemsPerPage ?? 10,
+          start_index: input.startIndex ?? 0,
+          total_results: 0,
+        },
+      }),
+    );
+  }
+
+  getCorporateDisqualifiedOfficer(
+    input: import("@workspace/types").CompaniesHouseCorporateOfficerInput,
+  ): Promise<
+    ProviderResult<import("@workspace/types").CompaniesHouseCorporateDisqualifiedOfficer>
+  > {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        name: "Example Corporate Officer",
+        companyNumber: "00000000",
+        countryOfRegistration: "United Kingdom",
+        personNumber: input.officerId,
+        kind: "corporate-disqualification",
+        disqualifications: [],
+        permissionsToAct: [],
+        providerPayload: { name: "Example Corporate Officer", person_number: input.officerId },
+      }),
+    );
+  }
+
+  getNaturalDisqualifiedOfficer(
+    input: import("@workspace/types").CompaniesHouseNaturalOfficerInput,
+  ): Promise<ProviderResult<import("@workspace/types").CompaniesHouseNaturalDisqualifiedOfficer>> {
+    return Promise.resolve(
+      createProviderSuccess(this.provider, {
+        forename: "Example",
+        surname: "Officer",
+        personNumber: input.officerId,
+        kind: "natural-disqualification",
+        disqualifications: [],
+        permissionsToAct: [],
+        providerPayload: {
+          forename: "Example",
+          surname: "Officer",
+          person_number: input.officerId,
+        },
+      }),
+    );
+  }
 }
 
 export class MockCompaniesHouseSearchAdapter implements ProviderAdapter<
