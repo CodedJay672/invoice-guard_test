@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts --watch",
     "format": "prettier --check .",
     "lint": "eslint .",

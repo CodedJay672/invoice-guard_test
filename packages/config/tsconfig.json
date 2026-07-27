@@ -1,7 +1,9 @@
 {
   "extends": "@workspace/typescript-config/node.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false
   },
   "types": ["node"],
   "include": ["package.json", "src/**/*.ts"],
