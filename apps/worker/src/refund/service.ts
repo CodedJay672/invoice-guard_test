@@ -77,7 +77,7 @@ export interface CreditRefundGateway {
 export class StripeCreditRefundGateway implements CreditRefundGateway {
   private readonly stripe: Stripe;
   constructor(secretKey: string) {
-    this.stripe = new Stripe(secretKey, { apiVersion: "2026-02-25.clover" | "2026-06-24.dahlia" });
+    this.stripe = new Stripe(secretKey, { apiVersion: "2026-06-24.dahlia" });
   }
   async create(input: {
     paymentIntentId: string;
