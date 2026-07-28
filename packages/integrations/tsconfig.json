@@ -1,8 +1,11 @@
 {
   "extends": "@workspace/typescript-config/package-build.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "outDir": "dist",
-    "noEmit": false
+    "rootDir": "src",
+    "noEmit": false,
+    "verbatimModuleSyntax": true
   },
   "include": ["package.json", "src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

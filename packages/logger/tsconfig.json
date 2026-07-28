@@ -1,6 +1,7 @@
 {
   "extends": "@workspace/typescript-config/package-build.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "outDir": "dist",
     "rootDir": "src",
     "noEmit": false

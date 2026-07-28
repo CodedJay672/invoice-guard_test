@@ -1,4 +1,4 @@
-import { createProviderSuccess, type ProviderMode, type ProviderResult } from "../provider.js";
+import { createProviderSuccess, type ProviderMode, type ProviderResult } from "@workspace/types";
 
 import type {
   LondonGazetteClient,

@@ -1,4 +1,4 @@
-import type { ProviderMode, ProviderResult } from "../provider.js";
+import type { ProviderMode, ProviderResult } from "@workspace/types";
 
 export interface RegistryTrustClientConfig {
   mode: ProviderMode;

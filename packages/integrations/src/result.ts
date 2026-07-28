@@ -1,4 +1,4 @@
-import type { IntegrationError } from "./errors.js";
+import type { IntegrationError } from "@workspace/types";
 import type { IntegrationResponseMetadata } from "./http.js";
 
 export interface IntegrationSuccess<TData> {

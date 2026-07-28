@@ -3,18 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
-  "types": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "format": "prettier --check .",
     "lint": "eslint .",
-    "test": "npm run typecheck",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@workspace/integrations": "*"
   }
 }

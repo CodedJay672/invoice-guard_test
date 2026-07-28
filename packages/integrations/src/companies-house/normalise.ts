@@ -1,4 +1,8 @@
-import { createProviderFailure, createProviderSuccess, type ProviderResult } from "../provider.js";
+import {
+  createProviderFailure,
+  createProviderSuccess,
+  type ProviderResult,
+} from "@workspace/types";
 
 import type {
   CompaniesHouseChargesFoundation,

@@ -1,5 +1,3 @@
-import { createProviderFailure, type ProviderMode, type ProviderResult } from "../provider.js";
-
 import {
   normaliseCompaniesHouseChargesResponse,
   normaliseCompaniesHouseFilingHistoryResponse,
@@ -13,8 +11,11 @@ import {
   normaliseCompaniesHouseCorporateDisqualifiedOfficerResponse,
   normaliseCompaniesHouseNaturalDisqualifiedOfficerResponse,
 } from "./normalise.js";
+import { createProviderFailure } from "@workspace/types";
 import type {
   CompaniesHouseChargesFoundation,
+  ProviderMode,
+  ProviderResult,
   CompaniesHouseClient,
   CompaniesHouseClientConfig,
   CompaniesHouseCompanyNumberInput,
@@ -34,7 +35,7 @@ import type {
   CompaniesHouseCorporateDisqualifiedOfficer,
   CompaniesHouseNaturalOfficerInput,
   CompaniesHouseNaturalDisqualifiedOfficer,
-} from "../../../types/src/companies-house.js";
+} from "@workspace/types";
 
 const provider = "companies_house";
 
