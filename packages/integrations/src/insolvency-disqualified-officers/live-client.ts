@@ -1,8 +1,4 @@
-import {
-  createProviderFailure,
-  type ProviderMode,
-  type ProviderResult,
-} from "@workspace/types";
+import { createProviderFailure, type ProviderMode, type ProviderResult } from "@workspace/types";
 
 import { normaliseInsolvencyDisqualifiedOfficersResponse } from "./normalise.js";
 import type {

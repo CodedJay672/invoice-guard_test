@@ -72,6 +72,18 @@ export const creditRefundStatusEnum = pgEnum("credit_refund_status", [
   "succeeded",
   "failed",
 ]);
+export const adminAlertStatusEnum = pgEnum("admin_alert_status", [
+  "queued",
+  "sending",
+  "sent",
+  "failed",
+  "resolved",
+]);
+export const maintenanceRunStatusEnum = pgEnum("maintenance_run_status", [
+  "running",
+  "succeeded",
+  "failed",
+]);
 
 export const snapshotSourceContextEnum = pgEnum("snapshot_source_context", [
   "free_preview",
@@ -431,6 +443,10 @@ export const fairPaymentCodeStatuses = pgTable(
     sourceReference: text("source_reference"),
     verifiedAt: timestamp("verified_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
+    sourceVersion: varchar("source_version", { length: 128 }),
+    retrievalStatus: providerStatusEnum("retrieval_status").notNull().default("success"),
+    failureCode: varchar("failure_code", { length: 80 }),
+    failureMessage: text("failure_message"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -491,5 +507,60 @@ export const adminAuditLogs = pgTable(
     adminIndex: index("admin_audit_logs_admin_idx").on(table.adminClerkUserId),
     targetIndex: index("admin_audit_logs_target_idx").on(table.targetType, table.targetId),
     createdAtIndex: index("admin_audit_logs_created_at_idx").on(table.createdAt),
+  }),
+);
+
+export const adminAlerts = pgTable(
+  "admin_alerts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    category: varchar("category", { length: 80 }).notNull(),
+    severity: varchar("severity", { length: 20 }).notNull(),
+    subject: text("subject").notNull(),
+    message: text("message").notNull(),
+    relatedEntityType: varchar("related_entity_type", { length: 80 }),
+    relatedEntityId: varchar("related_entity_id", { length: 128 }),
+    deduplicationKey: varchar("deduplication_key", { length: 200 }).notNull(),
+    status: adminAlertStatusEnum("status").notNull().default("queued"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    failureMessage: text("failure_message"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    deduplicationKeyUnique: uniqueIndex("admin_alerts_deduplication_key_unique").on(
+      table.deduplicationKey,
+    ),
+    statusOccurredIndex: index("admin_alerts_status_occurred_idx").on(
+      table.status,
+      table.occurredAt,
+    ),
+  }),
+);
+
+export const maintenanceRuns = pgTable(
+  "maintenance_runs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    task: varchar("task", { length: 80 }).notNull(),
+    scheduleBoundary: timestamp("schedule_boundary", { withTimezone: true }).notNull(),
+    status: maintenanceRunStatusEnum("status").notNull().default("running"),
+    recordsExamined: integer("records_examined").notNull().default(0),
+    recordsChanged: integer("records_changed").notNull().default(0),
+    safeErrorSummary: text("safe_error_summary"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    taskBoundaryUnique: uniqueIndex("maintenance_runs_task_boundary_unique").on(
+      table.task,
+      table.scheduleBoundary,
+    ),
+    taskStartedIndex: index("maintenance_runs_task_started_idx").on(table.task, table.startedAt),
   }),
 );

@@ -1021,12 +1021,8 @@
           "name": "report_notifications_report_id_purchased_reports_id_fk",
           "tableFrom": "report_notifications",
           "tableTo": "purchased_reports",
-          "columnsFrom": [
-            "report_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["report_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1174,12 +1170,8 @@
           "name": "report_pdf_artifacts_report_id_purchased_reports_id_fk",
           "tableFrom": "report_pdf_artifacts",
           "tableTo": "purchased_reports",
-          "columnsFrom": [
-            "report_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["report_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1454,9 +1446,7 @@
       "compositePrimaryKeys": {
         "stripe_events_id_pk": {
           "name": "stripe_events_id_pk",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "uniqueConstraints": {},
@@ -1469,10 +1459,7 @@
     "public.provider_status": {
       "name": "provider_status",
       "schema": "public",
-      "values": [
-        "success",
-        "failed"
-      ]
+      "values": ["success", "failed"]
     },
     "public.purchased_report_status": {
       "name": "purchased_report_status",
@@ -1490,46 +1477,27 @@
     "public.report_notification_status": {
       "name": "report_notification_status",
       "schema": "public",
-      "values": [
-        "queued",
-        "sending",
-        "sent",
-        "failed"
-      ]
+      "values": ["queued", "sending", "sent", "failed"]
     },
     "public.report_notification_type": {
       "name": "report_notification_type",
       "schema": "public",
-      "values": [
-        "owner_report_ready"
-      ]
+      "values": ["owner_report_ready"]
     },
     "public.report_pdf_status": {
       "name": "report_pdf_status",
       "schema": "public",
-      "values": [
-        "queued",
-        "generating",
-        "ready",
-        "failed"
-      ]
+      "values": ["queued", "generating", "ready", "failed"]
     },
     "public.report_tier": {
       "name": "report_tier",
       "schema": "public",
-      "values": [
-        "basic",
-        "standard",
-        "premium"
-      ]
+      "values": ["basic", "standard", "premium"]
     },
     "public.snapshot_source_context": {
       "name": "snapshot_source_context",
       "schema": "public",
-      "values": [
-        "free_preview",
-        "paid_report"
-      ]
+      "values": ["free_preview", "paid_report"]
     }
   },
   "schemas": {},

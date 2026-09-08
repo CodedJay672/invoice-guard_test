@@ -6,6 +6,8 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "check:source-artifacts": "node scripts/check-source-artifacts.mjs",
+    "launch:preflight": "node scripts/launch-preflight.mjs",
     "format": "prettier --check .",
     "test": "turbo test",
     "typecheck": "turbo typecheck",

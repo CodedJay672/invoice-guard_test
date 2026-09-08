@@ -1,5 +1,44 @@
 # UI Registry
 
+### Admin Operations Dashboard
+
+File: `apps/web/app/(landing)/admin/page.tsx`
+Last updated: 2026-07-28
+
+| Property       | Class                                           |
+| -------------- | ----------------------------------------------- |
+| Background     | inherited `bg-page` and `bg-surface`            |
+| Border         | shared Card border and `border-line` table rows |
+| Border radius  | shared Card primitive                           |
+| Text primary   | `text-content` inherited                        |
+| Text secondary | `text-content-muted`                            |
+| Heading        | `text-3xl font-semibold`                        |
+| Spacing        | `gap-6`, `gap-4`, `px-4 py-10`                  |
+| Status         | shared `Badge variant="outline"`                |
+| Shadow         | shared Card primitive                           |
+
+Pattern notes: Operations pages use a bounded server rendered shell, compact metric cards, and
+responsive record cards. Tables use semantic line and content tokens. Empty collections remain
+visible as factual text rather than disappearing.
+
+### Admin Refund Form
+
+File: `apps/web/components/admin/AdminRefundForm.tsx`
+Last updated: 2026-07-28
+
+| Property       | Class                                       |
+| -------------- | ------------------------------------------- |
+| Background     | inherited Card surface                      |
+| Border         | shared Input and Button primitives          |
+| Border radius  | shared form primitives                      |
+| Text primary   | inherited `text-content`                    |
+| Text secondary | `text-content-muted`                        |
+| Spacing        | shared `FieldGroup` and `Field` composition |
+| Status         | `aria-live="polite"` factual result text    |
+
+Pattern notes: Sensitive admin forms use the shared Field composition, native validation,
+server-side authorization, explicit pending state, and a durable factual result message.
+
 Living record of InvoiceGuard patterns. Match an existing pattern before inventing one, and update this file after every UI feature.
 
 ---
@@ -785,17 +824,17 @@ and future Companies House fields attached to the exact filing that supplied the
 Files: `apps/web/components/company-search/DisqualifiedOfficerResults.tsx`, `apps/web/components/company-search/CompanySearchExperience.tsx`, and the corporate and natural detail pages under `apps/web/app/(landing)/disqualified-officers/`
 Last updated: 2026-07-16
 
-| Property | Class or pattern |
-| --- | --- |
-| Background | page `bg-page`; cards `bg-surface` |
-| Border | `border-line`; selected tab and link accent `border-brand-teal` |
-| Border radius | result cards `rounded-lg`; variation rows `rounded-md` |
-| Text, primary | headings `text-brand-navy`; facts `text-content` |
-| Text, secondary | labels, counts, and snippets `text-content-muted` |
-| Spacing | result stack `space-y-4`; cards `p-5`; detail sections `space-y-6` |
-| Interactive states | navy selected subtype, teal primary tab, and semantic focus rings |
-| Shadow | result cards `shadow-sm` |
-| Accent usage | teal identifies links and selection, never severity |
+| Property           | Class or pattern                                                   |
+| ------------------ | ------------------------------------------------------------------ |
+| Background         | page `bg-page`; cards `bg-surface`                                 |
+| Border             | `border-line`; selected tab and link accent `border-brand-teal`    |
+| Border radius      | result cards `rounded-lg`; variation rows `rounded-md`             |
+| Text, primary      | headings `text-brand-navy`; facts `text-content`                   |
+| Text, secondary    | labels, counts, and snippets `text-content-muted`                  |
+| Spacing            | result stack `space-y-4`; cards `p-5`; detail sections `space-y-6` |
+| Interactive states | navy selected subtype, teal primary tab, and semantic focus rings  |
+| Shadow             | result cards `shadow-sm`                                           |
+| Accent usage       | teal identifies links and selection, never severity                |
 
 **Pattern notes:** Main search type, disqualification subtype, and page are shareable URL state. The compact Corporate and People selector sits below the primary tabs and resets pagination on change. Only the selected subtype loads. Both detail types keep disqualifications, variations, permissions, and complete provider metadata separate.
 

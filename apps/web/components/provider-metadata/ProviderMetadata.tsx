@@ -18,8 +18,7 @@ function isSafeUrl(value: string): boolean {
     const url = new URL(value);
     return (
       url.protocol === "https:" &&
-      (url.hostname === "companieshouse.gov.uk" ||
-        url.hostname.endsWith(".companieshouse.gov.uk"))
+      (url.hostname === "companieshouse.gov.uk" || url.hostname.endsWith(".companieshouse.gov.uk"))
     );
   } catch {
     return false;

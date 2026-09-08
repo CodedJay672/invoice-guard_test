@@ -3,7 +3,6 @@ type PublicSearchShellProps = {
 };
 
 export function PublicSearchShell({ children }: PublicSearchShellProps) {
-
   return (
     <div className="min-h-svh bg-page">
       {children}

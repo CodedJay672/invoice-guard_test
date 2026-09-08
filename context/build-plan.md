@@ -26,12 +26,12 @@ No `B` unit may start until its paired `A` unit has:
 
 Allowed verification methods:
 
-| Method | Use |
-| --- | --- |
-| Figma comparison | Layout, hierarchy, spacing, typography, component and responsive intent where Phase A designs exist. |
+| Method                   | Use                                                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Figma comparison         | Layout, hierarchy, spacing, typography, component and responsive intent where Phase A designs exist.        |
 | Physical browser testing | Interaction, responsive behavior, loading/error transitions, focus, forms, dialogs, tables, and navigation. |
-| Document/PDF inspection | Report pagination, print hierarchy, disclaimer placement, identifiers, and source status. |
-| Operational mock testing | Admin/maintenance/job states that need fixtures rather than a public design. |
+| Document/PDF inspection  | Report pagination, print hierarchy, disclaimer placement, identifiers, and source status.                   |
+| Operational mock testing | Admin/maintenance/job states that need fixtures rather than a public design.                                |
 
 Agent-run physical browser testing and user manual QA are encouraged but non-blocking. Their absence
 does not prevent `UI/Mock Verified` status when the complete state matrix, accessibility contracts,
@@ -332,11 +332,16 @@ until approved compliance copy and R2 deployment configuration are supplied.
 
 ### 19A — UI/Mock: Fair Payment Code States
 
+Status: **State presentation implemented; official source verification remains a launch gate.**
+
 - Present, absent, stale, refreshing, and source-failed paid-report states.
 
 Verification: automated report/admin state coverage and factual copy review; user manual QA is non-blocking.
 
 ### 19B — Logic/Data: Fair Payment Code Refresh
+
+Status: **Operational persistence and maintenance task implemented. Source transport remains blocked
+until a permitted official source is confirmed.**
 
 Depends on: **19A — UI/Mock Verified**.
 
@@ -351,6 +356,8 @@ owns only verified refresh/import automation, freshness operations, and maintena
 
 ### 20A — UI/Mock: Admin Dashboard
 
+Status: **Operations dashboard foundation implemented 2026-07-28.**
+
 - Reports, payments, provider failures, search activity, revenue, conversion, and transaction-gate views.
 - Filters, pagination, detail panels, loading, empty, degraded, unauthorized, and alert states.
 - Responsive table alternatives.
@@ -358,6 +365,9 @@ owns only verified refresh/import automation, freshness operations, and maintena
 Verification: automated role/state/table coverage and relevant Figma admin comparison if available; user manual QA is non-blocking.
 
 ### 20B — Logic/Data: Admin Authorization, Queries, and Alerts
+
+Status: **Verified email admin authorization, bounded queries, durable alerts, and Postmark delivery
+implemented 2026-07-28.**
 
 Depends on: **20A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
@@ -368,11 +378,17 @@ Depends on: **20A — UI/Mock Verified** and **AUTH-B — Logic/Data complete**.
 
 ### 21A — UI/Mock: Refund Workflow
 
+Status: **Authorized unused credit refund form and operational status history implemented
+2026-07-28.**
+
 - Full/partial refund, required reason, confirmation, processing, success, failure, duplicate/already-refunded, and audit-history states.
 
 Verification: automated dialog/focus/destructive-action contract tests with mock reports; user manual QA is non-blocking.
 
 ### 21B — Logic/Data: Stripe Refunds and Audit Logs
+
+Status: **Logic and data complete. Existing idempotent Stripe, ledger, webhook, and audit
+implementation was retained and exposed through admin operations.**
 
 Depends on: **21A — UI/Mock Verified**.
 
@@ -386,12 +402,18 @@ Depends on: **21A — UI/Mock Verified**.
 
 ### 22A — UI/Mock: Maintenance and Reliability Visibility
 
+Status: **Admin maintenance and alert visibility implemented 2026-07-28.**
+
 - Admin fixtures for stuck reports, anonymisation runs, scheduled-job health, alert delivery, and maintenance failures.
 - Define physical time-boundary test cases before scheduling jobs.
 
 Verification: operational mock testing. Figma is optional unless matching admin designs exist.
 
 ### 22B — Logic/Data: Retention and Reliability Jobs
+
+Status: **UTC idempotent maintenance processing, scheduling, stuck report alerts, search
+anonymisation, and reconciliation implemented 2026-07-28. Fair Payment Code retrieval remains
+externally gated.**
 
 Depends on: **22A — UI/Mock Verified**.
 

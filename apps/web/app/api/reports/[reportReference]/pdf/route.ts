@@ -25,10 +25,7 @@ async function proxyDownload(context: PdfRouteContext) {
     return NextResponse.json({ error: { code: "invalid_report_reference" } }, { status: 400 });
   const headers = new Headers({ Accept: "application/json" });
   addTrustedPrincipalHeaders(headers, identity);
-  const target = new URL(
-    `/reports/${encodeURIComponent(parsed.data)}/pdf`,
-    config.apiBaseUrl,
-  );
+  const target = new URL(`/reports/${encodeURIComponent(parsed.data)}/pdf`, config.apiBaseUrl);
   const response = await fetch(target, {
     method: "GET",
     headers,

@@ -7,7 +7,7 @@ export default function LandingPageLayout({ children }: { children: ReactNode })
   return (
     <main className="min-h-svh bg-page text-content">
       <Topbar />
-      <div className="p-2 bg-surface">{children}</div>
+      <div className="bg-surface p-2">{children}</div>
       <Footer />
     </main>
   );

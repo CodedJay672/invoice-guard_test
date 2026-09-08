@@ -11,11 +11,13 @@ import {
 import { createLogger } from "@workspace/logger";
 import {
   createQueue,
+  QUEUE_JOB_NAMES,
   QUEUE_NAMES,
   type SendAdminAlertJobData,
   type GenerateReportPdfJobData,
   type SendOwnerReportNotificationJobData,
   type ProcessCreditRefundJobData,
+  type MaintenanceJobData,
 } from "@workspace/queues";
 
 import { AnthropicAiInterpretationClient } from "./ai-interpretation/client.js";
@@ -41,6 +43,11 @@ import { createOwnerReportNotificationWorker } from "./report-notification/worke
 import { CreditRefundPublisher } from "./refund/publisher.js";
 import { CreditRefundService, StripeCreditRefundGateway } from "./refund/service.js";
 import { createCreditRefundWorker } from "./refund/worker.js";
+import { AdminAlertService } from "./admin-alert/service.js";
+import { createAdminAlertWorker } from "./admin-alert/worker.js";
+import { schema } from "@workspace/db";
+import { MaintenanceService } from "./maintenance/service.js";
+import { createMaintenanceWorker } from "./maintenance/worker.js";
 
 const config = loadAppConfig();
 assertWorkerProductionConfig(config);
@@ -98,15 +105,28 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
     }),
     alerts: {
       async publish(input): Promise<void> {
-        await alertQueue.add("paid-report-provider-alert", {
-          subject: `Paid report ${input.outcome}`,
-          message: JSON.stringify({
-            reportReference: input.reportReference,
-            outcome: input.outcome,
-            failures: input.failures,
-          }),
-          reportId: input.reportId,
-        });
+        const deduplicationKey = `paid-report:${input.reportId}:${input.outcome}`;
+        const inserted = await db
+          .insert(schema.adminAlerts)
+          .values({
+            category: "paid_report",
+            severity: input.outcome === "refund_required" ? "critical" : "important",
+            subject: `Paid report ${input.outcome}`,
+            message: JSON.stringify({
+              reportReference: input.reportReference,
+              outcome: input.outcome,
+              failures: input.failures,
+            }),
+            relatedEntityType: "report",
+            relatedEntityId: input.reportId,
+            deduplicationKey,
+          })
+          .onConflictDoNothing()
+          .returning({ id: schema.adminAlerts.id });
+        const alertId = inserted[0]?.id;
+        if (alertId) {
+          await alertQueue.add(QUEUE_JOB_NAMES.sendAdminAlert, { alertId }, { jobId: alertId });
+        }
       },
     },
     logger,
@@ -116,6 +136,10 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
     connectionString: config.redisUrl,
   });
   const refundPublisher = new CreditRefundPublisher(db, refundQueue);
+  const maintenanceQueue = createQueue<MaintenanceJobData, void, string>({
+    name: QUEUE_NAMES.maintenance,
+    connectionString: config.redisUrl,
+  });
   const service = new ReportGenerationService(
     new DrizzleReportGenerationRepository(db),
     handler,
@@ -125,6 +149,39 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
     refundPublisher,
   );
   createReportGenerationWorker({ connectionString: config.redisUrl, service, logger });
+  createMaintenanceWorker(
+    config.redisUrl,
+    new MaintenanceService(db, {
+      stuckAfterMs: config.reportGenerationStuckAfterMs,
+      publishAlert: async (alertId) => {
+        await alertQueue.add(QUEUE_JOB_NAMES.sendAdminAlert, { alertId }, { jobId: alertId });
+      },
+      reconcileNotifications: () => notificationPublisher.reconcileQueued(),
+      reconcilePdfs: () => pdfPublisher?.reconcileQueued() ?? Promise.resolve(0),
+      reconcileRefunds: async () => {
+        await refundPublisher.reconcile();
+        return 0;
+      },
+    }),
+  );
+  for (const task of [
+    "detect_stuck_reports",
+    "reconcile_notifications",
+    "reconcile_pdfs",
+    "reconcile_refunds",
+    "check_scheduler_health",
+  ] as const) {
+    await maintenanceQueue.add(
+      QUEUE_JOB_NAMES.runMaintenance,
+      { version: 1, task, scheduleBoundary: "scheduled" },
+      { jobId: `maintenance:${task}`, repeat: { pattern: "0 * * * *" } },
+    );
+  }
+  await maintenanceQueue.add(
+    QUEUE_JOB_NAMES.runMaintenance,
+    { version: 1, task: "anonymise_old_search_logs", scheduleBoundary: "scheduled" },
+    { jobId: "maintenance:anonymise_old_search_logs", repeat: { pattern: "15 2 * * *" } },
+  );
   if (config.stripeSecretKey) {
     createCreditRefundWorker({
       connectionString: config.redisUrl,
@@ -194,6 +251,17 @@ if (config.databaseUrl && config.redisUrl && config.anthropicApiKey) {
       service: notificationService,
       logger,
     });
+    if (config.adminAlertEmail) {
+      createAdminAlertWorker(
+        config.redisUrl,
+        new AdminAlertService(db, {
+          apiKey: config.postmarkApiKey,
+          from: config.postmarkFromEmail,
+          to: config.adminAlertEmail,
+          messageStream: config.postmarkMessageStream,
+        }),
+      );
+    }
   } else {
     logger.info("Owner notification consumer is idle until Clerk and Postmark are configured");
   }

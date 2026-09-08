@@ -6,6 +6,7 @@ import { registerCompanyRoutes } from "./companies/routes.js";
 import { registerCheckoutRoutes, registerStripeWebhookRoute } from "./checkout/routes.js";
 import { createApiDependencies, type ApiDependencies } from "./dependencies.js";
 import { registerReportDeliveryRoutes } from "./report-delivery/routes.js";
+import { registerAdminRoutes } from "./admin/routes.js";
 
 const config = loadAppConfig();
 const logger = createLogger({
@@ -48,6 +49,14 @@ export function createApiApp(
       dependencies.reportDeliveryService,
       dependencies.requestIdentityResolver,
       dependencies.pdfAccessService,
+    );
+  }
+  if (dependencies.adminRepository && dependencies.adminEmail) {
+    registerAdminRoutes(
+      app,
+      dependencies.adminRepository,
+      dependencies.requestIdentityResolver,
+      dependencies.adminEmail,
     );
   }
 

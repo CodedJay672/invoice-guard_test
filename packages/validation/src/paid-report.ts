@@ -33,21 +33,21 @@ export type PaidReportEntitlements = z.infer<typeof paidReportEntitlementsSchema
 export type PaidReportTier = ReportProductCode;
 
 const fullReportEntitlements: PaidReportEntitlements = {
-    companiesHouse: {
-      profile: true,
-      addressHistory: true,
-      officers: true,
-      filingHistory: true,
-      charges: true,
-      insolvency: true,
-    },
-    registryTrust: { enabled: true, includeAmounts: true, includeSatisfaction: true },
-    londonGazette: true,
-    insolvencyDisqualifiedOfficers: true,
-    fairPaymentCode: true,
-    evidenceCoverage: true,
-    relatedCompanies: false,
-    aiInterpretation: true,
+  companiesHouse: {
+    profile: true,
+    addressHistory: true,
+    officers: true,
+    filingHistory: true,
+    charges: true,
+    insolvency: true,
+  },
+  registryTrust: { enabled: true, includeAmounts: true, includeSatisfaction: true },
+  londonGazette: true,
+  insolvencyDisqualifiedOfficers: true,
+  fairPaymentCode: true,
+  evidenceCoverage: true,
+  relatedCompanies: false,
+  aiInterpretation: true,
 };
 
 export const CANONICAL_PAID_REPORT_ENTITLEMENTS: Record<PaidReportTier, PaidReportEntitlements> = {

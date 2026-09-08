@@ -39,6 +39,20 @@ void test("credit redemption and refund migration backfills purchases and protec
   assert.match(migration, /credit_refund_requests_report_unique/);
 });
 
+void test("launch operations migration persists alerts, maintenance, and Fair Payment Code health", async () => {
+  const migration = await readFile(
+    new URL("../../drizzle/0010_mean_talkback.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(migration, /CREATE TABLE "admin_alerts"/);
+  assert.match(migration, /admin_alerts_deduplication_key_unique/);
+  assert.match(migration, /CREATE TABLE "maintenance_runs"/);
+  assert.match(migration, /maintenance_runs_task_boundary_unique/);
+  assert.match(migration, /"source_version"/);
+  assert.match(migration, /"retrieval_status"/);
+});
+
 void test("credit-pack migration stores durable balances and an append-only audit ledger", async () => {
   assert.equal("availableCredits" in creditAccounts, true);
   assert.equal("creditDelta" in creditLedgerEntries, true);

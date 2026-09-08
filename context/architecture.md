@@ -2,22 +2,22 @@
 
 ## Stack
 
-| Layer | Tool | State |
-| --- | --- | --- |
-| Monorepo | npm workspaces + Turborepo | Implemented |
-| Web | Next.js 16.2.6 App Router + React 19 | Implemented |
-| API | Node.js + Express 5 | Partially implemented |
-| Worker | Node.js + BullMQ | Queue contracts implemented |
-| Language | TypeScript 5.9 strict | Implemented |
-| Database | PostgreSQL + Drizzle ORM | Schema implemented |
-| Redis | ioredis | Rate-limit and queue foundation implemented |
-| Auth | Clerk | Planned |
-| Payments | Stripe | Planned |
-| Email | Postmark | Planned |
-| UI | Tailwind CSS 4 + shadcn/ui/Radix | Foundation implemented |
-| Logging/validation | Pino + Zod | Implemented |
-| PDF/storage | Playwright Chromium + private Cloudflare R2 | Implemented; production copy/config gated |
-| AI report interpreter | Anthropic `claude-haiku-4-5-20251001`, `max_tokens: 1500` | Phase A planned |
+| Layer                 | Tool                                                      | State                                       |
+| --------------------- | --------------------------------------------------------- | ------------------------------------------- |
+| Monorepo              | npm workspaces + Turborepo                                | Implemented                                 |
+| Web                   | Next.js 16.2.6 App Router + React 19                      | Implemented                                 |
+| API                   | Node.js + Express 5                                       | Partially implemented                       |
+| Worker                | Node.js + BullMQ                                          | Queue contracts implemented                 |
+| Language              | TypeScript 5.9 strict                                     | Implemented                                 |
+| Database              | PostgreSQL + Drizzle ORM                                  | Schema implemented                          |
+| Redis                 | ioredis                                                   | Rate-limit and queue foundation implemented |
+| Auth                  | Clerk                                                     | Implemented                                 |
+| Payments              | Stripe                                                    | Implemented; production launch gated        |
+| Email                 | Postmark                                                  | Owner and admin alert delivery implemented  |
+| UI                    | Tailwind CSS 4 + shadcn/ui/Radix                          | Foundation implemented                      |
+| Logging/validation    | Pino + Zod                                                | Implemented                                 |
+| PDF/storage           | Playwright Chromium + private Cloudflare R2               | Implemented; production copy/config gated   |
+| AI report interpreter | Anthropic `claude-haiku-4-5-20251001`, `max_tokens: 1500` | Implemented; production launch gated        |
 
 ---
 
@@ -62,16 +62,16 @@ presented as a clean result.
 Fresh visitor responses expose non-empty technical metadata in a collapsed provider disclosure;
 credentials, request headers, and InvoiceGuard configuration never enter provider payloads.
 
-| Area | Owns | Must not own |
-| --- | --- | --- |
-| `apps/web` | Presentation, interaction state, Server Component reads through server-only DAL helpers, Server Actions for mutations, thin Express proxies | Providers, payment confirmation, report creation, durable business rules |
-| `apps/api` | HTTP validation, auth/admin checks, Stripe webhooks, service orchestration | Long-running jobs or UI |
-| `apps/web/actions` | Next.js Server Actions for mutations and retry commands that need owner context |
-| `apps/web/lib/data` | Server-only Next.js DAL. Server Components read through these helpers; inline component fetches are avoided |
-| `apps/worker` | Report/PDF/email/alert/maintenance jobs | Public HTTP or UI |
-| `packages/integrations` | External transport, normalization, provider results | Product entitlement or UI |
-| `packages/db` | Schema, migrations, typed persistence | HTTP/presentation logic |
-| `packages/ui` | Shared primitives and tokens | InvoiceGuard business logic |
+| Area                    | Owns                                                                                                                                        | Must not own                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `apps/web`              | Presentation, interaction state, Server Component reads through server-only DAL helpers, Server Actions for mutations, thin Express proxies | Providers, payment confirmation, report creation, durable business rules |
+| `apps/api`              | HTTP validation, auth/admin checks, Stripe webhooks, service orchestration                                                                  | Long-running jobs or UI                                                  |
+| `apps/web/actions`      | Next.js Server Actions for mutations and retry commands that need owner context                                                             |
+| `apps/web/lib/data`     | Server-only Next.js DAL. Server Components read through these helpers; inline component fetches are avoided                                 |
+| `apps/worker`           | Report/PDF/email/alert/maintenance jobs                                                                                                     | Public HTTP or UI                                                        |
+| `packages/integrations` | External transport, normalization, provider results                                                                                         | Product entitlement or UI                                                |
+| `packages/db`           | Schema, migrations, typed persistence                                                                                                       | HTTP/presentation logic                                                  |
+| `packages/ui`           | Shared primitives and tokens                                                                                                                | InvoiceGuard business logic                                              |
 
 Routes and processors stay thin. Services own business rules; repositories own persistence.
 
@@ -190,13 +190,13 @@ Do not add future-phase tables before their gate opens.
 
 ## Queues
 
-| Queue | Payload/Purpose |
-| --- | --- |
-| `report-generation-queue` | `{ reportId }` paid generation |
-| `pdf-generation-queue` | `{ reportId }` PDF generation |
-| `email-queue` | `{ reportId }` authenticated-owner report-ready notification |
-| `provider-alert-queue` | operational alerts |
-| `maintenance-queue` | expiry, anonymisation, stuck reports, Fair Payment Code |
+| Queue                     | Payload/Purpose                                              |
+| ------------------------- | ------------------------------------------------------------ |
+| `report-generation-queue` | `{ reportId }` paid generation                               |
+| `pdf-generation-queue`    | `{ reportId }` PDF generation                                |
+| `email-queue`             | `{ reportId }` authenticated-owner report-ready notification |
+| `provider-alert-queue`    | operational alerts                                           |
+| `maintenance-queue`       | expiry, anonymisation, stuck reports, Fair Payment Code      |
 
 Defaults are three attempts with exponential backoff. Side effects still require domain-level idempotency.
 

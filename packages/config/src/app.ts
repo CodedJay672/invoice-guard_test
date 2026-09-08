@@ -49,6 +49,7 @@ const appConfigSchema = z.object({
     .positive()
     .default(15 * 60 * 1000),
   ENABLE_FLAG_SUMMARY: z.string().optional(),
+  PAID_LAUNCH_APPROVED: z.string().optional(),
   R2_ENDPOINT: z.string().url().optional(),
   R2_BUCKET: z.string().min(1).optional(),
   R2_ACCESS_KEY_ID: z.string().min(1).optional(),
@@ -87,6 +88,7 @@ export interface AppConfig {
   registryTrustProviderMode: "mock" | "live";
   reportGenerationStuckAfterMs: number;
   enableFlagSummary: boolean;
+  paidLaunchApproved: boolean;
   r2Endpoint: string | undefined;
   r2Bucket: string | undefined;
   r2AccessKeyId: string | undefined;
@@ -129,6 +131,7 @@ export function loadAppConfig(env: Record<string, string | undefined> = process.
     registryTrustProviderMode: parsed.REGISTRY_TRUST_PROVIDER_MODE,
     reportGenerationStuckAfterMs: parsed.REPORT_GENERATION_STUCK_AFTER_MS,
     enableFlagSummary: readBooleanFlag(parsed.ENABLE_FLAG_SUMMARY, false),
+    paidLaunchApproved: readBooleanFlag(parsed.PAID_LAUNCH_APPROVED, false),
     r2Endpoint: parsed.R2_ENDPOINT,
     r2Bucket: parsed.R2_BUCKET,
     r2AccessKeyId: parsed.R2_ACCESS_KEY_ID,
@@ -193,7 +196,7 @@ export function assertWorkerProductionConfig(config: AppConfig): void {
     throw new Error(`Missing production worker configuration: ${missing.join(", ")}.`);
   }
 
-  if (config.registryTrustProviderMode !== "live") {
+  if (config.paidLaunchApproved && config.registryTrustProviderMode !== "live") {
     throw new Error("Production worker requires Registry Trust live mode.");
   }
 }
