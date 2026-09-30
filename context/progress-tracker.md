@@ -1,5 +1,21 @@
 # Progress Tracker
 
+## 2026-07-28 — Phase A Launch Remediation
+
+- Restored the documented five-request anonymous allowance shared across company,
+  disqualification, and free-tab requests.
+- Removed generated build artifacts from the shared types source tree, added source-artifact
+  detection, formatted the tracked repository, and added the general pull-request quality workflow.
+- Added durable admin alerts and maintenance runs, protected admin overview and collection APIs,
+  the Clerk-authorized `/admin` operations dashboard, Postmark admin-alert consumption, and
+  idempotent UTC maintenance processing for search anonymisation, stuck reports, reconciliation,
+  and scheduler health.
+- Added the launch preflight command and production paid-checkout gate. Paid production remains
+  blocked until the verified Registry Trust contract, permitted official Fair Payment Code source,
+  compliance approvals, credentials, backup drill, alert routing, and branch protection are confirmed.
+- Generated migration `0010_mean_talkback.sql` for the operational tables and Fair Payment Code
+  retrieval metadata.
+
 ## 2026-07-14 — Clerk Pending-Session Redirect Loop Fix
 
 - Changed the shared server identity resolver to recognize Clerk v7 pending sessions as authenticated
@@ -73,13 +89,15 @@ Update after every completed feature. Record actual state only.
 
 **Product phase:** Phase A — Company Search and Paid Reports
 
-**Build-plan phase:** 19A - Fair Payment Code States
+**Build-plan phase:** Phase A launch remediation
 
-**Last completed:** 12D - Logic/Data: Companies House Tab Data
+**Last completed:** Launch remediation baseline and operations foundation
 
-**Next:** 19A - UI/Mock: Fair Payment Code States
+**Next:** Verify the permitted official Fair Payment Code source and Registry Trust contract
 
-**Status:** 12D is implemented. Production free company tabs now read live Companies House data through typed API routes, same-origin Next.js proxies, server-only DAL helpers, and the design-matched 12C workspace presentation. CCJs, Fair Payment Code, and AI Summary remain paid placeholders with no free-tab provider calls.
+**Status:** Core public, purchase, report, notification, PDF, refund, admin, alert, and maintenance
+foundations are implemented. Paid production remains deliberately disabled behind launch preflight
+until external provider contracts and compliance approvals are verified.
 
 **Latest refinement:** 2026-07-10 design update: public company tabs now follow the supplied tab
 designs, surface design-visible Companies House fields when returned, and show blurred paid
@@ -146,7 +164,8 @@ InvoiceGuard interpretation placeholders without generating or exposing AI concl
 
 - Next.js 16 web, Express 5 API, worker, and shared workspace packages.
 - Eight-table Phase A Drizzle schema and forward-only context-compliance migration.
-- Typed BullMQ foundation; processors not implemented.
+- Typed BullMQ processors cover report generation, PDF, notification, refund, admin alert, and
+  maintenance work.
 - Mock/live-shaped Companies House, London Gazette, and insolvency/disqualified-officer adapters.
 - Search/profile/free-preview API, atomic Redis/in-memory rate limiting, signed proxy identity, and HMAC-hashed search logs.
 - Server-authoritative one-off credit-pack report products and Companies House-only preview with explicit not-yet-checked paid sources.

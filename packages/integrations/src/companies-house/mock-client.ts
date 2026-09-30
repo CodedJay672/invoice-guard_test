@@ -3,7 +3,7 @@ import {
   type ProviderAdapter,
   type ProviderMode,
   type ProviderResult,
-} from "../provider.js";
+} from "@workspace/types";
 
 import type {
   CompaniesHouseChargesFoundation,
@@ -19,7 +19,7 @@ import type {
   CompaniesHouseRegisteredOfficeAddress,
   CompaniesHouseSearchInput,
   CompaniesHouseSearchResult,
-} from "../../../types/src/companies-house.js";
+} from "@workspace/types";
 
 const mockCompanies: CompaniesHouseCompanyProfile[] = [
   {

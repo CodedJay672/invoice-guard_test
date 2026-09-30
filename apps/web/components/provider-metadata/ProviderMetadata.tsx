@@ -16,7 +16,10 @@ function label(value: string): string {
 function isSafeUrl(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && url.hostname.endsWith("companieshouse.gov.uk");
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "companieshouse.gov.uk" || url.hostname.endsWith(".companieshouse.gov.uk"))
+    );
   } catch {
     return false;
   }

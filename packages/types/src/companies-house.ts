@@ -1,4 +1,4 @@
-import type { ProviderMode, ProviderResult } from "@workspace/integrations";
+import type { ProviderMode, ProviderResult } from "./provider.js";
 import type { ProviderPayload } from "./company.js";
 
 export interface CompaniesHouseClientConfig {

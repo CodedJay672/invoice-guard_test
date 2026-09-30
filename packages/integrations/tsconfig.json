@@ -1,8 +1,12 @@
 {
   "extends": "@workspace/typescript-config/package-build.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false,
+    "verbatimModuleSyntax": true
   },
-  "include": ["package.json", "src/**/*.ts", "../types/src/companies-house.ts"],
+  "include": ["package.json", "src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

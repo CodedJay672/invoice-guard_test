@@ -1,7 +1,14 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card";
 import { FreePreviewPayload } from "@workspace/validation";
 import { ArrowRight } from "lucide-react";
 
@@ -14,13 +21,15 @@ function TierCard({ tier, ready }: TierCardProps) {
   return (
     <Card
       size="sm"
-      className="py-5 px-6 bg-linear-to-tr from-brand-navy from-0% to-brand-navy-hover to-100% flex items-center justify-between gap-4 flex-wrap"
+      className="flex flex-wrap items-center justify-between gap-4 bg-linear-to-tr from-brand-navy from-0% to-brand-navy-hover to-100% px-6 py-5"
     >
       <CardHeader>
         <CardTitle>
-          <h2 className="text-base font-extrabold text-content-inverse mb-px">{tier.name}</h2>
+          <h2 className="mb-px text-base font-extrabold text-content-inverse">{tier.name}</h2>
         </CardTitle>
-        <CardDescription className="text-xs text-content-subtle">One-off company report</CardDescription>
+        <CardDescription className="text-xs text-content-subtle">
+          One-off company report
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="text-2xl font-semibold text-content">{tier.price}</p>

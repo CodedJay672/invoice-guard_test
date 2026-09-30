@@ -3,16 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
     "format": "prettier --check .",
     "lint": "eslint .",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workspace/types": "*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1"

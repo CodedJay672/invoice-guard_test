@@ -10,20 +10,46 @@ export default async function Topbar() {
   const identity = await resolveAuthIdentity();
 
   return (
-    <header className="w-full h-17 sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
-      <div className="size-full mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 h-17 w-full border-b border-line bg-surface/95 backdrop-blur">
+      <div className="mx-auto flex size-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex max-sm:w-54 h-11 shrink-0 items-center gap-2 text-lg font-bold text-brand-navy focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none overflow-hidden"
+          className="flex h-11 shrink-0 items-center gap-2 overflow-hidden text-lg font-bold text-brand-navy focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none max-sm:w-54"
         >
-          <Image src="/dark-logo.png" alt="invoice-guard" width={140} height={30} className="content-center" />
+          <Image
+            src="/dark-logo.png"
+            alt="invoice-guard"
+            width={140}
+            height={30}
+            className="content-center"
+          />
         </Link>
 
-        <nav className="hidden md:flex items-center justify-center gap-16 text-sm font-medium">
-          <Link href="#what-we-check" className="text-sm font-medium leading-[22.4px] text-muted-foreground hover:text-foreground transition-colors ease-in-out">What we check</Link>
-          <Link href="#how-it-works" className="text-sm font-medium leading-[22.4px] text-muted-foreground hover:text-foreground transition-colors ease-in-out">How it works</Link>
-          <Link href="#pricing" className="text-sm font-medium leading-[22.4px] text-muted-foreground hover:text-foreground transition-colors ease-in-out">Pricing</Link>
-          <Link href="#faq" className="text-sm font-medium leading-[22.4px] text-muted-foreground hover:text-foreground transition-colors ease-in-out">FAQ</Link>
+        <nav className="hidden items-center justify-center gap-16 text-sm font-medium md:flex">
+          <Link
+            href="#what-we-check"
+            className="text-sm leading-[22.4px] font-medium text-muted-foreground transition-colors ease-in-out hover:text-foreground"
+          >
+            What we check
+          </Link>
+          <Link
+            href="#how-it-works"
+            className="text-sm leading-[22.4px] font-medium text-muted-foreground transition-colors ease-in-out hover:text-foreground"
+          >
+            How it works
+          </Link>
+          <Link
+            href="#pricing"
+            className="text-sm leading-[22.4px] font-medium text-muted-foreground transition-colors ease-in-out hover:text-foreground"
+          >
+            Pricing
+          </Link>
+          <Link
+            href="#faq"
+            className="text-sm leading-[22.4px] font-medium text-muted-foreground transition-colors ease-in-out hover:text-foreground"
+          >
+            FAQ
+          </Link>
         </nav>
 
         <div aria-label="Primary navigation" className="flex items-center gap-2">
@@ -36,7 +62,7 @@ export default async function Topbar() {
           )}
           <Link
             href="/search"
-            className="flex items-center px-4.5 py-2.25 text-sm font-medium bg-brand-navy hover:bg-brand-navy-hover text-content-inverse rounded-full focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
+            className="flex items-center rounded-full bg-brand-navy px-4.5 py-2.25 text-sm font-medium text-content-inverse hover:bg-brand-navy-hover focus-visible:ring-2 focus-visible:ring-focus focus-visible:outline-none"
           >
             <SearchIcon className="sm:hidden" />
             Search company

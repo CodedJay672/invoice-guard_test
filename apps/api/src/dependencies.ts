@@ -37,6 +37,7 @@ import {
   DrizzleReportProductRepository,
   InMemoryReportProductRepository,
 } from "./report-products/repository.js";
+import { AdminRepository } from "./admin/repository.js";
 
 function isPdfComplianceResolved(config: AppConfig): boolean {
   if (config.environment === "production") return false;
@@ -52,6 +53,8 @@ export interface ApiDependencies {
   checkoutService?: CheckoutService | undefined;
   reportDeliveryService?: ReportDeliveryService | undefined;
   pdfAccessService?: PdfAccessService | undefined;
+  adminRepository?: AdminRepository | undefined;
+  adminEmail?: string | undefined;
 }
 
 export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiDependencies {
@@ -78,7 +81,10 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
       cache: createCompanyTabCache(config),
     });
     const checkoutService =
-      config.redisUrl && config.stripeSecretKey && config.stripeWebhookSecret
+      (config.environment !== "production" || config.paidLaunchApproved) &&
+      config.redisUrl &&
+      config.stripeSecretKey &&
+      config.stripeWebhookSecret
         ? createCheckoutService(config, db, companyService, reportProductRepository)
         : undefined;
 
@@ -114,6 +120,8 @@ export function createApiDependencies(config: AppConfig = loadAppConfig()): ApiD
       checkoutService,
       reportDeliveryService: new ReportDeliveryService(new DrizzleReportDeliveryRepository(db)),
       pdfAccessService,
+      adminRepository: config.adminEmail ? new AdminRepository(db) : undefined,
+      adminEmail: config.adminEmail,
     };
   }
 

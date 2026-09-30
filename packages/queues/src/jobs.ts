@@ -12,6 +12,8 @@ export const QUEUE_JOB_NAMES = {
   generateReportPdf: "generate-report-pdf",
   sendOwnerReportReady: "send-owner-report-ready",
   processCreditRefund: "process-credit-refund",
+  sendAdminAlert: "send-admin-alert",
+  runMaintenance: "run-maintenance",
 } as const;
 
 export interface GenerateReportPdfJobData extends Record<string, unknown> {
@@ -26,14 +28,20 @@ export interface ProcessCreditRefundJobData extends Record<string, unknown> {
 }
 
 export interface SendAdminAlertJobData extends Record<string, unknown> {
-  subject: string;
-  message: string;
-  reportId?: string;
-  provider?: string;
+  alertId: string;
 }
 
-export interface MaintenanceJobData {
-  task: "detect_stuck_reports" | "anonymise_old_search_logs" | "scrape_fair_payment_code";
+export interface MaintenanceJobData extends Record<string, unknown> {
+  version: 1;
+  task:
+    | "detect_stuck_reports"
+    | "anonymise_old_search_logs"
+    | "refresh_fair_payment_code"
+    | "reconcile_notifications"
+    | "reconcile_pdfs"
+    | "reconcile_refunds"
+    | "check_scheduler_health";
+  scheduleBoundary: string;
 }
 
 export type QueueJobPayloadByName = {

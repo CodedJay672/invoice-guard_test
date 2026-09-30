@@ -1,4 +1,4 @@
-import { createProviderSuccess, type ProviderResult } from "../provider.js";
+import { createProviderSuccess, type ProviderResult } from "@workspace/types";
 import type {
   RegistryTrustClient,
   RegistryTrustCompanyResult,

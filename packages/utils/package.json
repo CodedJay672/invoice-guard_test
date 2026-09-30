@@ -4,12 +4,19 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./proxy-identity": "./src/proxy-identity.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./proxy-identity": {
+      "types": "./dist/proxy-identity.d.ts",
+      "default": "./dist/proxy-identity.js"
+    }
   },
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
     "format": "prettier --check .",
     "lint": "eslint .",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",

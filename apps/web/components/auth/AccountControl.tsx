@@ -10,11 +10,11 @@ import { Button } from "@workspace/ui/components/button";
 type AccountControlProps =
   | { state: "signed-out"; signInHref: string }
   | {
-    state: "signed-in";
-    email?: string;
-    verified?: boolean;
-    signingOut?: boolean;
-  };
+      state: "signed-in";
+      email?: string;
+      verified?: boolean;
+      signingOut?: boolean;
+    };
 
 export function AccountControl(props: AccountControlProps) {
   const { signOut } = useClerk();
